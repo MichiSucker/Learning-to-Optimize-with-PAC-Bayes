@@ -3,8 +3,9 @@ import torch
 
 class OptimizationAlgorithm:
 
-    def __init__(self, implementation, initial_state):
+    def __init__(self, implementation, initial_state, loss_function):
         self.implementation = implementation
+        self.loss_function = loss_function
         self.initial_state = initial_state.clone()
         self.current_state = initial_state.clone()
         self.current_iterate = self.current_state[-1]
