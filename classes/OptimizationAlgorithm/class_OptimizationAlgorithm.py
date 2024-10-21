@@ -1,9 +1,17 @@
+from collections.abc import Callable
+
 import torch
+import torch.nn as nn
+from typing import Callable
 
 
 class OptimizationAlgorithm:
 
-    def __init__(self, implementation, initial_state, loss_function, constraint=None):
+    def __init__(self,
+                 implementation: nn.Module,
+                 initial_state: torch.Tensor,
+                 loss_function: Callable,
+                 constraint: Callable=None):
         self.implementation = implementation
         self.loss_function = loss_function
         self.initial_state = initial_state.clone()
@@ -12,22 +20,22 @@ class OptimizationAlgorithm:
         self.iteration_counter = 0
         self.constraint = constraint
 
-    def get_initial_state(self):
+    def get_initial_state(self) -> torch.Tensor:
         return self.initial_state
 
-    def get_implementation(self):
+    def get_implementation(self) -> nn.Module:
         return self.implementation
 
-    def get_current_state(self):
+    def get_current_state(self) -> torch.Tensor:
         return self.current_state
 
-    def get_current_iterate(self):
+    def get_current_iterate(self) -> torch.Tensor:
         return self.current_iterate
 
-    def get_iteration_counter(self):
+    def get_iteration_counter(self) -> int:
         return self.iteration_counter
 
-    def set_iteration_counter(self, n):
+    def set_iteration_counter(self, n: int):
         if not isinstance(n, int):
             raise TypeError('Iteration counter has to be a non-negative integer.')
         self.iteration_counter = n
@@ -42,13 +50,13 @@ class OptimizationAlgorithm:
         self.reset_to_initial_state()
         self.reset_iteration_counter_to_zero()
 
-    def set_current_state(self, new_state):
+    def set_current_state(self, new_state: torch.Tensor):
         if new_state.shape != self.current_state.shape:
             raise ValueError('Shape of new state does not match shape of current state.')
         self.current_state = new_state.clone()
         self.current_iterate = self.current_state[-1]
 
-    def set_constraint(self, function):
+    def set_constraint(self, function: Callable):
         self.constraint = function
 
     def perform_step(self):
@@ -57,8 +65,8 @@ class OptimizationAlgorithm:
         with torch.no_grad():
             self.implementation.update_state(self)
 
-    def evaluate_loss_function_at_current_iterate(self):
+    def evaluate_loss_function_at_current_iterate(self) -> torch.Tensor:
         return self.loss_function(self.current_iterate)
 
-    def evaluate_constraint_at_current_iterate(self):
+    def evaluate_constraint_at_current_iterate(self) -> bool:
         return self.constraint(self.current_iterate)
