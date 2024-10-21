@@ -2,8 +2,13 @@ import unittest
 
 import algorithms.dummy
 from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
+from classes.LossFunction.class_LossFunction import LossFunction
 from algorithms.dummy import Dummy
 import torch
+
+
+def dummy_function(x):
+    return 0.5 * torch.linalg.norm(x) ** 2
 
 
 class TestClassOptimizationAlgorithm(unittest.TestCase):
@@ -13,7 +18,10 @@ class TestClassOptimizationAlgorithm(unittest.TestCase):
         self.length_state = torch.randint(low=1, high=5, size=(1,)).item()
         self.initial_state = torch.randn(size=(self.length_state, self.dim))
         self.current_state = self.initial_state.clone()
-        self.optimization_algorithm = OptimizationAlgorithm(implementation=Dummy(), initial_state=self.initial_state)
+        self.loss_function = LossFunction(function=dummy_function)
+        self.optimization_algorithm = OptimizationAlgorithm(implementation=Dummy(),
+                                                            initial_state=self.initial_state,
+                                                            loss_function=self.loss_function)
 
     def test_creation(self):
         self.assertIsInstance(self.optimization_algorithm, OptimizationAlgorithm)
@@ -21,8 +29,10 @@ class TestClassOptimizationAlgorithm(unittest.TestCase):
     def test_attributes(self):
         self.assertTrue(hasattr(self.optimization_algorithm, 'initial_state'))
         self.assertTrue(hasattr(self.optimization_algorithm, 'current_state'))
+        self.assertTrue(hasattr(self.optimization_algorithm, 'current_iterate'))
         self.assertTrue(hasattr(self.optimization_algorithm, 'implementation'))
         self.assertTrue(hasattr(self.optimization_algorithm, 'iteration_counter'))
+        self.assertTrue(hasattr(self.optimization_algorithm, 'loss_function'))
 
     def test_get_initial_state(self):
         self.assertIsInstance(self.optimization_algorithm.get_initial_state(), torch.Tensor)
@@ -76,3 +86,7 @@ class TestClassOptimizationAlgorithm(unittest.TestCase):
         self.optimization_algorithm.perform_step()
         self.assertNotEqual(self.optimization_algorithm.iteration_counter, current_iteration_counter)
         self.assertFalse(torch.equal(self.optimization_algorithm.get_current_state(), current_state))
+
+    def test_evaluate_loss_at_current_iterate(self):
+        self.assertEqual(self.loss_function(self.optimization_algorithm.current_iterate),
+                         self.optimization_algorithm.evaluate_loss_at_current_iterate())
