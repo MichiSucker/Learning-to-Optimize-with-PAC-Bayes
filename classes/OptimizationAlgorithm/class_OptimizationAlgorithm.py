@@ -45,5 +45,5 @@ class OptimizationAlgorithm:
         with torch.no_grad():
             self.implementation.update_state(self)
 
-    def evaluate_loss_at_current_iterate(self):
+    def evaluate_loss_function_at_current_iterate(self):
         return self.loss_function(self.current_iterate)

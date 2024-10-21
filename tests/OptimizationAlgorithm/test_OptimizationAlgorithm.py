@@ -87,6 +87,6 @@ class TestClassOptimizationAlgorithm(unittest.TestCase):
         self.assertNotEqual(self.optimization_algorithm.iteration_counter, current_iteration_counter)
         self.assertFalse(torch.equal(self.optimization_algorithm.get_current_state(), current_state))
 
-    def test_evaluate_loss_at_current_iterate(self):
+    def test_evaluate_loss_function_at_current_iterate(self):
         self.assertEqual(self.loss_function(self.optimization_algorithm.current_iterate),
-                         self.optimization_algorithm.evaluate_loss_at_current_iterate())
+                         self.optimization_algorithm.evaluate_loss_function_at_current_iterate())
