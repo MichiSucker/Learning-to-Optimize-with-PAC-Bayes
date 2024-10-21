@@ -80,6 +80,18 @@ class TestClassOptimizationAlgorithm(unittest.TestCase):
                                     self.optimization_algorithm.initial_state))
         self.assertTrue(torch.equal(self.optimization_algorithm.initial_state, self.initial_state))
 
+    def test_reset_state_and_iteration_counter(self):
+        current_state = self.optimization_algorithm.get_current_state()
+        self.optimization_algorithm.set_current_state(torch.randn(current_state.shape))
+        self.optimization_algorithm.set_iteration_counter(10)
+        self.assertFalse(torch.equal(self.optimization_algorithm.get_current_state(),
+                                     self.optimization_algorithm.get_initial_state()))
+        self.assertNotEqual(self.optimization_algorithm.get_iteration_counter(), 0)
+        self.optimization_algorithm.reset_state_and_iteration_counter()
+        self.assertTrue(torch.equal(self.optimization_algorithm.get_current_state(),
+                                    self.optimization_algorithm.get_initial_state()))
+        self.assertEqual(self.optimization_algorithm.get_iteration_counter(), 0)
+
     def test_set_current_state(self):
         old_state = self.optimization_algorithm.get_current_state()
         new_state = torch.randn(size=(self.length_state, self.dim))

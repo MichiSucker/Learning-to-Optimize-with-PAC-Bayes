@@ -38,6 +38,10 @@ class OptimizationAlgorithm:
     def reset_to_initial_state(self):
         self.current_state = self.initial_state.clone()
 
+    def reset_state_and_iteration_counter(self):
+        self.reset_to_initial_state()
+        self.reset_iteration_counter_to_zero()
+
     def set_current_state(self, new_state):
         if new_state.shape != self.current_state.shape:
             raise ValueError('Shape of new state does not match shape of current state.')
