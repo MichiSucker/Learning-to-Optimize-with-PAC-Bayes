@@ -4,7 +4,7 @@ import coverage
 
 if __name__ == '__main__':
 
-    cov = coverage.Coverage()
+    cov = coverage.Coverage(omit=['*test_*'])
     cov.start()
 
     test_loader = unittest.TestLoader()
