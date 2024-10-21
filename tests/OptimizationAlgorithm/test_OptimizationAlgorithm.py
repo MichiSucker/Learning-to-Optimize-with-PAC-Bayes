@@ -1,6 +1,7 @@
 import unittest
 
 import algorithms.dummy
+from classes.Constraint.class_Constraint import Constraint
 from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
 from classes.LossFunction.class_LossFunction import LossFunction
 from algorithms.dummy import Dummy
@@ -9,6 +10,13 @@ import torch
 
 def dummy_function(x):
     return 0.5 * torch.linalg.norm(x) ** 2
+
+
+def dummy_constraint(x):
+    if torch.all(x >= 0):
+        return True
+    else:
+        return False
 
 
 class TestClassOptimizationAlgorithm(unittest.TestCase):
@@ -57,6 +65,8 @@ class TestClassOptimizationAlgorithm(unittest.TestCase):
         random_number = torch.randint(low=0, high=100, size=(1,)).item()
         self.optimization_algorithm.set_iteration_counter(n=random_number)
         self.assertEqual(self.optimization_algorithm.get_iteration_counter(), random_number)
+        with self.assertRaises(TypeError):
+            self.optimization_algorithm.set_iteration_counter(n=torch.randn(1))
 
     def test_reset_iteration_counter_to_zero(self):
         self.optimization_algorithm.set_iteration_counter(10)
@@ -77,6 +87,9 @@ class TestClassOptimizationAlgorithm(unittest.TestCase):
         self.assertFalse(torch.equal(old_state, self.optimization_algorithm.get_current_state()))
         self.assertTrue(torch.equal(new_state, self.optimization_algorithm.get_current_state()))
         self.assertTrue(torch.equal(new_state[-1], self.optimization_algorithm.get_current_iterate()))
+        with self.assertRaises(ValueError):
+            state_with_wrong_shape = old_state[-1]
+            self.optimization_algorithm.set_current_state(state_with_wrong_shape)
 
     def test_update_state(self):
         self.assertTrue(hasattr(self.optimization_algorithm.implementation, 'forward'))
@@ -90,3 +103,9 @@ class TestClassOptimizationAlgorithm(unittest.TestCase):
     def test_evaluate_loss_function_at_current_iterate(self):
         self.assertEqual(self.loss_function(self.optimization_algorithm.current_iterate),
                          self.optimization_algorithm.evaluate_loss_function_at_current_iterate())
+
+    def test_evaluate_constraint(self):
+        self.optimization_algorithm.set_constraint(Constraint(dummy_constraint))
+        self.assertIsInstance(self.optimization_algorithm.evaluate_constraint_at_current_iterate(), bool)
+        self.optimization_algorithm.set_current_state(torch.ones(size=self.initial_state.shape))
+        self.assertTrue(self.optimization_algorithm.evaluate_constraint_at_current_iterate())

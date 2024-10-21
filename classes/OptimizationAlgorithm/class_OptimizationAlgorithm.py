@@ -28,6 +28,8 @@ class OptimizationAlgorithm:
         return self.iteration_counter
 
     def set_iteration_counter(self, n):
+        if not isinstance(n, int):
+            raise TypeError('Iteration counter has to be a non-negative integer.')
         self.iteration_counter = n
 
     def reset_iteration_counter_to_zero(self):
@@ -37,8 +39,13 @@ class OptimizationAlgorithm:
         self.current_state = self.initial_state.clone()
 
     def set_current_state(self, new_state):
+        if new_state.shape != self.current_state.shape:
+            raise ValueError('Shape of new state does not match shape of current state.')
         self.current_state = new_state.clone()
         self.current_iterate = self.current_state[-1]
+
+    def set_constraint(self, function):
+        self.constraint = function
 
     def perform_step(self):
         self.iteration_counter += 1
@@ -48,3 +55,6 @@ class OptimizationAlgorithm:
 
     def evaluate_loss_function_at_current_iterate(self):
         return self.loss_function(self.current_iterate)
+
+    def evaluate_constraint_at_current_iterate(self):
+        return self.constraint(self.current_iterate)
