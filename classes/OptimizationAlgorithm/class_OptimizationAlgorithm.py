@@ -3,13 +3,14 @@ import torch
 
 class OptimizationAlgorithm:
 
-    def __init__(self, implementation, initial_state, loss_function):
+    def __init__(self, implementation, initial_state, loss_function, constraint=None):
         self.implementation = implementation
         self.loss_function = loss_function
         self.initial_state = initial_state.clone()
         self.current_state = initial_state.clone()
         self.current_iterate = self.current_state[-1]
         self.iteration_counter = 0
+        self.constraint = constraint
 
     def get_initial_state(self):
         return self.initial_state
