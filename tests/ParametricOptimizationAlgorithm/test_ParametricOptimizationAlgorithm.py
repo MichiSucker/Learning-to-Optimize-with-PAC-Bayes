@@ -71,17 +71,7 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
 
     def test_compute_ratio_of_losses(self):
         predicted_iterates = [1., 2., 3., 4., 5.]
-        converged = [False, False, False, False, False]
         self.optimization_algorithm.set_loss_function(lambda x: x)
-        ratio_of_losses = self.optimization_algorithm.compute_ratio_of_losses(predicted_iterates, converged)
+        ratio_of_losses = self.optimization_algorithm.compute_ratio_of_losses(predicted_iterates)
         self.assertTrue(len(ratio_of_losses) == len(predicted_iterates) - 1)
         self.assertEqual(ratio_of_losses, [2./1., 3./2., 4./3., 5./4.])
-
-        predicted_iterates = [1., 2., 3., 4., 5.]
-        converged = [False, False, True, False, False]
-        ratio_of_losses = self.optimization_algorithm.compute_ratio_of_losses(predicted_iterates, converged)
-        self.assertTrue(len(ratio_of_losses) == len(predicted_iterates) - 1)
-        self.assertEqual(ratio_of_losses, [2./1., 0., 4./3., 5./4.])
-
-        with self.assertRaises(ValueError):
-            ratio_of_losses = self.optimization_algorithm.compute_ratio_of_losses(predicted_iterates, [])
