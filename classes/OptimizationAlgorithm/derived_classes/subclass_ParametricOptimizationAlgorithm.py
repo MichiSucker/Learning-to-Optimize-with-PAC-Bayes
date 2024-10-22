@@ -1,0 +1,214 @@
+import torch
+from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
+from classes.Constraint.class_Constraint import Constraint
+from classes.LossFunction.class_LossFunction import LossFunction
+import copy
+from tqdm import tqdm
+import numpy as np
+
+
+class TrajectoryRandomizer:
+    pass
+
+
+class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
+
+    def __init__(self,
+                 initial_state: torch.Tensor,
+                 implementation,
+                 loss_function: LossFunction,
+                 constraint: Constraint = None):
+
+        super().__init__(initial_state=initial_state, implementation=implementation, loss_function=loss_function,
+                         constraint=constraint)
+
+    def fit(self,
+            loss_functions: list,
+            fitting_parameters: dict,
+            constraint_parameters: dict,
+            update_parameters: dict,
+            found_point_inside_constraint: bool = False
+            ) -> None:
+
+        # Extract parameters for prints during training
+        num_iter_print_update = update_parameters['num_iter_print_update']
+        with_print = update_parameters['with_print']
+        bins = update_parameters['bins']
+
+        # Extract parameters for fitting
+        num_iter_max = fitting_parameters['n_max']
+        num_iter_update_stepsize = fitting_parameters['num_iter_update_stepsize']
+        lr = fitting_parameters['lr']
+        length_trajectory = fitting_parameters['length_trajectory']
+        restart_probability = fitting_parameters['restart_probability']
+        factor_stepsize_update = fitting_parameters['factor_stepsize_update']
+
+        # Extract parameters of constraint set
+        num_iter_update_constraint = constraint_parameters['num_iter_update_constraint']
+
+        if bins is None:
+            bins = [1e0, 1e-4, 1e-8, 1e-12, 1e-16, 1e-20, 1e-24, 1e-28][::-1]
+        optimizer = torch.optim.Adam(self.implementation.parameters(), lr=lr)
+        i, running_loss = 0, 0
+        if with_print:
+            print("---------------------------------------------------------------------------------------------------")
+            print("Fit Algorithm:")
+            print("---------------------------------------------------------------------------------------------------")
+            print(f"\t-Optimizing for {num_iter_max} iterations.")
+            print(f"\t-Updating step-size every {num_iter_update_stepsize} iterations.")
+        fresh_init = True
+        update_histogram = []
+
+        if found_point_inside_constraint:
+            old_state_dict = copy.deepcopy(self.implementation.state_dict())
+        else:
+            old_state_dict = None
+
+        rejected, num_iter_update_rejection_rate = 0, 20
+        i, t = 0, 0
+        pbar = tqdm(total=num_iter_max)
+        pbar.set_description('Fit Algorithm')
+
+        while i < num_iter_max:
+
+            if (t >= 1) and (t % num_iter_update_rejection_rate == 0):
+                if rejected / num_iter_update_rejection_rate >= 0.5:
+                    print("Decrease Learning Rate.")
+                    for g in optimizer.param_groups:
+                        g['lr'] = 0.1 * g['lr']
+                rejected = 0
+
+            # Update Stepsize
+            if t >= 1 and t % num_iter_update_stepsize == 0:
+                if with_print:
+                    print("\t\t\t------------------")
+                    print("\t\t\tUpdating Stepsize.")
+                    print("\t\t\t------------------")
+                for g in optimizer.param_groups:
+                    g['lr'] = factor_stepsize_update * g['lr']
+
+            # Increase Counter for t
+            # This should prevent getting stuck, because the step-size gets decreased
+            t += 1
+
+            # Reset optimizer
+            optimizer.zero_grad()
+
+            # Probabilistic Initialization of Algorithm
+            if fresh_init:
+                self.restart_with_new_loss(loss_functions=loss_functions)
+                fresh_init = False
+            else:
+                self.detach_current_state_from_computational_graph()
+                fresh_init = torch.rand(1) <= restart_probability
+
+            # Predict iterates
+            predicted_iterates, did_converge = self.compute_trajectory(num_steps=length_trajectory,
+                                                                       check_convergence=True)
+
+            new_loss = self.loss_function(predicted_iterates[-1]).item()
+            update_histogram.append(new_loss)
+
+            # Compute loss: Sum over relative decreases of the loss
+            # Note that there is a problem here:
+            # If the smallest loss is not zero, this loss will penalize a converged algorithm!
+            losses = [self.loss_function(predicted_iterates[k]) / self.loss_function(predicted_iterates[k - 1])
+                      if not did_converge[k]
+                      else self.loss_function(predicted_iterates[k]) - self.loss_function(predicted_iterates[k])
+                      for k in range(1, len(predicted_iterates))
+                      ]
+
+            if len(losses) == 0:
+                print("No Loss.")
+                continue
+
+            sum_losses = torch.sum(torch.stack(losses))
+            if torch.isnan(sum_losses) or torch.isinf(sum_losses):
+                print("NaN.")
+                continue
+
+            sum_losses.backward()
+
+            with torch.no_grad():
+                running_loss += sum_losses
+
+            # Update Statements
+            if i >= 1 and with_print and i % num_iter_print_update == 0:
+                print("\t\t\t-----------------------------------------------------------------------------------------")
+                print(f"\t\t\tIteration: {i}; Found point inside constraint: {found_point_inside_constraint}")
+                print("\t\t\t\tAvg. Loss = {:.2f}".format(running_loss / (num_iter_print_update * length_trajectory)))
+                vals, bins = np.histogram(update_histogram, bins=bins)
+                print(f"\t\t\t\tRatios:")
+                for j in range(len(vals) - 1, -1, -1):
+                    print(f"\t\t\t\t\t[{bins[j + 1]:.0e}, {bins[j]:.0e}] : {vals[j]}/{num_iter_print_update}")
+                print("\t\t\t-----------------------------------------------------------------------------------------")
+
+                # Reset Variables
+                update_histogram = []
+                running_loss = 0
+
+            # Update hyperparameters
+            optimizer.step()
+
+            # Check constraint. Reject current step if it is not satisfied.
+            if (i >= 1) and (self.constraint is not None) and (i % num_iter_update_constraint == 0):
+                print("Checking Constraint.")
+                satisfies_constraint = self.constraint(self)
+                print(f"Check over. Constraint satisfied: {satisfies_constraint}.")
+
+                # If constraint is satisfied, just update
+                if satisfies_constraint:
+                    print("Found new point that satisfies constraint.")
+                    found_point_inside_constraint = True
+                    old_state_dict = copy.deepcopy(self.implementation.state_dict())
+
+                # If constrained is not satisfied, and one has found a point before that does satisfy the constraint,
+                # then reject the new point.
+                elif found_point_inside_constraint and (not satisfies_constraint):
+                    self.implementation.load_state_dict(old_state_dict)
+                    rejected += 1
+                    print("Reject.")
+                    #continue  # Why do we continue here again? It only removes the two lines below.
+
+                # If constraint is not satisfied and one has not found a point before that does satisfy the constraint,
+                # just do nothing here, as this corresponds to accepting the new point.
+            #
+            # pr.disable()
+            # pr.print_stats()
+
+            # Update Iteration Counter
+            i += 1
+            pbar.update(1)
+
+        # Final check of constraint. If it is not satisfied, print a warning (without stopping the program).
+        satisfies_constraint = self.constraint(self)
+        if satisfies_constraint:
+            print("Final point lies within the constraint set.")
+        elif found_point_inside_constraint and (not satisfies_constraint):
+            self.implementation.load_state_dict(old_state_dict)
+            print("Took point from before that satisfies constraint.")
+        else:
+            raise Exception("Did not find a point that lies within the constraint!")
+
+        # Reset algorithm
+        self.reset_state_and_iteration_counter()
+        if with_print:
+            print("---------------------------------------------------------------------------------------------------")
+            print("End Fitting Algorithm.")
+
+    def determine_next_starting_point(self, start_again_from_initial_state, loss_functions, restart_probability):
+        if start_again_from_initial_state:
+            self.restart_with_new_loss(loss_functions=loss_functions)
+            restart = False
+        else:
+            self.detach_current_state_from_computational_graph()
+            restart = (torch.rand(1) <= restart_probability)
+        return restart
+
+    def restart_with_new_loss(self, loss_functions):
+        self.reset_state_and_iteration_counter()
+        self.set_loss_function(np.random.choice(loss_functions))
+
+    def detach_current_state_from_computational_graph(self):
+        x_0 = self.current_state.detach().clone()
+        self.current_state = x_0
