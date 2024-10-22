@@ -97,3 +97,17 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
         update_stepsize_of_optimizer(optimizer=optimizer, factor=factor)
         for g in optimizer.param_groups:
             self.assertEqual(g['lr'], factor * lr)
+
+    def test_update_hyperparameters(self):
+        # Note that this is a weak test! We only check whether the hyperparameters did change.
+        trajectory_randomizer = TrajectoryRandomizer(should_restart=True, restart_probability=1.)
+        loss_functions = [LossFunction(dummy_function) for i in range(10)]
+        old_hyperparameters = [p.clone() for p in self.optimization_algorithm.implementation.parameters()
+                               if p.requires_grad]
+        optimizer = torch.optim.Adam(self.optimization_algorithm.implementation.parameters(), lr=1e-4)
+        self.optimization_algorithm.update_hyperparameters(
+            optimizer=optimizer, trajectory_randomizer=trajectory_randomizer, loss_functions=loss_functions,
+            length_trajectory=1)
+        new_hyperparameters = [p.clone() for p in self.optimization_algorithm.implementation.parameters()
+                               if p.requires_grad]
+        self.assertNotEqual(old_hyperparameters, new_hyperparameters)

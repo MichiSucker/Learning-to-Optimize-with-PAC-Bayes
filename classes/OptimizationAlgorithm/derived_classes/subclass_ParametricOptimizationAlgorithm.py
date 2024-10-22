@@ -94,7 +94,6 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                         g['lr'] = 0.1 * g['lr']
                 rejected = 0
 
-            # Update Stepsize
             if should_update_stepsize_of_optimizer(t=t, update_stepsize_every=num_iter_update_stepsize):
                 update_stepsize_of_optimizer(optimizer, factor=factor_stepsize_update)
 
@@ -102,16 +101,8 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             # This should prevent getting stuck, because the step-size gets decreased
             t += 1
 
-            optimizer.zero_grad()
-            self.determine_next_starting_point(
-                trajectory_randomizer=trajectory_randomizer, loss_functions=loss_functions)
-            predicted_iterates = self.compute_trajectory(number_of_steps=length_trajectory)
-            ratios_of_losses = self.compute_ratio_of_losses(predicted_iterates=predicted_iterates)
-            if losses_are_invalid(ratios_of_losses):
-                print('Invalid losses.')
-                continue
-            sum_losses = torch.sum(torch.stack(ratios_of_losses))
-            sum_losses.backward()
+            self.update_hyperparameters(optimizer=optimizer, trajectory_randomizer=trajectory_randomizer,
+                                        loss_functions=loss_functions, length_trajectory=length_trajectory)
 
             with torch.no_grad():
                 update_histogram.append(self.loss_function(predicted_iterates[-1]).item())
@@ -131,9 +122,6 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                 # Reset Variables
                 update_histogram = []
                 running_loss = 0
-
-            # Update hyperparameters
-            optimizer.step()
 
             # Check constraint. Reject current step if it is not satisfied.
             if (i >= 1) and (self.constraint is not None) and (i % num_iter_update_constraint == 0):
@@ -173,6 +161,19 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         if with_print:
             print("---------------------------------------------------------------------------------------------------")
             print("End Fitting Algorithm.")
+
+    def update_hyperparameters(self, optimizer, trajectory_randomizer, loss_functions, length_trajectory):
+        optimizer.zero_grad()
+        self.determine_next_starting_point(
+            trajectory_randomizer=trajectory_randomizer, loss_functions=loss_functions)
+        predicted_iterates = self.compute_trajectory(number_of_steps=length_trajectory)
+        ratios_of_losses = self.compute_ratio_of_losses(predicted_iterates=predicted_iterates)
+        if losses_are_invalid(ratios_of_losses):
+            print('Invalid losses.')
+            return
+        sum_losses = torch.sum(torch.stack(ratios_of_losses))
+        sum_losses.backward()
+        optimizer.step()
 
     def determine_next_starting_point(self, trajectory_randomizer, loss_functions):
         if trajectory_randomizer.should_restart:
