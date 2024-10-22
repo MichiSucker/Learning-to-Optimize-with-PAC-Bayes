@@ -8,6 +8,11 @@ import numpy as np
 
 
 class TrainingAssistant:
+    # To-Do: Collect all print statements and stuff inside here.
+    pass
+
+
+class ConstraintChecker:
     pass
 
 
