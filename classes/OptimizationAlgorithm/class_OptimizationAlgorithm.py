@@ -11,7 +11,7 @@ class OptimizationAlgorithm:
                  implementation: nn.Module,
                  initial_state: torch.Tensor,
                  loss_function: Callable,
-                 constraint: Callable=None):
+                 constraint: Callable = None):
         self.implementation = implementation
         self.loss_function = loss_function
         self.initial_state = initial_state.clone()
@@ -64,6 +64,9 @@ class OptimizationAlgorithm:
         self.current_iterate = self.implementation.forward(self)
         with torch.no_grad():
             self.implementation.update_state(self)
+
+    def set_loss_function(self, new_loss_function: Callable):
+        self.loss_function = new_loss_function
 
     def evaluate_loss_function_at_current_iterate(self) -> torch.Tensor:
         return self.loss_function(self.current_iterate)

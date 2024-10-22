@@ -66,7 +66,7 @@ class TestClassOptimizationAlgorithm(unittest.TestCase):
         self.optimization_algorithm.set_iteration_counter(n=random_number)
         self.assertEqual(self.optimization_algorithm.get_iteration_counter(), random_number)
         with self.assertRaises(TypeError):
-            self.optimization_algorithm.set_iteration_counter(n=torch.randn(1))
+            self.optimization_algorithm.set_iteration_counter(n=torch.randn(1).item())
 
     def test_reset_iteration_counter_to_zero(self):
         self.optimization_algorithm.set_iteration_counter(10)
@@ -103,7 +103,7 @@ class TestClassOptimizationAlgorithm(unittest.TestCase):
             state_with_wrong_shape = old_state[-1]
             self.optimization_algorithm.set_current_state(state_with_wrong_shape)
 
-    def test_update_state(self):
+    def test_perform_step(self):
         self.assertTrue(hasattr(self.optimization_algorithm.implementation, 'forward'))
         self.assertTrue(hasattr(self.optimization_algorithm.implementation, 'update_state'))
         current_state = self.optimization_algorithm.get_current_state().clone()
@@ -121,3 +121,20 @@ class TestClassOptimizationAlgorithm(unittest.TestCase):
         self.assertIsInstance(self.optimization_algorithm.evaluate_constraint_at_current_iterate(), bool)
         self.optimization_algorithm.set_current_state(torch.ones(size=self.initial_state.shape))
         self.assertTrue(self.optimization_algorithm.evaluate_constraint_at_current_iterate())
+
+    def test_set_constraint(self):
+        old_constraint = self.optimization_algorithm.constraint
+        new_constraint = Constraint(dummy_constraint)
+        self.optimization_algorithm.set_constraint(new_constraint)
+        self.assertFalse(self.optimization_algorithm.constraint is None)
+        self.optimization_algorithm.set_constraint(old_constraint)
+        self.assertTrue(self.optimization_algorithm.constraint is None)
+
+    def test_set_loss_function(self):
+        current_loss_function = self.optimization_algorithm.loss_function
+        new_loss_function = LossFunction(function=lambda x: torch.linalg.norm(x))
+        self.optimization_algorithm.set_loss_function(new_loss_function)
+        self.assertNotEqual(new_loss_function, current_loss_function)
+        self.assertEqual(new_loss_function, self.optimization_algorithm.loss_function)
+        self.optimization_algorithm.set_loss_function(current_loss_function)
+        self.assertEqual(current_loss_function, self.optimization_algorithm.loss_function)
