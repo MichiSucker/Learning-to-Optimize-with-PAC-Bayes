@@ -7,6 +7,10 @@ from tqdm import tqdm
 import numpy as np
 
 
+class TrainingAssistant:
+    pass
+
+
 class TrajectoryRandomizer:
 
     def __init__(self, should_restart, restart_probability):
