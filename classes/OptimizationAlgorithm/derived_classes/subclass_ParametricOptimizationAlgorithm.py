@@ -95,7 +95,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                 rejected = 0
 
             # Update Stepsize
-            if t >= 1 and t % num_iter_update_stepsize == 0:
+            if should_update_stepsize_of_optimizer(t=t, update_stepsize_every=num_iter_update_stepsize):
                 if with_print:
                     print("\t\t\t------------------")
                     print("\t\t\tUpdating Stepsize.")
@@ -107,15 +107,10 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             # This should prevent getting stuck, because the step-size gets decreased
             t += 1
 
-            # Reset optimizer
             optimizer.zero_grad()
             self.determine_next_starting_point(
                 trajectory_randomizer=trajectory_randomizer, loss_functions=loss_functions)
             predicted_iterates = self.compute_trajectory(number_of_steps=length_trajectory)
-
-            new_loss = self.loss_function(predicted_iterates[-1]).item()
-            update_histogram.append(new_loss)
-
             ratios_of_losses = self.compute_ratio_of_losses(predicted_iterates=predicted_iterates)
             if losses_are_invalid(ratios_of_losses):
                 print('Invalid losses.')
@@ -124,6 +119,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             sum_losses.backward()
 
             with torch.no_grad():
+                update_histogram.append(self.loss_function(predicted_iterates[-1]).item())
                 running_loss += sum_losses
 
             # Update Statements
@@ -162,7 +158,6 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                     self.implementation.load_state_dict(old_state_dict)
                     rejected += 1
                     print("Reject.")
-                    #continue  # Why do we continue here again? It only removes the two lines below.
 
                 # If constraint is not satisfied and one has not found a point before that does satisfy the constraint,
                 # just do nothing here, as this corresponds to accepting the new point.
@@ -210,6 +205,12 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         ratios = [self.loss_function(predicted_iterates[k]) / self.loss_function(predicted_iterates[k - 1])
                   for k in range(1, len(predicted_iterates))]
         return ratios
+
+
+def should_update_stepsize_of_optimizer(t, update_stepsize_every):
+    if (t >= 1) and (t % update_stepsize_every == 0):
+        return True
+    return False
 
 
 def losses_are_invalid(losses):

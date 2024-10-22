@@ -3,7 +3,7 @@ import torch
 from algorithms.dummy import Dummy
 from classes.LossFunction.class_LossFunction import LossFunction
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
-    ParametricOptimizationAlgorithm, TrajectoryRandomizer, losses_are_invalid)
+    ParametricOptimizationAlgorithm, TrajectoryRandomizer, losses_are_invalid, should_update_stepsize_of_optimizer)
 
 
 def dummy_function(x):
@@ -81,3 +81,9 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
         self.assertTrue(losses_are_invalid([]))
         self.assertTrue(losses_are_invalid([1., None]))
         self.assertTrue(losses_are_invalid([1., torch.inf]))
+
+    def test_should_update_stepsize_of_optimizer(self):
+        self.assertFalse(should_update_stepsize_of_optimizer(t=0, update_stepsize_every=10))
+        self.assertFalse(should_update_stepsize_of_optimizer(t=1, update_stepsize_every=10))
+        self.assertTrue(should_update_stepsize_of_optimizer(t=10, update_stepsize_every=10))
+        self.assertTrue(should_update_stepsize_of_optimizer(t=100, update_stepsize_every=10))
