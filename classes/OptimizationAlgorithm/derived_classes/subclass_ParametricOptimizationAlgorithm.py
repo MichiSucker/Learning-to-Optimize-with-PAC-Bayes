@@ -8,7 +8,21 @@ import numpy as np
 
 
 class TrajectoryRandomizer:
-    pass
+
+    def __init__(self, should_restart, restart_probability):
+        self.should_restart = should_restart
+        self.restart_probability = restart_probability
+
+    def get_should_restart(self):
+        return self.should_restart
+
+    def set_should_restart(self, should_restart):
+        if not isinstance(should_restart, bool):
+            raise TypeError("Type of 'should_restart' has to be bool.")
+        self.should_restart = should_restart
+
+    def get_restart_probability(self):
+        return self.restart_probability
 
 
 class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
