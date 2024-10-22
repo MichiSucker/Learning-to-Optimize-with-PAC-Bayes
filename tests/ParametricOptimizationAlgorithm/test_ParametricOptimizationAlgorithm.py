@@ -10,7 +10,7 @@ def dummy_function(x):
     return 0.5 * torch.linalg.norm(x) ** 2
 
 
-class TestParametricOptimizationAlgorithm(unittest.TestCase):
+class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
 
     def setUp(self):
         self.dim = torch.randint(low=1, high=1000, size=(1,)).item()
