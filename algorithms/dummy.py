@@ -6,7 +6,7 @@ class Dummy(nn.Module):
 
     def __init__(self):
         super(Dummy, self).__init__()
-        self.scale = 1.
+        self.scale = nn.Parameter(torch.tensor(1.))
 
     def forward(self, optimization_algorithm):
         current_iterate = optimization_algorithm.get_current_iterate()
