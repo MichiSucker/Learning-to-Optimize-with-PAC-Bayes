@@ -54,10 +54,8 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         num_iter_update_stepsize = fitting_parameters['num_iter_update_stepsize']
         lr = fitting_parameters['lr']
         length_trajectory = fitting_parameters['length_trajectory']
-        restart_probability = fitting_parameters['restart_probability']
         factor_stepsize_update = fitting_parameters['factor_stepsize_update']
 
-        fresh_init = True
         trajectory_randomizer = TrajectoryRandomizer(should_restart=True,
                                                      restart_probability=fitting_parameters['restart_probability'])
 
@@ -111,28 +109,18 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
             # Reset optimizer
             optimizer.zero_grad()
-            self.determine_next_starting_point(trajectory_randomizer=trajectory_randomizer,
-                                               loss_functions=loss_functions)
-
-            # Predict iterates
-            predicted_iterates, did_converge = self.compute_trajectory(num_steps=length_trajectory,
-                                                                       check_convergence=True)
+            self.determine_next_starting_point(
+                trajectory_randomizer=trajectory_randomizer, loss_functions=loss_functions)
+            predicted_iterates = self.compute_trajectory(number_of_steps=length_trajectory)
 
             new_loss = self.loss_function(predicted_iterates[-1]).item()
             update_histogram.append(new_loss)
 
-            ratios_of_losses = self.compute_ratio_of_losses(predicted_iterates=predicted_iterates,
-                                                            converged=did_converge)
-
-            if len(ratios_of_losses) == 0:
-                print("No Loss.")
+            ratios_of_losses = self.compute_ratio_of_losses(predicted_iterates=predicted_iterates)
+            if losses_are_invalid(ratios_of_losses):
+                print('Invalid losses.')
                 continue
-
             sum_losses = torch.sum(torch.stack(ratios_of_losses))
-            if torch.isnan(sum_losses) or torch.isinf(sum_losses):
-                print("NaN.")
-                continue
-
             sum_losses.backward()
 
             with torch.no_grad():
@@ -222,3 +210,10 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         ratios = [self.loss_function(predicted_iterates[k]) / self.loss_function(predicted_iterates[k - 1])
                   for k in range(1, len(predicted_iterates))]
         return ratios
+
+
+def losses_are_invalid(losses):
+    if (len(losses) == 0) or (None in losses) or (torch.inf in losses):
+        return True
+    return False
+

@@ -3,7 +3,7 @@ import torch
 from algorithms.dummy import Dummy
 from classes.LossFunction.class_LossFunction import LossFunction
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
-    ParametricOptimizationAlgorithm, TrajectoryRandomizer)
+    ParametricOptimizationAlgorithm, TrajectoryRandomizer, losses_are_invalid)
 
 
 def dummy_function(x):
@@ -75,3 +75,9 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
         ratio_of_losses = self.optimization_algorithm.compute_ratio_of_losses(predicted_iterates)
         self.assertTrue(len(ratio_of_losses) == len(predicted_iterates) - 1)
         self.assertEqual(ratio_of_losses, [2./1., 3./2., 4./3., 5./4.])
+
+    def test_losses_are_invalid(self):
+        self.assertFalse(losses_are_invalid([1., 2., 3.]))
+        self.assertTrue(losses_are_invalid([]))
+        self.assertTrue(losses_are_invalid([1., None]))
+        self.assertTrue(losses_are_invalid([1., torch.inf]))
