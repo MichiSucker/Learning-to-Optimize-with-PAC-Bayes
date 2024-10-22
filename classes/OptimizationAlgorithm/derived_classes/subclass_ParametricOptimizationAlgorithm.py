@@ -223,3 +223,12 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
     def detach_current_state_from_computational_graph(self):
         x_0 = self.current_state.detach().clone()
         self.current_state = x_0
+
+    def compute_ratio_of_losses(self, predicted_iterates, converged):
+        if len(predicted_iterates) != len(converged):
+            raise ValueError("Lenghts of 'predicted_iterates' and 'converged' do not match.")
+        ratios = [self.loss_function(predicted_iterates[k]) / self.loss_function(predicted_iterates[k - 1])
+                  if not converged[k]
+                  else self.loss_function(predicted_iterates[k]) - self.loss_function(predicted_iterates[k])
+                  for k in range(1, len(predicted_iterates))]
+        return ratios
