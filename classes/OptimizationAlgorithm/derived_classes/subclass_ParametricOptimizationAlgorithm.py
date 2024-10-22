@@ -57,6 +57,10 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         restart_probability = fitting_parameters['restart_probability']
         factor_stepsize_update = fitting_parameters['factor_stepsize_update']
 
+        fresh_init = True
+        trajectory_randomizer = TrajectoryRandomizer(should_restart=True,
+                                                     restart_probability=fitting_parameters['restart_probability'])
+
         # Extract parameters of constraint set
         num_iter_update_constraint = constraint_parameters['num_iter_update_constraint']
 
@@ -70,7 +74,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             print("---------------------------------------------------------------------------------------------------")
             print(f"\t-Optimizing for {num_iter_max} iterations.")
             print(f"\t-Updating step-size every {num_iter_update_stepsize} iterations.")
-        fresh_init = True
+
         update_histogram = []
 
         if found_point_inside_constraint:
@@ -107,14 +111,8 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
             # Reset optimizer
             optimizer.zero_grad()
-
-            # Probabilistic Initialization of Algorithm
-            if fresh_init:
-                self.restart_with_new_loss(loss_functions=loss_functions)
-                fresh_init = False
-            else:
-                self.detach_current_state_from_computational_graph()
-                fresh_init = torch.rand(1) <= restart_probability
+            self.determine_next_starting_point(trajectory_randomizer=trajectory_randomizer,
+                                               loss_functions=loss_functions)
 
             # Predict iterates
             predicted_iterates, did_converge = self.compute_trajectory(num_steps=length_trajectory,
@@ -210,14 +208,13 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             print("---------------------------------------------------------------------------------------------------")
             print("End Fitting Algorithm.")
 
-    def determine_next_starting_point(self, start_again_from_initial_state, loss_functions, restart_probability):
-        if start_again_from_initial_state:
+    def determine_next_starting_point(self, trajectory_randomizer, loss_functions):
+        if trajectory_randomizer.should_restart:
             self.restart_with_new_loss(loss_functions=loss_functions)
-            restart = False
+            trajectory_randomizer.set_should_restart(False)
         else:
             self.detach_current_state_from_computational_graph()
-            restart = (torch.rand(1) <= restart_probability)
-        return restart
+            trajectory_randomizer.set_should_restart((torch.rand(1) <= trajectory_randomizer.restart_probability).item())
 
     def restart_with_new_loss(self, loss_functions):
         self.reset_state_and_iteration_counter()

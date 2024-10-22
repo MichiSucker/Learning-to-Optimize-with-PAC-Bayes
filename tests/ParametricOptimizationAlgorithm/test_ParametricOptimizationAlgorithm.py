@@ -3,7 +3,7 @@ import torch
 from algorithms.dummy import Dummy
 from classes.LossFunction.class_LossFunction import LossFunction
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
-    ParametricOptimizationAlgorithm)
+    ParametricOptimizationAlgorithm, TrajectoryRandomizer)
 
 
 def dummy_function(x):
@@ -44,29 +44,26 @@ class TestParametricOptimizationAlgorithm(unittest.TestCase):
 
     def test_determine_next_starting_point(self):
         restart_probability = 0.65
-        start_again_from_initial_state = True
+        trajectory_randomizer = TrajectoryRandomizer(should_restart=True,
+                                                     restart_probability=restart_probability)
         self.optimization_algorithm.set_iteration_counter(10)
         loss_functions = [LossFunction(dummy_function) for i in range(10)]
         old_loss_function = self.optimization_algorithm.loss_function
         self.optimization_algorithm.set_current_state(torch.randn(size=self.optimization_algorithm.initial_state.shape))
-        restart = self.optimization_algorithm.determine_next_starting_point(start_again_from_initial_state,
-                                                                            loss_functions=loss_functions,
-                                                                            restart_probability=restart_probability)
-        self.assertFalse(restart)
+        self.optimization_algorithm.determine_next_starting_point(trajectory_randomizer, loss_functions=loss_functions)
+        self.assertFalse(trajectory_randomizer.should_restart)
         self.assertEqual(self.optimization_algorithm.iteration_counter, 0)
         self.assertTrue(torch.equal(self.optimization_algorithm.current_state,
                                     self.optimization_algorithm.initial_state))
         self.assertNotEqual(old_loss_function, self.optimization_algorithm.loss_function)
         self.assertTrue(self.optimization_algorithm.loss_function in loss_functions)
 
-        start_again_from_initial_state = False
+        trajectory_randomizer.set_should_restart(False)
         current_loss_function = self.optimization_algorithm.loss_function
         current_state = self.optimization_algorithm.current_state.clone()
         self.optimization_algorithm.current_state.requires_grad = True
         self.optimization_algorithm.set_iteration_counter(10)
-        _ = self.optimization_algorithm.determine_next_starting_point(start_again_from_initial_state,
-                                                                      loss_functions=loss_functions,
-                                                                      restart_probability=restart_probability)
+        self.optimization_algorithm.determine_next_starting_point(trajectory_randomizer, loss_functions=loss_functions)
         self.assertFalse(self.optimization_algorithm.current_state.requires_grad)
         self.assertEqual(self.optimization_algorithm.iteration_counter, 10)
         self.assertTrue(torch.equal(self.optimization_algorithm.current_state, current_state))
