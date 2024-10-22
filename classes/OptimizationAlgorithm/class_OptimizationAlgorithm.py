@@ -59,11 +59,18 @@ class OptimizationAlgorithm:
     def set_constraint(self, function: Callable):
         self.constraint = function
 
-    def perform_step(self):
+    def perform_step(self, return_iterate=False):
         self.iteration_counter += 1
         self.current_iterate = self.implementation.forward(self)
         with torch.no_grad():
             self.implementation.update_state(self)
+        if return_iterate:
+            return self.current_iterate
+
+    def compute_trajectory(self, number_of_steps):
+        trajectory = [self.current_state[-1].clone()] + [self.perform_step(return_iterate=True)
+                                                         for _ in range(number_of_steps)]
+        return trajectory
 
     def set_loss_function(self, new_loss_function: Callable):
         self.loss_function = new_loss_function
