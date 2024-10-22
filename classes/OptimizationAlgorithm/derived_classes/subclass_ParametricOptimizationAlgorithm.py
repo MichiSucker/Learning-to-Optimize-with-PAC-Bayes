@@ -121,20 +121,14 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             new_loss = self.loss_function(predicted_iterates[-1]).item()
             update_histogram.append(new_loss)
 
-            # Compute loss: Sum over relative decreases of the loss
-            # Note that there is a problem here:
-            # If the smallest loss is not zero, this loss will penalize a converged algorithm!
-            losses = [self.loss_function(predicted_iterates[k]) / self.loss_function(predicted_iterates[k - 1])
-                      if not did_converge[k]
-                      else self.loss_function(predicted_iterates[k]) - self.loss_function(predicted_iterates[k])
-                      for k in range(1, len(predicted_iterates))
-                      ]
+            ratios_of_losses = self.compute_ratio_of_losses(predicted_iterates=predicted_iterates,
+                                                            converged=did_converge)
 
-            if len(losses) == 0:
+            if len(ratios_of_losses) == 0:
                 print("No Loss.")
                 continue
 
-            sum_losses = torch.sum(torch.stack(losses))
+            sum_losses = torch.sum(torch.stack(ratios_of_losses))
             if torch.isnan(sum_losses) or torch.isinf(sum_losses):
                 print("NaN.")
                 continue
