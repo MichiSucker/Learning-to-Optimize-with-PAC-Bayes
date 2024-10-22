@@ -170,6 +170,3 @@ class TestProbabilisticConstraint(unittest.TestCase):
 
         self.assertTrue(current_upper_quantile - current_lower_quantile < quantile_distance_to_test)
         self.assertTrue(true_probability-0.1 <= posterior_mean <= true_probability+0.1)
-
-
-        #test
