@@ -96,12 +96,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
             # Update Stepsize
             if should_update_stepsize_of_optimizer(t=t, update_stepsize_every=num_iter_update_stepsize):
-                if with_print:
-                    print("\t\t\t------------------")
-                    print("\t\t\tUpdating Stepsize.")
-                    print("\t\t\t------------------")
-                for g in optimizer.param_groups:
-                    g['lr'] = factor_stepsize_update * g['lr']
+                update_stepsize_of_optimizer(optimizer, factor=factor_stepsize_update)
 
             # Increase Counter for t
             # This should prevent getting stuck, because the step-size gets decreased
@@ -159,12 +154,6 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                     rejected += 1
                     print("Reject.")
 
-                # If constraint is not satisfied and one has not found a point before that does satisfy the constraint,
-                # just do nothing here, as this corresponds to accepting the new point.
-            #
-            # pr.disable()
-            # pr.print_stats()
-
             # Update Iteration Counter
             i += 1
             pbar.update(1)
@@ -211,6 +200,11 @@ def should_update_stepsize_of_optimizer(t, update_stepsize_every):
     if (t >= 1) and (t % update_stepsize_every == 0):
         return True
     return False
+
+
+def update_stepsize_of_optimizer(optimizer, factor):
+    for g in optimizer.param_groups:
+        g['lr'] = factor * g['lr']
 
 
 def losses_are_invalid(losses):

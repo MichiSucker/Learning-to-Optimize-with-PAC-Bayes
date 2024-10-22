@@ -3,7 +3,8 @@ import torch
 from algorithms.dummy import Dummy
 from classes.LossFunction.class_LossFunction import LossFunction
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
-    ParametricOptimizationAlgorithm, TrajectoryRandomizer, losses_are_invalid, should_update_stepsize_of_optimizer)
+    ParametricOptimizationAlgorithm, TrajectoryRandomizer, losses_are_invalid, should_update_stepsize_of_optimizer,
+    update_stepsize_of_optimizer)
 
 
 def dummy_function(x):
@@ -87,3 +88,12 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
         self.assertFalse(should_update_stepsize_of_optimizer(t=1, update_stepsize_every=10))
         self.assertTrue(should_update_stepsize_of_optimizer(t=10, update_stepsize_every=10))
         self.assertTrue(should_update_stepsize_of_optimizer(t=100, update_stepsize_every=10))
+
+    def test_update_stepsize_of_optimizer(self):
+        dummy_parameters = [torch.tensor([1., 2.], requires_grad=True)]
+        lr = 4e-3
+        factor = 0.5
+        optimizer = torch.optim.Adam(dummy_parameters, lr=lr)
+        update_stepsize_of_optimizer(optimizer=optimizer, factor=factor)
+        for g in optimizer.param_groups:
+            self.assertEqual(g['lr'], factor * lr)
