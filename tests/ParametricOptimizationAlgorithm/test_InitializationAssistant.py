@@ -84,3 +84,12 @@ class TestInitializationAssistant(unittest.TestCase):
         self.initialization_assistant.update_stepsize_of_optimizer(optimizer=optimizer)
         for g in optimizer.param_groups:
             self.assertEqual(g['lr'], self.initialization_assistant.factor_update_stepsize * lr)
+
+    def test_print_update(self):
+        # This is just a weak test: We only test whether it created an output.
+        capturedOutput = io.StringIO()
+        sys.stdout = capturedOutput
+        self.initialization_assistant.print_update(iteration=10)
+        self.assertTrue(len(capturedOutput.getvalue()) > 0)
+        sys.stdout = sys.__stdout__
+        self.assertTrue(len(capturedOutput.getvalue()) > 0)

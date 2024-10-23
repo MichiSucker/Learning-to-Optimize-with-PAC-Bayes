@@ -164,6 +164,7 @@ class InitializationAssistant:
         self.update_stepsize_every = update_stepsize_every
         self.print_update_every = print_update_every
         self.factor_update_stepsize = factor_update_stepsize
+        self.running_loss = 0
 
     def starting_message(self):
         if self.printing_enabled:
@@ -189,6 +190,11 @@ class InitializationAssistant:
     def should_print_update(self, iteration):
         return (iteration >= 1) and self.printing_enabled and (iteration % self.print_update_every == 0)
 
+    def print_update(self, iteration):
+        print(f"Iteration: {iteration}")
+        print("\tAvg. Loss = {:.2f}".format(self.running_loss / self.print_update_every))
+        self.running_loss = 0
+
 
 class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
@@ -210,7 +216,6 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         lr = parameters['lr']
         eps = parameters['eps']
         num_iter_print_update = parameters['num_iter_print_update']
-        with_print = parameters['with_print']
 
         initialization_assistant = InitializationAssistant(
             printing_enabled=parameters['with_print'],
