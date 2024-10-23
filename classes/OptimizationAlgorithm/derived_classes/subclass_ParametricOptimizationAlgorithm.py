@@ -1,5 +1,6 @@
 import torch
-
+import torch.nn as nn
+from typing import Tuple, List
 from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
 from classes.Constraint.class_Constraint import Constraint
 from classes.LossFunction.class_LossFunction import LossFunction
@@ -8,10 +9,63 @@ from tqdm import tqdm
 import numpy as np
 
 
+class ConstraintChecker:
+
+    def __init__(self,
+                 check_constraint_every: int,
+                 there_is_a_constraint: bool):
+        self.check_constraint_every = check_constraint_every
+        self.there_is_a_constraint = there_is_a_constraint
+        self.found_point_inside_constraint = False
+        self.point_inside_constraint = None
+
+    def should_check_constraint(self, iteration_number: int) -> bool:
+        if (self.there_is_a_constraint
+            and (iteration_number >= 1)
+                and (iteration_number % self.check_constraint_every == 0)):
+            return True
+        else:
+            return False
+
+    def set_there_is_a_constraint(self, new_bool: bool):
+        self.there_is_a_constraint = new_bool
+
+    def set_check_constraint_every(self, new_number: int):
+        self.check_constraint_every = new_number
+
+    def update_point_inside_constraint_or_reject(self, optimization_algorithm: OptimizationAlgorithm):
+        satisfies_constraint = check_constraint(optimization_algorithm)
+
+        if satisfies_constraint:
+            self.found_point_inside_constraint = True
+            self.point_inside_constraint = copy.deepcopy(optimization_algorithm.implementation.state_dict())
+
+        elif self.found_point_inside_constraint and (not satisfies_constraint):
+            optimization_algorithm.implementation.load_state_dict(self.point_inside_constraint)
+
+    def final_check(self, optimization_algorithm: OptimizationAlgorithm):
+        satisfies_constraint = check_constraint(optimization_algorithm)
+        if satisfies_constraint:
+            return
+        elif self.found_point_inside_constraint and (not satisfies_constraint):
+            optimization_algorithm.implementation.load_state_dict(self.point_inside_constraint)
+        else:
+            raise Exception("Did not find a point that lies within the constraint!")
+
+
+def check_constraint(optimization_algorithm: OptimizationAlgorithm) -> bool:
+    return optimization_algorithm.constraint(optimization_algorithm)
+
+
 class TrainingAssistant:
 
-    def __init__(self, printing_enabled, print_update_every, maximal_number_of_iterations, update_stepsize_every,
-                 factor_update_stepsize, bins=None):
+    def __init__(self,
+                 printing_enabled: bool,
+                 print_update_every: int,
+                 maximal_number_of_iterations: int,
+                 update_stepsize_every: int,
+                 factor_update_stepsize: float,
+                 bins: list = None):
         self.printing_enabled = printing_enabled
         self.print_update_every = print_update_every
         self.maximal_number_of_iterations = maximal_number_of_iterations
@@ -37,29 +91,29 @@ class TrainingAssistant:
             print("---------------------------------------------------------------------------------------------------")
             print("End Fitting Algorithm.")
 
-    def should_update_stepsize_of_optimizer(self, iteration):
+    def should_update_stepsize_of_optimizer(self, iteration: int) -> bool:
         if (iteration >= 1) and (iteration % self.update_stepsize_every == 0):
             return True
         else:
             return False
 
-    def update_stepsize_of_optimizer(self, optimizer):
+    def update_stepsize_of_optimizer(self, optimizer: torch.optim.Optimizer):
         for g in optimizer.param_groups:
             g['lr'] = self.factor_update_stepsize * g['lr']
 
-    def get_bins(self):
+    def get_bins(self) -> list:
         return self.bins
 
-    def set_bins(self, new_bins):
+    def set_bins(self, new_bins: list):
         self.bins = new_bins
 
-    def should_print_update(self, iteration):
+    def should_print_update(self, iteration: int) -> bool:
         if iteration >= 1 and self.printing_enabled and iteration % self.print_update_every == 0:
             return True
         else:
             return False
 
-    def print_update(self, iteration, constraint_checker):
+    def print_update(self, iteration: int, constraint_checker: ConstraintChecker):
         print("\t\t\t-----------------------------------------------------------------------------------------")
         print(f"\t\t\tIteration: {iteration}; Found point inside constraint: "
               f"{constraint_checker.found_point_inside_constraint}")
@@ -74,55 +128,12 @@ class TrainingAssistant:
         self.running_loss = 0
 
 
-class ConstraintChecker:
-
-    def __init__(self, check_constraint_every, there_is_a_constraint):
-        self.check_constraint_every = check_constraint_every
-        self.there_is_a_constraint = there_is_a_constraint
-        self.found_point_inside_constraint = False
-        self.point_inside_constraint = None
-
-    def should_check_constraint(self, iteration_number):
-        if (self.there_is_a_constraint
-            and (iteration_number >= 1)
-                and (iteration_number % self.check_constraint_every == 0)):
-            return True
-        else:
-            return False
-
-    def set_there_is_a_constraint(self, new_bool):
-        self.there_is_a_constraint = new_bool
-
-    def set_check_constraint_every(self, new_number):
-        self.check_constraint_every = new_number
-
-    def update_point_inside_constraint_or_reject(self, optimization_algorithm):
-        satisfies_constraint = check_constraint(optimization_algorithm)
-
-        if satisfies_constraint:
-            self.found_point_inside_constraint = True
-            self.point_inside_constraint = copy.deepcopy(optimization_algorithm.implementation.state_dict())
-
-        elif self.found_point_inside_constraint and (not satisfies_constraint):
-            optimization_algorithm.implementation.load_state_dict(self.point_inside_constraint)
-
-    def final_check(self, optimization_algorithm):
-        satisfies_constraint = check_constraint(optimization_algorithm)
-        if satisfies_constraint:
-            return
-        elif self.found_point_inside_constraint and (not satisfies_constraint):
-            optimization_algorithm.implementation.load_state_dict(self.point_inside_constraint)
-        else:
-            raise Exception("Did not find a point that lies within the constraint!")
-
-
-def check_constraint(optimization_algorithm):
-    return optimization_algorithm.constraint(optimization_algorithm)
-
-
 class TrajectoryRandomizer:
 
-    def __init__(self, should_restart, restart_probability, length_partial_trajectory):
+    def __init__(self,
+                 should_restart: bool,
+                 restart_probability: float,
+                 length_partial_trajectory: int):
         self.should_restart = should_restart
         self.restart_probability = restart_probability
         self.length_partial_trajectory = length_partial_trajectory
@@ -130,7 +141,7 @@ class TrajectoryRandomizer:
     def get_should_restart(self):
         return self.should_restart
 
-    def set_should_restart(self, should_restart):
+    def set_should_restart(self, should_restart: bool):
         if not isinstance(should_restart, bool):
             raise TypeError("Type of 'should_restart' has to be bool.")
         self.should_restart = should_restart
@@ -143,7 +154,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
     def __init__(self,
                  initial_state: torch.Tensor,
-                 implementation,
+                 implementation: nn.Module,
                  loss_function: LossFunction,
                  constraint: Constraint = None):
 
@@ -186,7 +197,12 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         self.reset_state_and_iteration_counter()
         training_assistant.final_message()
 
-    def initialize_helpers_for_training(self, fitting_parameters, constraint_parameters, update_parameters):
+    def initialize_helpers_for_training(
+            self,
+            fitting_parameters: dict,
+            constraint_parameters: dict,
+            update_parameters: dict
+    ) -> Tuple[torch.optim.Optimizer, TrainingAssistant, TrajectoryRandomizer, ConstraintChecker]:
 
         trajectory_randomizer = TrajectoryRandomizer(
             should_restart=True,
@@ -212,7 +228,11 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
         return optimizer, training_assistant, trajectory_randomizer, constraint_checker
 
-    def update_hyperparameters(self, optimizer, trajectory_randomizer, loss_functions, training_assistant):
+    def update_hyperparameters(self,
+                               optimizer: torch.optim.Optimizer,
+                               trajectory_randomizer: TrajectoryRandomizer,
+                               loss_functions: List[LossFunction],
+                               training_assistant: TrainingAssistant):
 
         optimizer.zero_grad()
         self.determine_next_starting_point(
@@ -232,7 +252,9 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             training_assistant.loss_histogram.append(self.loss_function(predicted_iterates[-1]).item())
             training_assistant.running_loss += sum_losses.item()
 
-    def determine_next_starting_point(self, trajectory_randomizer, loss_functions):
+    def determine_next_starting_point(self,
+                                      trajectory_randomizer: TrajectoryRandomizer,
+                                      loss_functions: List[LossFunction]):
         if trajectory_randomizer.should_restart:
             self.restart_with_new_loss(loss_functions=loss_functions)
             trajectory_randomizer.set_should_restart(False)
@@ -242,7 +264,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                 (torch.rand(1) <= trajectory_randomizer.restart_probability).item()
             )
 
-    def restart_with_new_loss(self, loss_functions):
+    def restart_with_new_loss(self, loss_functions: List[LossFunction]):
         self.reset_state_and_iteration_counter()
         self.set_loss_function(np.random.choice(loss_functions))
 
@@ -250,14 +272,13 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         x_0 = self.current_state.detach().clone()
         self.set_current_state(x_0)
 
-    def compute_ratio_of_losses(self, predicted_iterates):
+    def compute_ratio_of_losses(self, predicted_iterates: List[torch.Tensor]) -> List:
         ratios = [self.loss_function(predicted_iterates[k]) / self.loss_function(predicted_iterates[k - 1])
                   for k in range(1, len(predicted_iterates))]
         return ratios
 
 
-def losses_are_invalid(losses):
+def losses_are_invalid(losses: List) -> bool:
     if (len(losses) == 0) or (None in losses) or (torch.inf in losses):
         return True
     return False
-
