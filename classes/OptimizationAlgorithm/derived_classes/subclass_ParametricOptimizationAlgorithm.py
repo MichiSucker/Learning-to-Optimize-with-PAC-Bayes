@@ -157,9 +157,10 @@ class TrajectoryRandomizer:
 
 class InitializationAssistant:
 
-    def __init__(self, printing_enabled, maximal_number_of_iterations):
+    def __init__(self, printing_enabled, maximal_number_of_iterations, update_stepsize_every):
         self.printing_enabled = printing_enabled
         self.maximal_number_of_iterations = maximal_number_of_iterations
+        self.update_stepsize_every = update_stepsize_every
 
     def starting_message(self):
         if self.printing_enabled:
@@ -174,6 +175,9 @@ class InitializationAssistant:
         pbar = tqdm(range(self.maximal_number_of_iterations))
         pbar.set_description('Initialize algorithm')
         return pbar
+
+    def should_update_stepsize_of_optimizer(self, iteration):
+        return (iteration >= 1) and (iteration % self.update_stepsize_every == 0)
 
 
 class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
@@ -202,7 +206,8 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
         initialization_assistant = InitializationAssistant(
             printing_enabled=parameters['with_print'],
-            maximal_number_of_iterations=parameters['num_iter_max']
+            maximal_number_of_iterations=parameters['num_iter_max'],
+            update_stepsize_every=parameters['num_iter_update_stepsize']
         )
         initialization_assistant.starting_message()
         optimizer = torch.optim.Adam(self.implementation.parameters(), lr=lr)
@@ -253,19 +258,15 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
             optimizer.step()
 
-            if i >= 1 and i % num_iter_update_stepsize == 0:
+            if initialization_assistant.should_update_stepsize_of_optimizer(iteration=i):
                 if with_print:
                     print("Updating Stepsize.")
                 for g in optimizer.param_groups:
                     g['lr'] = 0.5 * g['lr']
 
-            self.reset_state_and_iteration_counter()
-            other_algo.reset_state_and_iteration_counter()
-
         self.reset_state_and_iteration_counter()
         other_algo.reset_state_and_iteration_counter()
-        if with_print:
-            print("Finished initialization.")
+        initialization_assistant.final_message()
 
     def fit(self,
             loss_functions: list,
