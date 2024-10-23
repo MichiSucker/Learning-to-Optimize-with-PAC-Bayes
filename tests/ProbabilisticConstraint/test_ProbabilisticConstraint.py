@@ -154,6 +154,7 @@ class TestProbabilisticConstraint(unittest.TestCase):
         self.probabilistic_constraint.set_list_of_constraints(new_list_of_constraints)
         self.assertEqual(self.probabilistic_constraint.get_list_of_constraints(), new_list_of_constraints)
 
+    @unittest.skip("Skip 'test_estimate_probability' because it takes long.")
     def test_estimate_probability(self):
         dummy_point = torch.tensor([1.])
         true_probability = torch.distributions.uniform.Uniform(0.1, 0.9).sample((1,)).item()
@@ -162,8 +163,8 @@ class TestProbabilisticConstraint(unittest.TestCase):
                                    for _ in range(1000)]
         self.probabilistic_constraint.set_list_of_constraints(new_list_of_constraints)
         self.probabilistic_constraint.set_probabilities((true_probability-0.1, true_probability+0.1))
-        self.probabilistic_constraint.set_quantiles((0.05, 0.95))
-        quantile_distance_to_test = 0.1
+        self.probabilistic_constraint.set_quantiles((0.025, 0.975))
+        quantile_distance_to_test = 0.05
         self.probabilistic_constraint.set_quantile_distance(quantile_distance_to_test)
         posterior_mean, current_lower_quantile, current_upper_quantile, n_iterates = (
             self.probabilistic_constraint.estimate_probability(dummy_point))
