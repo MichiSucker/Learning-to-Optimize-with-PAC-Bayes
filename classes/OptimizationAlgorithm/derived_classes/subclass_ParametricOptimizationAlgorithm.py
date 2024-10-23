@@ -212,11 +212,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                                         loss_functions: List[LossFunction],
                                         parameters: dict) -> None:
 
-        # Extract
         lr = parameters['lr']
-        eps = parameters['eps']
-        num_iter_print_update = parameters['num_iter_print_update']
-
         initialization_assistant = InitializationAssistant(
             printing_enabled=parameters['with_print'],
             maximal_number_of_iterations=parameters['num_iter_max'],
@@ -263,13 +259,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             running_loss += loss
 
             if initialization_assistant.should_print_update(iteration=i):
-                print("Iteration: {}".format(i))
-                print("\tAvg. Loss = {:.2f}".format(running_loss / num_iter_print_update))
-
-                if i >= 100 and (running_loss / num_iter_print_update <= eps):
-                    break
-                else:
-                    running_loss = 0
+                initialization_assistant.print_update(iteration=i)
 
             optimizer.step()
 
