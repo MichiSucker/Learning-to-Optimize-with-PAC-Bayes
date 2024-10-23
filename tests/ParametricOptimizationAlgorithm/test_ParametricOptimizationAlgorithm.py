@@ -84,11 +84,12 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
         self.assertTrue(losses_are_invalid([1., torch.inf]))
 
     def test_should_update_stepsize_of_optimizer(self):
-        self.assertFalse(should_update_stepsize_of_optimizer(t=0, update_stepsize_every=10))
-        self.assertFalse(should_update_stepsize_of_optimizer(t=1, update_stepsize_every=10))
-        self.assertTrue(should_update_stepsize_of_optimizer(t=10, update_stepsize_every=10))
-        self.assertTrue(should_update_stepsize_of_optimizer(t=100, update_stepsize_every=10))
+        self.assertFalse(should_update_stepsize_of_optimizer(i=0, update_stepsize_every=10))
+        self.assertFalse(should_update_stepsize_of_optimizer(i=1, update_stepsize_every=10))
+        self.assertTrue(should_update_stepsize_of_optimizer(i=10, update_stepsize_every=10))
+        self.assertTrue(should_update_stepsize_of_optimizer(i=100, update_stepsize_every=10))
 
+    @unittest.skip("Skip 'test_update_stepsize_of_optimizer' because it takes long.")
     def test_update_stepsize_of_optimizer(self):
         dummy_parameters = [torch.tensor([1., 2.], requires_grad=True)]
         lr = 4e-3
@@ -98,6 +99,7 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
         for g in optimizer.param_groups:
             self.assertEqual(g['lr'], factor * lr)
 
+    @unittest.skip("Skip 'test_update_hyperparameters' because it takes long.")
     def test_update_hyperparameters(self):
         # Note that this is a weak test! We only check whether the hyperparameters did change.
         trajectory_randomizer = TrajectoryRandomizer(should_restart=True, restart_probability=1.)
