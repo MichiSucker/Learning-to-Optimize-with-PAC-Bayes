@@ -3,8 +3,7 @@ import torch
 from algorithms.dummy import Dummy
 from classes.LossFunction.class_LossFunction import LossFunction
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
-    ParametricOptimizationAlgorithm, TrajectoryRandomizer, losses_are_invalid, should_update_stepsize_of_optimizer,
-    update_stepsize_of_optimizer)
+    ParametricOptimizationAlgorithm, TrajectoryRandomizer, TrainingAssistant, losses_are_invalid)
 
 
 def dummy_function(x):
@@ -46,7 +45,8 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
     def test_determine_next_starting_point(self):
         restart_probability = 0.65
         trajectory_randomizer = TrajectoryRandomizer(should_restart=True,
-                                                     restart_probability=restart_probability)
+                                                     restart_probability=restart_probability,
+                                                     length_partial_trajectory=1)
         self.optimization_algorithm.set_iteration_counter(10)
         loss_functions = [LossFunction(dummy_function) for i in range(10)]
         old_loss_function = self.optimization_algorithm.loss_function
@@ -83,33 +83,28 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
         self.assertTrue(losses_are_invalid([1., None]))
         self.assertTrue(losses_are_invalid([1., torch.inf]))
 
-    def test_should_update_stepsize_of_optimizer(self):
-        self.assertFalse(should_update_stepsize_of_optimizer(i=0, update_stepsize_every=10))
-        self.assertFalse(should_update_stepsize_of_optimizer(i=1, update_stepsize_every=10))
-        self.assertTrue(should_update_stepsize_of_optimizer(i=10, update_stepsize_every=10))
-        self.assertTrue(should_update_stepsize_of_optimizer(i=100, update_stepsize_every=10))
-
-    @unittest.skip("Skip 'test_update_stepsize_of_optimizer' because it takes long.")
-    def test_update_stepsize_of_optimizer(self):
-        dummy_parameters = [torch.tensor([1., 2.], requires_grad=True)]
-        lr = 4e-3
-        factor = 0.5
-        optimizer = torch.optim.Adam(dummy_parameters, lr=lr)
-        update_stepsize_of_optimizer(optimizer=optimizer, factor=factor)
-        for g in optimizer.param_groups:
-            self.assertEqual(g['lr'], factor * lr)
-
     @unittest.skip("Skip 'test_update_hyperparameters' because it takes long.")
     def test_update_hyperparameters(self):
         # Note that this is a weak test! We only check whether the hyperparameters did change.
-        trajectory_randomizer = TrajectoryRandomizer(should_restart=True, restart_probability=1.)
+        trajectory_randomizer = TrajectoryRandomizer(should_restart=True, restart_probability=1.,
+                                                     length_partial_trajectory=1)
+        training_assistant = TrainingAssistant(
+            printing_enabled=True,
+            print_update_every=10,
+            maximal_number_of_iterations=100,
+            update_stepsize_every=10,
+            factor_update_stepsize=0.5
+        )
         loss_functions = [LossFunction(dummy_function) for i in range(10)]
         old_hyperparameters = [p.clone() for p in self.optimization_algorithm.implementation.parameters()
                                if p.requires_grad]
         optimizer = torch.optim.Adam(self.optimization_algorithm.implementation.parameters(), lr=1e-4)
         self.optimization_algorithm.update_hyperparameters(
-            optimizer=optimizer, trajectory_randomizer=trajectory_randomizer, loss_functions=loss_functions,
-            length_trajectory=1)
+            optimizer=optimizer,
+            trajectory_randomizer=trajectory_randomizer,
+            loss_functions=loss_functions,
+            training_assistant=training_assistant
+        )
         new_hyperparameters = [p.clone() for p in self.optimization_algorithm.implementation.parameters()
                                if p.requires_grad]
         self.assertNotEqual(old_hyperparameters, new_hyperparameters)

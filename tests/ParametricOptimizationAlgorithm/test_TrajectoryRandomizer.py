@@ -1,5 +1,4 @@
 import unittest
-from unittest import TestCase
 
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import TrajectoryRandomizer
 
@@ -9,8 +8,10 @@ class TestTrajectoryRandomizer(unittest.TestCase):
     def setUp(self):
         self.should_restart = False
         self.restart_probability = 0.65
+        self.length_partial_trajectory = 1
         self.trajectory_randomizer = TrajectoryRandomizer(should_restart=self.should_restart,
-                                                          restart_probability=self.restart_probability)
+                                                          restart_probability=self.restart_probability,
+                                                          length_partial_trajectory=self.length_partial_trajectory)
 
     def test_creation(self):
         self.assertIsInstance(self.trajectory_randomizer, TrajectoryRandomizer)
