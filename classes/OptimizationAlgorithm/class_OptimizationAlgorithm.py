@@ -67,7 +67,7 @@ class OptimizationAlgorithm:
         if return_iterate:
             return self.current_iterate
 
-    def compute_trajectory(self, number_of_steps):
+    def compute_partial_trajectory(self, number_of_steps):
         trajectory = [self.current_state[-1].clone()] + [self.perform_step(return_iterate=True)
                                                          for _ in range(number_of_steps)]
         return trajectory

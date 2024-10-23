@@ -206,7 +206,8 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         optimizer.zero_grad()
         self.determine_next_starting_point(
             trajectory_randomizer=trajectory_randomizer, loss_functions=loss_functions)
-        predicted_iterates = self.compute_trajectory(number_of_steps=trajectory_randomizer.length_partial_trajectory)
+        predicted_iterates = self.compute_partial_trajectory(
+            number_of_steps=trajectory_randomizer.length_partial_trajectory)
         ratios_of_losses = self.compute_ratio_of_losses(predicted_iterates=predicted_iterates)
         if losses_are_invalid(ratios_of_losses):
             print('Invalid losses.')

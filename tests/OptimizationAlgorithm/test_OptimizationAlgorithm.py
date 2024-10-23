@@ -115,7 +115,7 @@ class TestClassOptimizationAlgorithm(unittest.TestCase):
         self.assertTrue(isinstance(self.optimization_algorithm.perform_step(return_iterate=True), torch.Tensor))
 
     def test_compute_trajectory(self):
-        self.assertEqual(len(self.optimization_algorithm.compute_trajectory(number_of_steps=10)), 11)
+        self.assertEqual(len(self.optimization_algorithm.compute_partial_trajectory(number_of_steps=10)), 11)
 
     def test_evaluate_loss_function_at_current_iterate(self):
         self.assertEqual(self.loss_function(self.optimization_algorithm.current_iterate),
