@@ -166,6 +166,10 @@ class InitializationAssistant:
             print("Init. network to mimic algorithm.")
             print(f"Optimizing for {self.maximal_number_of_iterations} iterations.")
 
+    def final_message(self):
+        if self.printing_enabled:
+            print("Finished initialization.")
+
     def get_progressbar(self):
         pbar = tqdm(range(self.maximal_number_of_iterations))
         pbar.set_description('Initialize algorithm')

@@ -33,6 +33,21 @@ class TestInitializationAssistant(unittest.TestCase):
         self.assertTrue(len(capturedOutput.getvalue()) == 0)
         sys.stdout = sys.__stdout__
 
+    def test_final_message(self):
+        # This is just a weak test: We only test whether it created an output.
+        capturedOutput = io.StringIO()
+        sys.stdout = capturedOutput
+        self.initialization_assistant.final_message()
+        self.assertTrue(len(capturedOutput.getvalue()) > 0)
+        sys.stdout = sys.__stdout__
+
+        self.initialization_assistant.printing_enabled = False
+        capturedOutput = io.StringIO()
+        sys.stdout = capturedOutput
+        self.initialization_assistant.final_message()
+        self.assertTrue(len(capturedOutput.getvalue()) == 0)
+        sys.stdout = sys.__stdout__
+
     def test_get_progressbar(self):
         pbar = self.initialization_assistant.get_progressbar()
         self.assertTrue(hasattr(pbar, 'desc'))
