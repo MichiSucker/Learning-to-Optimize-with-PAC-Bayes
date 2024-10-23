@@ -23,7 +23,7 @@ class TestClassOptimizationAlgorithm(unittest.TestCase):
 
     def setUp(self):
         self.dim = torch.randint(low=1, high=1000, size=(1,)).item()
-        self.length_state = torch.randint(low=1, high=5, size=(1,)).item()
+        self.length_state = 1  # Take one, because it has to be compatible with Dummy()
         self.initial_state = torch.randn(size=(self.length_state, self.dim))
         self.current_state = self.initial_state.clone()
         self.loss_function = LossFunction(function=dummy_function)
@@ -109,10 +109,12 @@ class TestClassOptimizationAlgorithm(unittest.TestCase):
         current_state = self.optimization_algorithm.get_current_state().clone()
         current_iteration_counter = self.optimization_algorithm.get_iteration_counter()
         self.optimization_algorithm.perform_step()
-        self.assertNotEqual(self.optimization_algorithm.iteration_counter, current_iteration_counter)
+        self.assertEqual(self.optimization_algorithm.iteration_counter, current_iteration_counter + 1)
         self.assertFalse(torch.equal(self.optimization_algorithm.get_current_state(), current_state))
         self.assertTrue(self.optimization_algorithm.perform_step() is None)
         self.assertTrue(isinstance(self.optimization_algorithm.perform_step(return_iterate=True), torch.Tensor))
+        self.assertEqual(self.optimization_algorithm.current_state.shape,
+                         self.optimization_algorithm.initial_state.shape)
 
     def test_compute_trajectory(self):
         self.assertEqual(len(self.optimization_algorithm.compute_partial_trajectory(number_of_steps=10)), 11)

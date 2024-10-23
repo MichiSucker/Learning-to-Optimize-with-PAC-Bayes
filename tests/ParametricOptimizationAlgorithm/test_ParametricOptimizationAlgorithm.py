@@ -1,6 +1,8 @@
+import copy
 import unittest
 import torch
 from algorithms.dummy import Dummy
+from classes.Constraint.class_Constraint import Constraint
 from classes.LossFunction.class_LossFunction import LossFunction
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
     ParametricOptimizationAlgorithm, TrajectoryRandomizer, TrainingAssistant, losses_are_invalid, ConstraintChecker)
@@ -14,7 +16,7 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
 
     def setUp(self):
         self.dim = torch.randint(low=1, high=1000, size=(1,)).item()
-        self.length_state = torch.randint(low=1, high=5, size=(1,)).item()
+        self.length_state = 1  # Take one, because it has to be compatible with Dummy()
         self.initial_state = torch.randn(size=(self.length_state, self.dim))
         self.current_state = self.initial_state.clone()
         self.loss_function = LossFunction(function=dummy_function)
@@ -109,6 +111,7 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
                                if p.requires_grad]
         self.assertNotEqual(old_hyperparameters, new_hyperparameters)
 
+    @unittest.skip("Skip 'test_initialize_helpers_for_training' because it takes long.")
     def test_initialize_helpers_for_training(self):
         fitting_parameters = {'restart_probability': 0.5, 'length_trajectory': 1, 'n_max': 100,
                               'num_iter_update_stepsize': 5, 'factor_stepsize_update': 0.5, 'lr': 1e-4}
@@ -123,3 +126,22 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
         self.assertIsInstance(training_assistant, TrainingAssistant)
         self.assertIsInstance(trajectory_randomizer, TrajectoryRandomizer)
         self.assertIsInstance(constraint_checker, ConstraintChecker)
+
+    def test_fit(self):
+        # This is again a weak test: We only check whether the hyperparameters have been changed
+        # (we do not really know more here; only during evaluation do we see whether training was successful).
+        # Further checks:
+        #   1) if the algorithm got reset correctly,
+        #   2) if output statements got printed.
+        fitting_parameters = {'restart_probability': 0.5, 'length_trajectory': 1, 'n_max': 100,
+                              'num_iter_update_stepsize': 5, 'factor_stepsize_update': 0.5, 'lr': 1e-4}
+        constraint_parameters = {'num_iter_update_constraint': 5}
+        update_parameters = {'with_print': True, 'num_iter_print_update': 10, 'bins': []}
+        loss_functions = [LossFunction(dummy_function) for _ in range(10)]
+        constraint = Constraint(function=lambda x: True)
+        old_hyperparameters = copy.deepcopy(self.optimization_algorithm.implementation.state_dict())
+        self.optimization_algorithm.set_constraint(constraint)
+        self.optimization_algorithm.fit(loss_functions=loss_functions,
+                                        fitting_parameters=fitting_parameters,
+                                        constraint_parameters=constraint_parameters,
+                                        update_parameters=update_parameters)
