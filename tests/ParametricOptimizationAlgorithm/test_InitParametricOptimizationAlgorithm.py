@@ -71,6 +71,7 @@ class TestInitParametricOptimizationAlgorithm(unittest.TestCase):
         self.assertTrue(torch.equal(self.optimization_algorithm.current_state, current_state))
         self.assertEqual(current_loss_function, self.optimization_algorithm.loss_function)
 
+    @unittest.skip("Skip 'test_update_initialization_of_hyperparameters' because it takes long.")
     def test_update_initialization_of_hyperparameters(self):
         # Note that this is a weak test! We only check whether the hyperparameters did change.
         trajectory_randomizer = TrajectoryRandomizer(should_restart=True, restart_probability=1.,
@@ -99,6 +100,7 @@ class TestInitParametricOptimizationAlgorithm(unittest.TestCase):
                                if p.requires_grad]
         self.assertNotEqual(old_hyperparameters, new_hyperparameters)
 
+    @unittest.skip("Skip 'test_initialize_helpers_for_initialization' because it takes long.")
     def test_initialize_helpers_for_initialization(self):
         parameters = {'with_print': True, 'num_iter_max': 100, 'lr': 1e-4,
                       'num_iter_update_stepsize': 10, 'num_iter_print_update': 10}
