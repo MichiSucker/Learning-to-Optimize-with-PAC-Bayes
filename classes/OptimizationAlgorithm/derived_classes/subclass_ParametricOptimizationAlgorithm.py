@@ -155,6 +155,10 @@ class TrajectoryRandomizer:
         return self.restart_probability
 
 
+class InitializationAssistant:
+    pass
+
+
 class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
     def __init__(self,
