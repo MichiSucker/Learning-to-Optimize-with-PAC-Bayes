@@ -9,8 +9,8 @@ class Dummy(nn.Module):
         self.scale = nn.Parameter(torch.tensor(1.))
 
     def forward(self, optimization_algorithm):
-        current_iterate = optimization_algorithm.get_current_iterate()
-        return current_iterate + self.scale * torch.randn(size=current_iterate.shape)
+        gradient = optimization_algorithm.loss_function.compute_gradient(optimization_algorithm.current_iterate)
+        return optimization_algorithm.current_iterate + self.scale * gradient
 
     @staticmethod
     def update_state(optimization_algorithm):
