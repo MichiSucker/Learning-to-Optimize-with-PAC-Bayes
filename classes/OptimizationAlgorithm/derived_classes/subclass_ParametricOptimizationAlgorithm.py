@@ -1,4 +1,5 @@
 import torch
+
 from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
 from classes.Constraint.class_Constraint import Constraint
 from classes.LossFunction.class_LossFunction import LossFunction
@@ -8,12 +9,54 @@ import numpy as np
 
 
 class TrainingAssistant:
-    # To-Do: Collect all print statements and stuff inside here.
+    # To-Do: Collect all print statements and stuff inside here. This is mainly for cleaning-up.
     pass
 
 
 class ConstraintChecker:
-    pass
+
+    def __init__(self, check_constraint_every, there_is_a_constraint):
+        self.check_constraint_every = check_constraint_every
+        self.there_is_a_constraint = there_is_a_constraint
+        self.found_point_inside_constraint = False
+        self.point_inside_constraint = None
+
+    def constraint_has_to_be_checked(self, iteration_number):
+        if (self.there_is_a_constraint
+            and (iteration_number >= 1)
+                and (iteration_number % self.check_constraint_every == 0)):
+            return True
+        else:
+            return False
+
+    def set_there_is_a_constraint(self, new_bool):
+        self.there_is_a_constraint = new_bool
+
+    def set_check_constraint_every(self, new_number):
+        self.check_constraint_every = new_number
+
+    def update_point_inside_constraint_or_reject(self, optimization_algorithm):
+        satisfies_constraint = check_constraint(optimization_algorithm)
+
+        if satisfies_constraint:
+            self.found_point_inside_constraint = True
+            self.point_inside_constraint = copy.deepcopy(optimization_algorithm.implementation.state_dict())
+
+        elif self.found_point_inside_constraint and (not satisfies_constraint):
+            optimization_algorithm.implementation.load_state_dict(self.point_inside_constraint)
+
+    def final_check(self, optimization_algorithm):
+        satisfies_constraint = check_constraint(optimization_algorithm)
+        if satisfies_constraint:
+            return
+        elif self.found_point_inside_constraint and (not satisfies_constraint):
+            optimization_algorithm.implementation.load_state_dict(self.point_inside_constraint)
+        else:
+            raise Exception("Did not find a point that lies within the constraint!")
+
+
+def check_constraint(optimization_algorithm):
+    return optimization_algorithm.constraint(optimization_algorithm)
 
 
 class TrajectoryRandomizer:
@@ -49,8 +92,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             loss_functions: list,
             fitting_parameters: dict,
             constraint_parameters: dict,
-            update_parameters: dict,
-            found_point_inside_constraint: bool = False
+            update_parameters: dict
             ) -> None:
 
         # Extract parameters for prints during training
@@ -65,11 +107,11 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         length_trajectory = fitting_parameters['length_trajectory']
         factor_stepsize_update = fitting_parameters['factor_stepsize_update']
 
-        trajectory_randomizer = TrajectoryRandomizer(should_restart=True,
-                                                     restart_probability=fitting_parameters['restart_probability'])
-
-        # Extract parameters of constraint set
-        num_iter_update_constraint = constraint_parameters['num_iter_update_constraint']
+        trajectory_randomizer = TrajectoryRandomizer(
+            should_restart=True, restart_probability=fitting_parameters['restart_probability'])
+        constraint_checker = ConstraintChecker(
+            check_constraint_every=constraint_parameters['num_iter_update_constraint'],
+            there_is_a_constraint=self.constraint is not None)
 
         if bins is None:
             bins = [1e0, 1e-4, 1e-8, 1e-12, 1e-16, 1e-20, 1e-24, 1e-28][::-1]
@@ -84,31 +126,14 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
         update_histogram = []
 
-        if found_point_inside_constraint:
-            old_state_dict = copy.deepcopy(self.implementation.state_dict())
-        else:
-            old_state_dict = None
-
-        rejected, num_iter_update_rejection_rate = 0, 20
-        i, t = 0, 0
+        i = 0
         pbar = tqdm(total=num_iter_max)
         pbar.set_description('Fit Algorithm')
 
         while i < num_iter_max:
 
-            if (t >= 1) and (t % num_iter_update_rejection_rate == 0):
-                if rejected / num_iter_update_rejection_rate >= 0.5:
-                    print("Decrease Learning Rate.")
-                    for g in optimizer.param_groups:
-                        g['lr'] = 0.1 * g['lr']
-                rejected = 0
-
-            if should_update_stepsize_of_optimizer(t=t, update_stepsize_every=num_iter_update_stepsize):
+            if should_update_stepsize_of_optimizer(i=i, update_stepsize_every=num_iter_update_stepsize):
                 update_stepsize_of_optimizer(optimizer, factor=factor_stepsize_update)
-
-            # Increase Counter for t
-            # This should prevent getting stuck, because the step-size gets decreased
-            t += 1
 
             self.update_hyperparameters(optimizer=optimizer, trajectory_randomizer=trajectory_randomizer,
                                         loss_functions=loss_functions, length_trajectory=length_trajectory)
@@ -120,7 +145,8 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             # Update Statements
             if i >= 1 and with_print and i % num_iter_print_update == 0:
                 print("\t\t\t-----------------------------------------------------------------------------------------")
-                print(f"\t\t\tIteration: {i}; Found point inside constraint: {found_point_inside_constraint}")
+                print(f"\t\t\tIteration: {i}; Found point inside constraint: "
+                      f"{constraint_checker.found_point_inside_constraint}")
                 print("\t\t\t\tAvg. Loss = {:.2f}".format(running_loss / (num_iter_print_update * length_trajectory)))
                 vals, bins = np.histogram(update_histogram, bins=bins)
                 print(f"\t\t\t\tRatios:")
@@ -132,41 +158,16 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                 update_histogram = []
                 running_loss = 0
 
-            # Check constraint. Reject current step if it is not satisfied.
-            if (i >= 1) and (self.constraint is not None) and (i % num_iter_update_constraint == 0):
-                print("Checking Constraint.")
-                satisfies_constraint = self.constraint(self)
-                print(f"Check over. Constraint satisfied: {satisfies_constraint}.")
-
-                # If constraint is satisfied, just update
-                if satisfies_constraint:
-                    print("Found new point that satisfies constraint.")
-                    found_point_inside_constraint = True
-                    old_state_dict = copy.deepcopy(self.implementation.state_dict())
-
-                # If constrained is not satisfied, and one has found a point before that does satisfy the constraint,
-                # then reject the new point.
-                elif found_point_inside_constraint and (not satisfies_constraint):
-                    self.implementation.load_state_dict(old_state_dict)
-                    rejected += 1
-                    print("Reject.")
+            if constraint_checker.constraint_has_to_be_checked(i):
+                constraint_checker.update_point_inside_constraint_or_reject(self)
 
             # Update Iteration Counter
             i += 1
             pbar.update(1)
 
-        # Final check of constraint. If it is not satisfied, print a warning (without stopping the program).
-        satisfies_constraint = self.constraint(self)
-        if satisfies_constraint:
-            print("Final point lies within the constraint set.")
-        elif found_point_inside_constraint and (not satisfies_constraint):
-            self.implementation.load_state_dict(old_state_dict)
-            print("Took point from before that satisfies constraint.")
-        else:
-            raise Exception("Did not find a point that lies within the constraint!")
-
-        # Reset algorithm
+        constraint_checker.final_check(self)
         self.reset_state_and_iteration_counter()
+
         if with_print:
             print("---------------------------------------------------------------------------------------------------")
             print("End Fitting Algorithm.")
@@ -206,8 +207,8 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         return ratios
 
 
-def should_update_stepsize_of_optimizer(t, update_stepsize_every):
-    if (t >= 1) and (t % update_stepsize_every == 0):
+def should_update_stepsize_of_optimizer(i, update_stepsize_every):
+    if (i >= 1) and (i % update_stepsize_every == 0):
         return True
     return False
 
