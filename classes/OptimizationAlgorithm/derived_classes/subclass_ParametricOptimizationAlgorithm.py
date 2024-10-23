@@ -93,7 +93,7 @@ class TrainingAssistant:
 
     def get_progressbar(self):
         pbar = tqdm(range(self.maximal_number_of_iterations))
-        pbar.set_description('Fit Algorithm')
+        pbar.set_description('Fit algorithm')
         return pbar
 
     def should_update_stepsize_of_optimizer(self, iteration: int) -> bool:
@@ -165,6 +165,11 @@ class InitializationAssistant:
         if self.printing_enabled:
             print("Init. network to mimic algorithm.")
             print(f"Optimizing for {self.maximal_number_of_iterations} iterations.")
+
+    def get_progressbar(self):
+        pbar = tqdm(total=self.maximal_number_of_iterations)
+        pbar.set_description('Initialize algorithm')
+        return pbar
 
 
 class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
