@@ -240,10 +240,9 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         predicted_iterates = self.compute_partial_trajectory(
             number_of_steps=trajectory_randomizer.length_partial_trajectory)
         ratios_of_losses = self.compute_ratio_of_losses(predicted_iterates=predicted_iterates)
-        with torch.no_grad():
-            if losses_are_invalid(ratios_of_losses):
-                print('Invalid losses.')
-                return
+        if losses_are_invalid(ratios_of_losses):
+            print('Invalid losses.')
+            return
         sum_losses = torch.sum(torch.stack(ratios_of_losses))
         sum_losses.backward()
         optimizer.step()
