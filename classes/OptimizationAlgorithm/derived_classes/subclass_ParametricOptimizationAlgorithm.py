@@ -212,22 +212,8 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                                         loss_functions: List[LossFunction],
                                         parameters: dict) -> None:
 
-        lr = parameters['lr']
-        initialization_assistant = InitializationAssistant(
-            printing_enabled=parameters['with_print'],
-            maximal_number_of_iterations=parameters['num_iter_max'],
-            update_stepsize_every=parameters['num_iter_update_stepsize'],
-            print_update_every=parameters['num_iter_print_update'],
-            factor_update_stepsize=0.5
-        )
-
-        trajectory_randomizer = TrajectoryRandomizer(
-            should_restart=True,
-            restart_probability=0.05,
-            length_partial_trajectory=5
-        )
-        optimizer = torch.optim.Adam(self.implementation.parameters(), lr=lr)
-
+        optimizer, initialization_assistant, trajectory_randomizer = self.initialize_helpers_for_initialization(
+            parameters=parameters)
         initialization_assistant.starting_message()
         pbar = initialization_assistant.get_progressbar()
         for i in pbar:
@@ -262,6 +248,25 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             trajectory_randomizer.set_should_restart(
                 (torch.rand(1) <= trajectory_randomizer.restart_probability).item()
             )
+
+    def initialize_helpers_for_initialization(self, parameters):
+
+        initialization_assistant = InitializationAssistant(
+            printing_enabled=parameters['with_print'],
+            maximal_number_of_iterations=parameters['num_iter_max'],
+            update_stepsize_every=parameters['num_iter_update_stepsize'],
+            print_update_every=parameters['num_iter_print_update'],
+            factor_update_stepsize=0.5
+        )
+
+        trajectory_randomizer = TrajectoryRandomizer(
+            should_restart=True,
+            restart_probability=0.05,
+            length_partial_trajectory=5
+        )
+        optimizer = torch.optim.Adam(self.implementation.parameters(), lr=parameters['lr'])
+
+        return optimizer, initialization_assistant, trajectory_randomizer
 
     def update_initialization_of_hyperparameters(
             self,

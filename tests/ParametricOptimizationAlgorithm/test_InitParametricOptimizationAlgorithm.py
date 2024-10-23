@@ -98,3 +98,12 @@ class TestInitParametricOptimizationAlgorithm(unittest.TestCase):
         new_hyperparameters = [p.clone() for p in self.optimization_algorithm.implementation.parameters()
                                if p.requires_grad]
         self.assertNotEqual(old_hyperparameters, new_hyperparameters)
+
+    def test_initialize_helpers_for_initialization(self):
+        parameters = {'with_print': True, 'num_iter_max': 100, 'lr': 1e-4,
+                      'num_iter_update_stepsize': 10, 'num_iter_print_update': 10}
+        optimizer, initialization_assistant, trajectory_randomizer = (
+            self.optimization_algorithm.initialize_helpers_for_initialization(parameters=parameters))
+        self.assertIsInstance(optimizer, torch.optim.Adam)
+        self.assertIsInstance(trajectory_randomizer, TrajectoryRandomizer)
+        self.assertIsInstance(initialization_assistant, InitializationAssistant)
