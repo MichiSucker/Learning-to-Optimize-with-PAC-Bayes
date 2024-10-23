@@ -166,6 +166,115 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         super().__init__(initial_state=initial_state, implementation=implementation, loss_function=loss_function,
                          constraint=constraint)
 
+    def initialize_with_other_algorithm(self,
+                                  other_algo: OptimizationAlgorithm,
+                                  loss_functions: List[ParametricLossFunction],
+                                  parameters: Dict
+                                  ) -> None:
+
+        # Extract
+        lr = parameters['lr']
+        eps = parameters['eps']
+        num_iter_max = parameters['num_iter_max']
+        num_iter_print_update = parameters['num_iter_print_update']
+        num_iter_update_stepsize = parameters['num_iter_update_stepsize']
+        with_print = parameters['with_print']
+
+        if with_print:
+            print("Init. network to mimic algorithm.")
+            print(f"Optimizing for {num_iter_max} iterations.")
+
+        # While we get too high loss, train network to be simulating the standard algorithm.
+        # ==> Falls back to gradient descent
+        optimizer = torch.optim.Adam(self.implementation.parameters(), lr=lr)
+        criterion = torch.nn.MSELoss()
+        i, running_loss, running_norm = 0, 0, 0
+        fresh_init = True
+        restart_prob = 0.05
+        pbar = tqdm(total=num_iter_max)
+        while True:
+
+            # Reset optimizer
+            optimizer.zero_grad()
+
+            # Probabilistic Initialization of Algorithm
+            if fresh_init:
+
+                # Start from zero again
+                self.reset_state()
+                other_algo.reset_state()
+
+                # Samples quantile_distance new loss function
+                current_loss_function = np.random.choice(loss_functions)
+                self.set_loss_function(current_loss_function)
+                other_algo.set_loss_function(current_loss_function)
+
+                # Don't restart directly again from zero
+                fresh_init = False
+            else:
+                # Detach computational graph
+                x_0 = self.current_state.detach().clone()
+                self.current_state = x_0
+                fresh_init = torch.rand(1) <= restart_prob
+
+            # Compute iterates
+            # iterates_other = [other_algo.step(return_val=True) for _ in range(5)]
+            # iterates_self = [self.step(return_val=True) for _ in range(5)]
+
+            # Take 6 steps as the first iterate is the same (initialization)
+            iterates_other = other_algo.compute_trajectory(num_steps=6)
+            iterates_self = self.compute_trajectory(num_steps=6)
+
+            # Compute loss
+            losses = torch.stack([criterion(prediction, x)
+                                  for prediction, x in zip(iterates_self[1:], iterates_other[1:])])
+            total_loss = torch.sum(losses)
+            total_loss.backward()
+            running_loss += total_loss
+
+            # Compute norm of gradients
+            total_norm = 0
+            for p in self.implementation.parameters():
+                if p.requires_grad and p.grad is not None:
+                    param_norm = p.grad.data.norm(2)
+                    total_norm += param_norm.item() ** 2
+            total_norm = total_norm ** (1. / 2)
+
+            running_norm += total_norm
+            if i >= 1 and with_print and i % num_iter_print_update == 0:
+                print("Iteration: {}".format(i))
+                print("\tAvg. Loss = {:.2f}".format(running_loss / num_iter_print_update))
+                print("\tAvg. Norm = {:.2f}\n".format(running_norm / num_iter_print_update))
+
+                if i >= 100 and \
+                        (running_loss / num_iter_print_update <= eps) or (running_norm / num_iter_print_update) <= eps:
+                    break
+                else:
+                    running_loss = 0
+                    running_norm = 0
+
+            optimizer.step()
+
+            if i >= 1 and i % num_iter_update_stepsize == 0:
+                if with_print:
+                    print("Updating Stepsize.")
+                for g in optimizer.param_groups:
+                    g['lr'] = 0.5 * g['lr']
+
+            if i >= 1 and i % num_iter_max == 0:
+                break
+
+            i += 1
+            pbar.update(1)
+
+            self.reset_state()
+            other_algo.reset_state()
+
+        self.reset_state()
+        other_algo.reset_state()
+        if with_print:
+            print("Finished initialization.")
+
     def fit(self,
             loss_functions: list,
             fitting_parameters: dict,
