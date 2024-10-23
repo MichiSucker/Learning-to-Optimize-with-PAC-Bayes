@@ -175,8 +175,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             bins=update_parameters['bins']
         )
 
-        optimizer = torch.optim.Adam(self.implementation.parameters(),
-                                     lr=fitting_parameters['lr'])
+        optimizer = torch.optim.Adam(self.implementation.parameters(), lr=fitting_parameters['lr'])
         training_assistant.starting_message()
 
         pbar = tqdm(range(training_assistant.maximal_number_of_iterations))
