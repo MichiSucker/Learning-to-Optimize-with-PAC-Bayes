@@ -202,11 +202,11 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         )
         initialization_assistant.starting_message()
         optimizer = torch.optim.Adam(self.implementation.parameters(), lr=lr)
-        i, running_loss, running_norm = 0, 0, 0
+        running_loss, running_norm = 0, 0
         fresh_init = True
         restart_prob = 0.05
-        pbar = tqdm(total=num_iter_max)
-        while True:
+        pbar = initialization_assistant.get_progressbar()
+        for i in pbar:
 
             # Reset optimizer
             optimizer.zero_grad()
@@ -254,12 +254,6 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                     print("Updating Stepsize.")
                 for g in optimizer.param_groups:
                     g['lr'] = 0.5 * g['lr']
-
-            if i >= 1 and i % num_iter_max == 0:
-                break
-
-            i += 1
-            pbar.update(1)
 
             self.reset_state_and_iteration_counter()
             other_algo.reset_state_and_iteration_counter()
