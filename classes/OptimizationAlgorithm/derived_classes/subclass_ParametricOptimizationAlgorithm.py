@@ -157,10 +157,11 @@ class TrajectoryRandomizer:
 
 class InitializationAssistant:
 
-    def __init__(self, printing_enabled, maximal_number_of_iterations, update_stepsize_every):
+    def __init__(self, printing_enabled, maximal_number_of_iterations, update_stepsize_every, print_update_every):
         self.printing_enabled = printing_enabled
         self.maximal_number_of_iterations = maximal_number_of_iterations
         self.update_stepsize_every = update_stepsize_every
+        self.print_update_every = print_update_every
 
     def starting_message(self):
         if self.printing_enabled:
@@ -178,6 +179,9 @@ class InitializationAssistant:
 
     def should_update_stepsize_of_optimizer(self, iteration):
         return (iteration >= 1) and (iteration % self.update_stepsize_every == 0)
+
+    def should_print_update(self, iteration):
+        return (iteration >= 1) and self.printing_enabled and (iteration % self.print_update_every == 0)
 
 
 class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
@@ -199,15 +203,14 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         # Extract
         lr = parameters['lr']
         eps = parameters['eps']
-        num_iter_max = parameters['num_iter_max']
         num_iter_print_update = parameters['num_iter_print_update']
-        num_iter_update_stepsize = parameters['num_iter_update_stepsize']
         with_print = parameters['with_print']
 
         initialization_assistant = InitializationAssistant(
             printing_enabled=parameters['with_print'],
             maximal_number_of_iterations=parameters['num_iter_max'],
-            update_stepsize_every=parameters['num_iter_update_stepsize']
+            update_stepsize_every=parameters['num_iter_update_stepsize'],
+            print_update_every=parameters['num_iter_print_update']
         )
         initialization_assistant.starting_message()
         optimizer = torch.optim.Adam(self.implementation.parameters(), lr=lr)
@@ -247,7 +250,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             loss.backward()
             running_loss += loss
 
-            if i >= 1 and with_print and i % num_iter_print_update == 0:
+            if initialization_assistant.should_print_update(iteration=i):
                 print("Iteration: {}".format(i))
                 print("\tAvg. Loss = {:.2f}".format(running_loss / num_iter_print_update))
 
@@ -259,8 +262,6 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             optimizer.step()
 
             if initialization_assistant.should_update_stepsize_of_optimizer(iteration=i):
-                if with_print:
-                    print("Updating Stepsize.")
                 for g in optimizer.param_groups:
                     g['lr'] = 0.5 * g['lr']
 

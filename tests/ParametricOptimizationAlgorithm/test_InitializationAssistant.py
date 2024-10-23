@@ -12,10 +12,12 @@ class TestInitializationAssistant(unittest.TestCase):
         self.printing_enabled = True
         self.maximal_number_of_iterations = 100
         self.update_stepsize_every = 10
+        self.print_update_every = 5
         self.initialization_assistant = InitializationAssistant(
             printing_enabled=self.printing_enabled,
             maximal_number_of_iterations=self.maximal_number_of_iterations,
-            update_stepsize_every=self.update_stepsize_every
+            update_stepsize_every=self.update_stepsize_every,
+            print_update_every=self.print_update_every
         )
 
     def test_creation(self):
@@ -63,4 +65,12 @@ class TestInitializationAssistant(unittest.TestCase):
         self.assertTrue(self.initialization_assistant.should_update_stepsize_of_optimizer(iteration=random_multiple))
         self.assertFalse(self.initialization_assistant.should_update_stepsize_of_optimizer(iteration=random_multiple-1))
         self.assertFalse(self.initialization_assistant.should_update_stepsize_of_optimizer(iteration=0))
+
+    def test_should_print_update(self):
+        random_multiple = torch.randint(1, 9, size=(1,)).item() * self.print_update_every
+        self.assertTrue(self.initialization_assistant.should_print_update(random_multiple))
+        self.assertFalse(self.initialization_assistant.should_print_update(random_multiple-1))
+        self.assertFalse(self.initialization_assistant.should_print_update(0))
+        self.initialization_assistant.printing_enabled = False
+        self.assertFalse(self.initialization_assistant.should_print_update(random_multiple))
 
