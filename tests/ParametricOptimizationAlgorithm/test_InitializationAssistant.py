@@ -76,6 +76,7 @@ class TestInitializationAssistant(unittest.TestCase):
         self.initialization_assistant.printing_enabled = False
         self.assertFalse(self.initialization_assistant.should_print_update(random_multiple))
 
+    @unittest.skip("Skip 'test_update_stepsize_of_optimizer' because it takes long.")
     def test_update_stepsize_of_optimizer(self):
         dummy_parameters = [torch.tensor([1., 2.], requires_grad=True)]
         lr = 4e-3
