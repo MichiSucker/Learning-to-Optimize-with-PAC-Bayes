@@ -97,7 +97,7 @@ class TestTrainingAssistant(unittest.TestCase):
         self.assertFalse(self.training_assistant.should_update_stepsize_of_optimizer(iteration=random_multiple-1))
         self.assertFalse(self.training_assistant.should_update_stepsize_of_optimizer(iteration=0))
 
-    @unittest.skip("Skip 'test_update_stepsize_of_optimizer' because it takes long.")
+    # @unittest.skip("Skip 'test_update_stepsize_of_optimizer' because it takes long.")
     def test_update_stepsize_of_optimizer(self):
         dummy_parameters = [torch.tensor([1., 2.], requires_grad=True)]
         lr = 4e-3
@@ -105,3 +105,10 @@ class TestTrainingAssistant(unittest.TestCase):
         self.training_assistant.update_stepsize_of_optimizer(optimizer=optimizer)
         for g in optimizer.param_groups:
             self.assertEqual(g['lr'], self.training_assistant.factor_update_stepsize * lr)
+
+    def test_get_progressbar(self):
+        pbar = self.training_assistant.get_progressbar()
+        self.assertTrue(hasattr(pbar, 'desc'))
+        self.assertTrue(hasattr(pbar, 'iterable'))
+        self.assertEqual(pbar.desc, 'Fit Algorithm: ')
+        self.assertEqual(list(pbar.iterable), list(range(self.training_assistant.maximal_number_of_iterations)))
