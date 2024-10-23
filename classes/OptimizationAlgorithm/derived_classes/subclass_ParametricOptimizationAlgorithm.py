@@ -167,10 +167,9 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                          constraint=constraint)
 
     def initialize_with_other_algorithm(self,
-                                  other_algo: OptimizationAlgorithm,
-                                  loss_functions: List[ParametricLossFunction],
-                                  parameters: Dict
-                                  ) -> None:
+                                        other_algo: OptimizationAlgorithm,
+                                        loss_functions: List[LossFunction],
+                                        parameters: dict) -> None:
 
         # Extract
         lr = parameters['lr']
@@ -217,20 +216,14 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                 self.current_state = x_0
                 fresh_init = torch.rand(1) <= restart_prob
 
-            # Compute iterates
-            # iterates_other = [other_algo.step(return_val=True) for _ in range(5)]
-            # iterates_self = [self.step(return_val=True) for _ in range(5)]
-
-            # Take 6 steps as the first iterate is the same (initialization)
-            iterates_other = other_algo.compute_trajectory(num_steps=6)
-            iterates_self = self.compute_trajectory(num_steps=6)
+            iterates_other = other_algo.compute_partial_trajectory(number_of_steps=6)
+            iterates_self = self.compute_partial_trajectory(number_of_steps=6)
 
             # Compute loss
-            losses = torch.stack([criterion(prediction, x)
-                                  for prediction, x in zip(iterates_self[1:], iterates_other[1:])])
-            total_loss = torch.sum(losses)
-            total_loss.backward()
-            running_loss += total_loss
+            loss = compute_initialization_loss(iterates_learned_algorithm=iterates_self,
+                                               iterates_standard_algorithm=iterates_other)
+            loss.backward()
+            running_loss += loss
 
             # Compute norm of gradients
             total_norm = 0
@@ -394,3 +387,13 @@ def losses_are_invalid(losses: List) -> bool:
     if (len(losses) == 0) or (None in losses) or (torch.inf in losses):
         return True
     return False
+
+
+def compute_initialization_loss(iterates_learned_algorithm, iterates_standard_algorithm):
+    if len(iterates_standard_algorithm) != len(iterates_learned_algorithm):
+        raise ValueError("Number of iterates does not match.")
+    criterion = torch.nn.MSELoss()
+    return torch.sum(torch.stack(
+        [criterion(prediction, x) for prediction, x in zip(iterates_learned_algorithm[1:],
+                                                           iterates_standard_algorithm[1:])])
+    )
