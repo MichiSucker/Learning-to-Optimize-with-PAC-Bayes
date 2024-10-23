@@ -156,7 +156,15 @@ class TrajectoryRandomizer:
 
 
 class InitializationAssistant:
-    pass
+
+    def __init__(self, printing_enabled, maximal_number_of_iterations):
+        self.printing_enabled = printing_enabled
+        self.maximal_number_of_iterations = maximal_number_of_iterations
+
+    def starting_message(self):
+        if self.printing_enabled:
+            print("Init. network to mimic algorithm.")
+            print(f"Optimizing for {self.maximal_number_of_iterations} iterations.")
 
 
 class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
@@ -183,12 +191,11 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         num_iter_update_stepsize = parameters['num_iter_update_stepsize']
         with_print = parameters['with_print']
 
-        if with_print:
-            print("Init. network to mimic algorithm.")
-            print(f"Optimizing for {num_iter_max} iterations.")
-
-        # While we get too high loss, train network to be simulating the standard algorithm.
-        # ==> Falls back to gradient descent
+        initialization_assistant = InitializationAssistant(
+            printing_enabled=parameters['with_print'],
+            maximal_number_of_iterations=parameters['num_iter_max']
+        )
+        initialization_assistant.starting_message()
         optimizer = torch.optim.Adam(self.implementation.parameters(), lr=lr)
         i, running_loss, running_norm = 0, 0, 0
         fresh_init = True
