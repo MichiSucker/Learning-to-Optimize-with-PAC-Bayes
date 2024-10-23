@@ -167,7 +167,7 @@ class InitializationAssistant:
             print(f"Optimizing for {self.maximal_number_of_iterations} iterations.")
 
     def get_progressbar(self):
-        pbar = tqdm(total=self.maximal_number_of_iterations)
+        pbar = tqdm(range(self.maximal_number_of_iterations))
         pbar.set_description('Initialize algorithm')
         return pbar
 

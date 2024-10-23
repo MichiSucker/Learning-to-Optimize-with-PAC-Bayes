@@ -33,3 +33,10 @@ class TestInitializationAssistant(unittest.TestCase):
         self.assertTrue(len(capturedOutput.getvalue()) == 0)
         sys.stdout = sys.__stdout__
 
+    def test_get_progressbar(self):
+        pbar = self.initialization_assistant.get_progressbar()
+        self.assertTrue(hasattr(pbar, 'desc'))
+        self.assertTrue(hasattr(pbar, 'iterable'))
+        self.assertEqual(pbar.desc, 'Initialize algorithm: ')
+        self.assertEqual(list(pbar.iterable), list(range(self.initialization_assistant.maximal_number_of_iterations)))
+
