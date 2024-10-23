@@ -186,7 +186,6 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         # While we get too high loss, train network to be simulating the standard algorithm.
         # ==> Falls back to gradient descent
         optimizer = torch.optim.Adam(self.implementation.parameters(), lr=lr)
-        criterion = torch.nn.MSELoss()
         i, running_loss, running_norm = 0, 0, 0
         fresh_init = True
         restart_prob = 0.05
@@ -218,33 +217,19 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
             iterates_other = other_algo.compute_partial_trajectory(number_of_steps=6)
             iterates_self = self.compute_partial_trajectory(number_of_steps=6)
-
-            # Compute loss
             loss = compute_initialization_loss(iterates_learned_algorithm=iterates_self,
                                                iterates_standard_algorithm=iterates_other)
             loss.backward()
             running_loss += loss
 
-            # Compute norm of gradients
-            total_norm = 0
-            for p in self.implementation.parameters():
-                if p.requires_grad and p.grad is not None:
-                    param_norm = p.grad.data.norm(2)
-                    total_norm += param_norm.item() ** 2
-            total_norm = total_norm ** (1. / 2)
-
-            running_norm += total_norm
             if i >= 1 and with_print and i % num_iter_print_update == 0:
                 print("Iteration: {}".format(i))
                 print("\tAvg. Loss = {:.2f}".format(running_loss / num_iter_print_update))
-                print("\tAvg. Norm = {:.2f}\n".format(running_norm / num_iter_print_update))
 
-                if i >= 100 and \
-                        (running_loss / num_iter_print_update <= eps) or (running_norm / num_iter_print_update) <= eps:
+                if i >= 100 and (running_loss / num_iter_print_update <= eps):
                     break
                 else:
                     running_loss = 0
-                    running_norm = 0
 
             optimizer.step()
 
