@@ -3,7 +3,7 @@ import torch
 from algorithms.dummy import Dummy
 from classes.LossFunction.class_LossFunction import LossFunction
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
-    ParametricOptimizationAlgorithm, TrajectoryRandomizer, TrainingAssistant, losses_are_invalid)
+    ParametricOptimizationAlgorithm, TrajectoryRandomizer, TrainingAssistant, losses_are_invalid, ConstraintChecker)
 
 
 def dummy_function(x):
@@ -108,3 +108,18 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
         new_hyperparameters = [p.clone() for p in self.optimization_algorithm.implementation.parameters()
                                if p.requires_grad]
         self.assertNotEqual(old_hyperparameters, new_hyperparameters)
+
+    def test_initialize_helpers_for_training(self):
+        fitting_parameters = {'restart_probability': 0.5, 'length_trajectory': 1, 'n_max': 100,
+                              'num_iter_update_stepsize': 5, 'factor_stepsize_update': 0.5, 'lr': 1e-4}
+        constraint_parameters = {'num_iter_update_constraint': 5}
+        update_parameters = {'with_print': True, 'num_iter_print_update': 10, 'bins': []}
+        optimizer, training_assistant, trajectory_randomizer, constraint_checker = (
+            self.optimization_algorithm.initialize_helpers_for_training(
+                fitting_parameters=fitting_parameters,
+                constraint_parameters=constraint_parameters,
+                update_parameters=update_parameters))
+        self.assertIsInstance(optimizer, torch.optim.Adam)
+        self.assertIsInstance(training_assistant, TrainingAssistant)
+        self.assertIsInstance(trajectory_randomizer, TrajectoryRandomizer)
+        self.assertIsInstance(constraint_checker, ConstraintChecker)

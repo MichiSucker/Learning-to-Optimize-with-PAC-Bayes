@@ -157,25 +157,11 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             update_parameters: dict
             ) -> None:
 
-        trajectory_randomizer = TrajectoryRandomizer(
-            should_restart=True,
-            restart_probability=fitting_parameters['restart_probability'],
-            length_partial_trajectory=fitting_parameters['length_trajectory']
+        optimizer, training_assistant, trajectory_randomizer, constraint_checker = self.initialize_helpers_for_training(
+            fitting_parameters=fitting_parameters,
+            constraint_parameters=constraint_parameters,
+            update_parameters=update_parameters
         )
-        constraint_checker = ConstraintChecker(
-            check_constraint_every=constraint_parameters['num_iter_update_constraint'],
-            there_is_a_constraint=self.constraint is not None
-        )
-        training_assistant = TrainingAssistant(
-            printing_enabled=update_parameters['with_print'],
-            print_update_every=update_parameters['num_iter_print_update'],
-            maximal_number_of_iterations=fitting_parameters['n_max'],
-            update_stepsize_every=fitting_parameters['num_iter_update_stepsize'],
-            factor_update_stepsize=fitting_parameters['factor_stepsize_update'],
-            bins=update_parameters['bins']
-        )
-
-        optimizer = torch.optim.Adam(self.implementation.parameters(), lr=fitting_parameters['lr'])
         training_assistant.starting_message()
 
         pbar = tqdm(range(training_assistant.maximal_number_of_iterations))
@@ -200,6 +186,32 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         constraint_checker.final_check(self)
         self.reset_state_and_iteration_counter()
         training_assistant.final_message()
+
+    def initialize_helpers_for_training(self, fitting_parameters, constraint_parameters, update_parameters):
+
+        trajectory_randomizer = TrajectoryRandomizer(
+            should_restart=True,
+            restart_probability=fitting_parameters['restart_probability'],
+            length_partial_trajectory=fitting_parameters['length_trajectory']
+        )
+
+        constraint_checker = ConstraintChecker(
+            check_constraint_every=constraint_parameters['num_iter_update_constraint'],
+            there_is_a_constraint=self.constraint is not None
+        )
+
+        training_assistant = TrainingAssistant(
+            printing_enabled=update_parameters['with_print'],
+            print_update_every=update_parameters['num_iter_print_update'],
+            maximal_number_of_iterations=fitting_parameters['n_max'],
+            update_stepsize_every=fitting_parameters['num_iter_update_stepsize'],
+            factor_update_stepsize=fitting_parameters['factor_stepsize_update'],
+            bins=update_parameters['bins']
+        )
+
+        optimizer = torch.optim.Adam(self.implementation.parameters(), lr=fitting_parameters['lr'])
+
+        return optimizer, training_assistant, trajectory_randomizer, constraint_checker
 
     def update_hyperparameters(self, optimizer, trajectory_randomizer, loss_functions, training_assistant):
         optimizer.zero_grad()
