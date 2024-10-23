@@ -110,5 +110,5 @@ class TestTrainingAssistant(unittest.TestCase):
         pbar = self.training_assistant.get_progressbar()
         self.assertTrue(hasattr(pbar, 'desc'))
         self.assertTrue(hasattr(pbar, 'iterable'))
-        self.assertEqual(pbar.desc, 'Fit Algorithm: ')
+        self.assertEqual(pbar.desc, 'Fit algorithm: ')
         self.assertEqual(list(pbar.iterable), list(range(self.training_assistant.maximal_number_of_iterations)))
