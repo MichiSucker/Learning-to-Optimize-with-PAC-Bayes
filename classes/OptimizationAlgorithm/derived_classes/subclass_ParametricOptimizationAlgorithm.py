@@ -199,8 +199,8 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             if fresh_init:
 
                 # Start from zero again
-                self.reset_state()
-                other_algo.reset_state()
+                self.reset_state_and_iteration_counter()
+                other_algo.reset_state_and_iteration_counter()
 
                 # Samples quantile_distance new loss function
                 current_loss_function = np.random.choice(loss_functions)
@@ -245,11 +245,11 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             i += 1
             pbar.update(1)
 
-            self.reset_state()
-            other_algo.reset_state()
+            self.reset_state_and_iteration_counter()
+            other_algo.reset_state_and_iteration_counter()
 
-        self.reset_state()
-        other_algo.reset_state()
+        self.reset_state_and_iteration_counter()
+        other_algo.reset_state_and_iteration_counter()
         if with_print:
             print("Finished initialization.")
 
