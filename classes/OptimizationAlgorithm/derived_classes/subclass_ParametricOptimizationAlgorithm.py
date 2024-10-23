@@ -167,7 +167,6 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         pbar = tqdm(range(training_assistant.maximal_number_of_iterations))
         pbar.set_description('Fit Algorithm')
         for i in pbar:
-
             if training_assistant.should_update_stepsize_of_optimizer(iteration=i):
                 training_assistant.update_stepsize_of_optimizer(optimizer)
 
@@ -214,22 +213,24 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         return optimizer, training_assistant, trajectory_randomizer, constraint_checker
 
     def update_hyperparameters(self, optimizer, trajectory_randomizer, loss_functions, training_assistant):
+
         optimizer.zero_grad()
         self.determine_next_starting_point(
             trajectory_randomizer=trajectory_randomizer, loss_functions=loss_functions)
         predicted_iterates = self.compute_partial_trajectory(
             number_of_steps=trajectory_randomizer.length_partial_trajectory)
         ratios_of_losses = self.compute_ratio_of_losses(predicted_iterates=predicted_iterates)
-        if losses_are_invalid(ratios_of_losses):
-            print('Invalid losses.')
-            return
+        with torch.no_grad():
+            if losses_are_invalid(ratios_of_losses):
+                print('Invalid losses.')
+                return
         sum_losses = torch.sum(torch.stack(ratios_of_losses))
         sum_losses.backward()
         optimizer.step()
 
         with torch.no_grad():
             training_assistant.loss_histogram.append(self.loss_function(predicted_iterates[-1]).item())
-            training_assistant.running_loss += sum_losses
+            training_assistant.running_loss += sum_losses.item()
 
     def determine_next_starting_point(self, trajectory_randomizer, loss_functions):
         if trajectory_randomizer.should_restart:
@@ -237,7 +238,9 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             trajectory_randomizer.set_should_restart(False)
         else:
             self.detach_current_state_from_computational_graph()
-            trajectory_randomizer.set_should_restart((torch.rand(1) <= trajectory_randomizer.restart_probability).item())
+            trajectory_randomizer.set_should_restart(
+                (torch.rand(1) <= trajectory_randomizer.restart_probability).item()
+            )
 
     def restart_with_new_loss(self, loss_functions):
         self.reset_state_and_iteration_counter()
@@ -245,7 +248,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
     def detach_current_state_from_computational_graph(self):
         x_0 = self.current_state.detach().clone()
-        self.current_state = x_0
+        self.set_current_state(x_0)
 
     def compute_ratio_of_losses(self, predicted_iterates):
         ratios = [self.loss_function(predicted_iterates[k]) / self.loss_function(predicted_iterates[k - 1])

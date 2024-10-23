@@ -44,7 +44,7 @@ class OptimizationAlgorithm:
         self.iteration_counter = 0
 
     def reset_to_initial_state(self):
-        self.current_state = self.initial_state.clone()
+        self.set_current_state(self.initial_state.clone())
 
     def reset_state_and_iteration_counter(self):
         self.reset_to_initial_state()
