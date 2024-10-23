@@ -208,7 +208,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                          constraint=constraint)
 
     def initialize_with_other_algorithm(self,
-                                        other_algo: OptimizationAlgorithm,
+                                        other_algorithm: OptimizationAlgorithm,
                                         loss_functions: List[LossFunction],
                                         parameters: dict) -> None:
 
@@ -232,31 +232,17 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         pbar = initialization_assistant.get_progressbar()
         for i in pbar:
 
-            # Reset optimizer
             optimizer.zero_grad()
 
-            # Probabilistic Initialization of Algorithm
-            if trajectory_randomizer.should_restart:
+            self.determine_next_starting_point_for_both_algorithms(
+                trajectory_randomizer=trajectory_randomizer,
+                other_algorithm=other_algorithm,
+                loss_functions=loss_functions)
 
-                # Start from zero again
-                self.reset_state_and_iteration_counter()
-                other_algo.reset_state_and_iteration_counter()
-
-                # Samples quantile_distance new loss function
-                current_loss_function = np.random.choice(loss_functions)
-                self.set_loss_function(current_loss_function)
-                other_algo.set_loss_function(current_loss_function)
-                trajectory_randomizer.set_should_restart(False)
-            else:
-                # Detach computational graph
-                x_0 = self.current_state.detach().clone()
-                self.current_state = x_0
-                trajectory_randomizer.set_should_restart(
-                    (torch.rand(1) <= trajectory_randomizer.restart_probability).item()
-                )
-
-            iterates_other = other_algo.compute_partial_trajectory(number_of_steps=5)
-            iterates_self = self.compute_partial_trajectory(number_of_steps=5)
+            iterates_other = other_algorithm.compute_partial_trajectory(
+                number_of_steps=trajectory_randomizer.length_partial_trajectory)
+            iterates_self = self.compute_partial_trajectory(
+                number_of_steps=trajectory_randomizer.length_partial_trajectory)
             loss = compute_initialization_loss(iterates_learned_algorithm=iterates_self,
                                                iterates_standard_algorithm=iterates_other)
             loss.backward()
@@ -272,7 +258,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                 initialization_assistant.update_stepsize_of_optimizer(optimizer=optimizer)
 
         self.reset_state_and_iteration_counter()
-        other_algo.reset_state_and_iteration_counter()
+        other_algorithm.reset_state_and_iteration_counter()
         initialization_assistant.final_message()
 
     def determine_next_starting_point_for_both_algorithms(self,
