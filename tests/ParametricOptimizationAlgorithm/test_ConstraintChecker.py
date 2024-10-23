@@ -27,16 +27,16 @@ class TestConstraintChecker(unittest.TestCase):
         self.assertFalse(self.constraint_checker.found_point_inside_constraint)
         self.assertTrue(isinstance(self.constraint_checker.point_inside_constraint, NoneType))
 
-    def test_constraint_has_to_be_checked(self):
+    def test_should_check_constraint(self):
         i = torch.randint(low=1, high=9, size=(1,)).item() * self.check_constraint_every
-        self.assertTrue(self.constraint_checker.constraint_has_to_be_checked(i))
+        self.assertTrue(self.constraint_checker.should_check_constraint(i))
         i = i-1
-        self.assertFalse(self.constraint_checker.constraint_has_to_be_checked(i))
-        self.assertFalse(self.constraint_checker.constraint_has_to_be_checked(0))
+        self.assertFalse(self.constraint_checker.should_check_constraint(i))
+        self.assertFalse(self.constraint_checker.should_check_constraint(0))
 
         self.constraint_checker.set_there_is_a_constraint(False)
         i = torch.randint(low=1, high=9, size=(1,)).item() * self.check_constraint_every
-        self.assertFalse(self.constraint_checker.constraint_has_to_be_checked(i))
+        self.assertFalse(self.constraint_checker.should_check_constraint(i))
 
     def test_set_there_is_a_constraint(self):
         self.assertTrue(self.constraint_checker.there_is_a_constraint)

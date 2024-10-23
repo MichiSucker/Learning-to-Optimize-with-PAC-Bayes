@@ -82,7 +82,7 @@ class ConstraintChecker:
         self.found_point_inside_constraint = False
         self.point_inside_constraint = None
 
-    def constraint_has_to_be_checked(self, iteration_number):
+    def should_check_constraint(self, iteration_number):
         if (self.there_is_a_constraint
             and (iteration_number >= 1)
                 and (iteration_number % self.check_constraint_every == 0)):
@@ -195,7 +195,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                 training_assistant.print_update(iteration=i, constraint_checker=constraint_checker)
                 training_assistant.reset_running_loss_and_loss_histogram()
 
-            if constraint_checker.constraint_has_to_be_checked(i):
+            if constraint_checker.should_check_constraint(i):
                 constraint_checker.update_point_inside_constraint_or_reject(self)
 
         constraint_checker.final_check(self)
