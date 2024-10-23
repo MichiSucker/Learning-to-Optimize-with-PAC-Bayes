@@ -220,11 +220,14 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             print_update_every=parameters['num_iter_print_update'],
             factor_update_stepsize=0.5
         )
+
+        trajectory_randomizer = TrajectoryRandomizer(
+            should_restart=True,
+            restart_probability=0.05,
+            length_partial_trajectory=5
+        )
         initialization_assistant.starting_message()
         optimizer = torch.optim.Adam(self.implementation.parameters(), lr=lr)
-        running_loss, running_norm = 0, 0
-        fresh_init = True
-        restart_prob = 0.05
         pbar = initialization_assistant.get_progressbar()
         for i in pbar:
 
@@ -232,7 +235,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             optimizer.zero_grad()
 
             # Probabilistic Initialization of Algorithm
-            if fresh_init:
+            if trajectory_randomizer.should_restart:
 
                 # Start from zero again
                 self.reset_state_and_iteration_counter()
@@ -242,26 +245,27 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                 current_loss_function = np.random.choice(loss_functions)
                 self.set_loss_function(current_loss_function)
                 other_algo.set_loss_function(current_loss_function)
-
-                # Don't restart directly again from zero
-                fresh_init = False
+                trajectory_randomizer.set_should_restart(False)
             else:
                 # Detach computational graph
                 x_0 = self.current_state.detach().clone()
                 self.current_state = x_0
-                fresh_init = torch.rand(1) <= restart_prob
+                trajectory_randomizer.set_should_restart(
+                    (torch.rand(1) <= trajectory_randomizer.restart_probability).item()
+                )
 
-            iterates_other = other_algo.compute_partial_trajectory(number_of_steps=6)
-            iterates_self = self.compute_partial_trajectory(number_of_steps=6)
+            iterates_other = other_algo.compute_partial_trajectory(number_of_steps=5)
+            iterates_self = self.compute_partial_trajectory(number_of_steps=5)
             loss = compute_initialization_loss(iterates_learned_algorithm=iterates_self,
                                                iterates_standard_algorithm=iterates_other)
             loss.backward()
-            running_loss += loss
+            optimizer.step()
+
+            with torch.no_grad():
+                initialization_assistant.running_loss += loss
 
             if initialization_assistant.should_print_update(iteration=i):
                 initialization_assistant.print_update(iteration=i)
-
-            optimizer.step()
 
             if initialization_assistant.should_update_stepsize_of_optimizer(iteration=i):
                 initialization_assistant.update_stepsize_of_optimizer(optimizer=optimizer)
