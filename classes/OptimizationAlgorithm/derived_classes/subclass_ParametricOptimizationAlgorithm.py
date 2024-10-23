@@ -91,6 +91,11 @@ class TrainingAssistant:
             print("---------------------------------------------------------------------------------------------------")
             print("End Fitting Algorithm.")
 
+    def get_progressbar(self):
+        pbar = tqdm(range(self.maximal_number_of_iterations))
+        pbar.set_description('Fit Algorithm')
+        return pbar
+
     def should_update_stepsize_of_optimizer(self, iteration: int) -> bool:
         if (iteration >= 1) and (iteration % self.update_stepsize_every == 0):
             return True
@@ -173,10 +178,9 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             constraint_parameters=constraint_parameters,
             update_parameters=update_parameters
         )
-        training_assistant.starting_message()
 
-        pbar = tqdm(range(training_assistant.maximal_number_of_iterations))
-        pbar.set_description('Fit Algorithm')
+        training_assistant.starting_message()
+        pbar = training_assistant.get_progressbar()
         for i in pbar:
             if training_assistant.should_update_stepsize_of_optimizer(iteration=i):
                 training_assistant.update_stepsize_of_optimizer(optimizer)

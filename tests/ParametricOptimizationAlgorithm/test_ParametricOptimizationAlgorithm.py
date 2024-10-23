@@ -87,7 +87,7 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
         self.assertTrue(losses_are_invalid([1., None]))
         self.assertTrue(losses_are_invalid([1., torch.inf]))
 
-    @unittest.skip("Skip 'test_update_hyperparameters' because it takes long.")
+    # @unittest.skip("Skip 'test_update_hyperparameters' because it takes long.")
     def test_update_hyperparameters(self):
         # Note that this is a weak test! We only check whether the hyperparameters did change.
         trajectory_randomizer = TrajectoryRandomizer(should_restart=True, restart_probability=1.,
@@ -113,7 +113,7 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
                                if p.requires_grad]
         self.assertNotEqual(old_hyperparameters, new_hyperparameters)
 
-    @unittest.skip("Skip 'test_initialize_helpers_for_training' because it takes long.")
+    # @unittest.skip("Skip 'test_initialize_helpers_for_training' because it takes long.")
     def test_initialize_helpers_for_training(self):
         fitting_parameters = {'restart_probability': 0.5, 'length_trajectory': 1, 'n_max': 100,
                               'num_iter_update_stepsize': 5, 'factor_stepsize_update': 0.5, 'lr': 1e-4}
