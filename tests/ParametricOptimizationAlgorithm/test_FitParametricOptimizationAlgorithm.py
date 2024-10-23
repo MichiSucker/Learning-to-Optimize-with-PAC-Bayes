@@ -75,7 +75,7 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
         self.assertEqual(current_loss_function, self.optimization_algorithm.loss_function)
 
     def test_compute_ratio_of_losses(self):
-        predicted_iterates = [1., 2., 3., 4., 5.]
+        predicted_iterates = [torch.tensor(1.), torch.tensor(2.), torch.tensor(3.), torch.tensor(4.), torch.tensor(5.)]
         self.optimization_algorithm.set_loss_function(lambda x: x)
         ratio_of_losses = self.optimization_algorithm.compute_ratio_of_losses(predicted_iterates)
         self.assertTrue(len(ratio_of_losses) == len(predicted_iterates) - 1)
