@@ -157,11 +157,13 @@ class TrajectoryRandomizer:
 
 class InitializationAssistant:
 
-    def __init__(self, printing_enabled, maximal_number_of_iterations, update_stepsize_every, print_update_every):
+    def __init__(self, printing_enabled, maximal_number_of_iterations, update_stepsize_every, factor_update_stepsize,
+                 print_update_every):
         self.printing_enabled = printing_enabled
         self.maximal_number_of_iterations = maximal_number_of_iterations
         self.update_stepsize_every = update_stepsize_every
         self.print_update_every = print_update_every
+        self.factor_update_stepsize = factor_update_stepsize
 
     def starting_message(self):
         if self.printing_enabled:
@@ -179,6 +181,10 @@ class InitializationAssistant:
 
     def should_update_stepsize_of_optimizer(self, iteration):
         return (iteration >= 1) and (iteration % self.update_stepsize_every == 0)
+
+    def update_stepsize_of_optimizer(self, optimizer):
+        for g in optimizer.param_groups:
+            g['lr'] = self.factor_update_stepsize * g['lr']
 
     def should_print_update(self, iteration):
         return (iteration >= 1) and self.printing_enabled and (iteration % self.print_update_every == 0)
@@ -210,7 +216,8 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             printing_enabled=parameters['with_print'],
             maximal_number_of_iterations=parameters['num_iter_max'],
             update_stepsize_every=parameters['num_iter_update_stepsize'],
-            print_update_every=parameters['num_iter_print_update']
+            print_update_every=parameters['num_iter_print_update'],
+            factor_update_stepsize=0.5
         )
         initialization_assistant.starting_message()
         optimizer = torch.optim.Adam(self.implementation.parameters(), lr=lr)
@@ -262,8 +269,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             optimizer.step()
 
             if initialization_assistant.should_update_stepsize_of_optimizer(iteration=i):
-                for g in optimizer.param_groups:
-                    g['lr'] = 0.5 * g['lr']
+                initialization_assistant.update_stepsize_of_optimizer(optimizer=optimizer)
 
         self.reset_state_and_iteration_counter()
         other_algo.reset_state_and_iteration_counter()

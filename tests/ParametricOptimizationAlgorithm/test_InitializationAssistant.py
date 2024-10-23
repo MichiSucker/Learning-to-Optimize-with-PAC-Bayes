@@ -13,11 +13,13 @@ class TestInitializationAssistant(unittest.TestCase):
         self.maximal_number_of_iterations = 100
         self.update_stepsize_every = 10
         self.print_update_every = 5
+        self.factor_update_stepsize = 0.5
         self.initialization_assistant = InitializationAssistant(
             printing_enabled=self.printing_enabled,
             maximal_number_of_iterations=self.maximal_number_of_iterations,
             update_stepsize_every=self.update_stepsize_every,
-            print_update_every=self.print_update_every
+            print_update_every=self.print_update_every,
+            factor_update_stepsize=self.factor_update_stepsize
         )
 
     def test_creation(self):
@@ -74,3 +76,10 @@ class TestInitializationAssistant(unittest.TestCase):
         self.initialization_assistant.printing_enabled = False
         self.assertFalse(self.initialization_assistant.should_print_update(random_multiple))
 
+    def test_update_stepsize_of_optimizer(self):
+        dummy_parameters = [torch.tensor([1., 2.], requires_grad=True)]
+        lr = 4e-3
+        optimizer = torch.optim.Adam(dummy_parameters, lr=lr)
+        self.initialization_assistant.update_stepsize_of_optimizer(optimizer=optimizer)
+        for g in optimizer.param_groups:
+            self.assertEqual(g['lr'], self.initialization_assistant.factor_update_stepsize * lr)
