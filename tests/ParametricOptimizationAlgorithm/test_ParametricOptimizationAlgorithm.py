@@ -1,6 +1,8 @@
+import torch
+import io
+import sys
 import copy
 import unittest
-import torch
 from algorithms.dummy import Dummy
 from classes.Constraint.class_Constraint import Constraint
 from classes.LossFunction.class_LossFunction import LossFunction
@@ -29,7 +31,7 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
 
     def test_restart_with_new_loss(self):
         self.optimization_algorithm.set_iteration_counter(10)
-        loss_functions = [LossFunction(dummy_function) for i in range(10)]
+        loss_functions = [LossFunction(dummy_function) for _ in range(10)]
         old_loss_function = self.optimization_algorithm.loss_function
         self.optimization_algorithm.restart_with_new_loss(loss_functions)
         self.assertEqual(self.optimization_algorithm.iteration_counter, 0)
@@ -50,7 +52,7 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
                                                      restart_probability=restart_probability,
                                                      length_partial_trajectory=1)
         self.optimization_algorithm.set_iteration_counter(10)
-        loss_functions = [LossFunction(dummy_function) for i in range(10)]
+        loss_functions = [LossFunction(dummy_function) for _ in range(10)]
         old_loss_function = self.optimization_algorithm.loss_function
         self.optimization_algorithm.set_current_state(torch.randn(size=self.optimization_algorithm.initial_state.shape))
         self.optimization_algorithm.determine_next_starting_point(trajectory_randomizer, loss_functions=loss_functions)
@@ -97,7 +99,7 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
             update_stepsize_every=10,
             factor_update_stepsize=0.5
         )
-        loss_functions = [LossFunction(dummy_function) for i in range(10)]
+        loss_functions = [LossFunction(dummy_function) for _ in range(10)]
         old_hyperparameters = [p.clone() for p in self.optimization_algorithm.implementation.parameters()
                                if p.requires_grad]
         optimizer = torch.optim.Adam(self.optimization_algorithm.implementation.parameters(), lr=1e-4)
@@ -141,7 +143,15 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
         constraint = Constraint(function=lambda x: True)
         old_hyperparameters = copy.deepcopy(self.optimization_algorithm.implementation.state_dict())
         self.optimization_algorithm.set_constraint(constraint)
+
+        capturedOutput = io.StringIO()
+        sys.stdout = capturedOutput
         self.optimization_algorithm.fit(loss_functions=loss_functions,
                                         fitting_parameters=fitting_parameters,
                                         constraint_parameters=constraint_parameters,
                                         update_parameters=update_parameters)
+        self.assertNotEqual(old_hyperparameters, self.optimization_algorithm.implementation.state_dict())
+        self.assertTrue(torch.equal(self.optimization_algorithm.current_state,
+                                    self.optimization_algorithm.initial_state))
+        self.assertTrue(len(capturedOutput.getvalue()) > 0)
+        sys.stdout = sys.__stdout__
