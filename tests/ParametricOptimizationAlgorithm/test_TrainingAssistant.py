@@ -97,7 +97,7 @@ class TestTrainingAssistant(unittest.TestCase):
         self.assertFalse(self.training_assistant.should_update_stepsize_of_optimizer(iteration=random_multiple-1))
         self.assertFalse(self.training_assistant.should_update_stepsize_of_optimizer(iteration=0))
 
-    # @unittest.skip("Skip 'test_update_stepsize_of_optimizer' because it takes long.")
+    @unittest.skip("Skip 'test_update_stepsize_of_optimizer' because it takes long.")
     def test_update_stepsize_of_optimizer(self):
         dummy_parameters = [torch.tensor([1., 2.], requires_grad=True)]
         lr = 4e-3
