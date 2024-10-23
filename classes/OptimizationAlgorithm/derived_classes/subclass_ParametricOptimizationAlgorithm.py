@@ -232,24 +232,11 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         pbar = initialization_assistant.get_progressbar()
         for i in pbar:
 
-            optimizer.zero_grad()
-
-            self.determine_next_starting_point_for_both_algorithms(
-                trajectory_randomizer=trajectory_randomizer,
-                other_algorithm=other_algorithm,
-                loss_functions=loss_functions)
-
-            iterates_other = other_algorithm.compute_partial_trajectory(
-                number_of_steps=trajectory_randomizer.length_partial_trajectory)
-            iterates_self = self.compute_partial_trajectory(
-                number_of_steps=trajectory_randomizer.length_partial_trajectory)
-            loss = compute_initialization_loss(iterates_learned_algorithm=iterates_self,
-                                               iterates_standard_algorithm=iterates_other)
-            loss.backward()
-            optimizer.step()
-
-            with torch.no_grad():
-                initialization_assistant.running_loss += loss
+            self.update_initialization_of_hyperparameters(optimizer=optimizer,
+                                                          other_algorithm=other_algorithm,
+                                                          trajectory_randomizer=trajectory_randomizer,
+                                                          loss_functions=loss_functions,
+                                                          initialization_assistant=initialization_assistant)
 
             if initialization_assistant.should_print_update(iteration=i):
                 initialization_assistant.print_update(iteration=i)
@@ -275,6 +262,30 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             trajectory_randomizer.set_should_restart(
                 (torch.rand(1) <= trajectory_randomizer.restart_probability).item()
             )
+
+    def update_initialization_of_hyperparameters(
+            self,
+            optimizer,
+            other_algorithm,
+            trajectory_randomizer,
+            loss_functions,
+            initialization_assistant):
+
+        optimizer.zero_grad()
+        self.determine_next_starting_point_for_both_algorithms(
+            trajectory_randomizer=trajectory_randomizer,
+            other_algorithm=other_algorithm,
+            loss_functions=loss_functions)
+        iterates_other = other_algorithm.compute_partial_trajectory(
+            number_of_steps=trajectory_randomizer.length_partial_trajectory)
+        iterates_self = self.compute_partial_trajectory(
+            number_of_steps=trajectory_randomizer.length_partial_trajectory)
+        loss = compute_initialization_loss(iterates_learned_algorithm=iterates_self,
+                                           iterates_standard_algorithm=iterates_other)
+        loss.backward()
+        optimizer.step()
+        with torch.no_grad():
+            initialization_assistant.running_loss += loss
 
     def fit(self,
             loss_functions: list,

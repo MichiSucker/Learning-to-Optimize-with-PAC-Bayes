@@ -1,6 +1,6 @@
 import unittest
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
-    ParametricOptimizationAlgorithm, compute_initialization_loss, TrajectoryRandomizer)
+    ParametricOptimizationAlgorithm, compute_initialization_loss, TrajectoryRandomizer, InitializationAssistant)
 import torch
 from algorithms.dummy import Dummy
 from classes.LossFunction.class_LossFunction import LossFunction
@@ -70,3 +70,31 @@ class TestInitParametricOptimizationAlgorithm(unittest.TestCase):
         self.assertEqual(self.optimization_algorithm.iteration_counter, 10)
         self.assertTrue(torch.equal(self.optimization_algorithm.current_state, current_state))
         self.assertEqual(current_loss_function, self.optimization_algorithm.loss_function)
+
+    def test_update_initialization_of_hyperparameters(self):
+        # Note that this is a weak test! We only check whether the hyperparameters did change.
+        trajectory_randomizer = TrajectoryRandomizer(should_restart=True, restart_probability=1.,
+                                                     length_partial_trajectory=1)
+        initialization_assistant = InitializationAssistant(
+            printing_enabled=True,
+            maximal_number_of_iterations=100,
+            update_stepsize_every=10,
+            print_update_every=10,
+            factor_update_stepsize=0.5
+        )
+        other_algorithm = copy.deepcopy(self.optimization_algorithm)
+        other_algorithm.implementation.state_dict()['scale'] -= 0.5
+        loss_functions = [LossFunction(dummy_function) for _ in range(10)]
+        old_hyperparameters = [p.clone() for p in self.optimization_algorithm.implementation.parameters()
+                               if p.requires_grad]
+        optimizer = torch.optim.Adam(self.optimization_algorithm.implementation.parameters(), lr=1e-4)
+        self.optimization_algorithm.update_initialization_of_hyperparameters(
+            optimizer=optimizer,
+            other_algorithm=other_algorithm,
+            trajectory_randomizer=trajectory_randomizer,
+            loss_functions=loss_functions,
+            initialization_assistant=initialization_assistant
+        )
+        new_hyperparameters = [p.clone() for p in self.optimization_algorithm.implementation.parameters()
+                               if p.requires_grad]
+        self.assertNotEqual(old_hyperparameters, new_hyperparameters)
