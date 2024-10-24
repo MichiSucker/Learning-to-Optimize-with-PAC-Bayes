@@ -431,11 +431,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         optimizer = torch.optim.SGD(self.implementation.parameters(), lr=init_lr)
 
         # Setup distributions for noise
-        noise_distributions = {}
-        for p in self.implementation.parameters():
-            if p.requires_grad:
-                dim = len(p.flatten())
-                noise_distributions[p] = MultivariateNormal(torch.zeros(dim), torch.eye(dim))
+        noise_distributions = self.set_up_noise_distributions()
 
         # For rejection procedure
         # This assumes that the initialization of the sampling algorithm lies withing the constraint!
@@ -452,9 +448,6 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             lr = init_lr / t
             for parameter in optimizer.param_groups:
                 parameter['lr'] = lr
-
-            # Update iteration counter (for reduction of step-size, to prevent getting stuck)
-            t += 1
 
             optimizer.zero_grad()   # PROBABLY NOT NEEDED!
             # Note that this initialization refers to the optimization space: This is different from the
@@ -499,12 +492,22 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                 # Otherwise, reject the new point.
                 else:
                     self.implementation.load_state_dict(old_state_dict)
-                    continue
+
+            # Update iteration counter (for reduction of step-size, to prevent getting stuck)
+            t += 1
 
         # Reset iteration counter of algorithm
         self.iteration_counter = 0
 
         return samples[-desired_number_of_samples:], samples_state_dict[-desired_number_of_samples:], estimated_probabilities[-desired_number_of_samples:]
+
+    def set_up_noise_distributions(self):
+        noise_distributions = {}
+        for name, parameter in self.implementation.named_parameters():
+            if parameter.requires_grad:
+                dim = len(parameter.flatten())
+                noise_distributions[name] = MultivariateNormal(torch.zeros(dim), torch.eye(dim))
+        return noise_distributions
 
     def perform_noisy_gradient_step_on_hyperparameters(self, lr, noise_distributions):
         for p in self.implementation.parameters():
