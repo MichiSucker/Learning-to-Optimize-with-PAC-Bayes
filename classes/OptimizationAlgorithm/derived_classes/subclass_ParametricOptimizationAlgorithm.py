@@ -30,8 +30,17 @@ class SamplingAssistant:
         pbar.set_description('Sampling')
         return pbar
 
+    def should_continue(self):
+        return self.number_of_correct_samples < self.desired_number_of_samples + self.number_of_iterations_burnin
+
     def should_store_sample(self, iteration):
         return iteration >= self.number_of_iterations_burnin
+
+    def update_samples(self, implementation, estimated_probability):
+        self.samples.append([p.detach().clone() for p in implementation.parameters() if p.requires_grad])
+        self.samples_state_dict.append(copy.deepcopy(implementation.state_dict()))
+        self.estimated_probabilities.append(estimated_probability)
+        self.number_of_correct_samples += 1
 
     def prepare_output(self):
         if any((len(self.samples) < self.desired_number_of_samples,
@@ -472,8 +481,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         old_state_dict = copy.deepcopy(self.implementation.state_dict())
         t = 1
         pbar = sampling_assistant.get_progressbar()
-        while (sampling_assistant.number_of_correct_samples <
-               sampling_assistant.desired_number_of_samples + sampling_assistant.number_of_iterations_burnin):
+        while sampling_assistant.should_continue():
 
             sampling_assistant.decay_learning_rate(iteration=t)
 
@@ -508,14 +516,10 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                     old_state_dict = copy.deepcopy(self.implementation.state_dict())
 
                     # Store sample
-                    if t >= sampling_assistant.number_of_iterations_burnin:
-                        sampling_assistant.samples.append(
-                            [p.detach().clone() for p in self.implementation.parameters() if p.requires_grad])
-                        sampling_assistant.samples_state_dict.append(copy.deepcopy(self.implementation.state_dict()))
-                        sampling_assistant.estimated_probabilities.append(estimated_prob)
-
-                        # Increase sample counter
-                        sampling_assistant.number_of_correct_samples += 1
+                    if sampling_assistant.should_store_sample(iteration=t):
+                        sampling_assistant.update_samples(
+                            implementation=self.implementation, estimated_probability=estimated_prob
+                        )
                         pbar.update(1)
 
                 # Otherwise, reject the new point.

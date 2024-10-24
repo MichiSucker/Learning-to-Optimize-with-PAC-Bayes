@@ -1,4 +1,5 @@
 import unittest
+from algorithms.dummy import Dummy
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import SamplingAssistant
 
 
@@ -32,6 +33,37 @@ class TestSamplingAssistant(unittest.TestCase):
         self.assertTrue(hasattr(pbar, 'desc'))
         self.assertTrue(hasattr(pbar, 'iterable'))
         self.assertEqual(pbar.desc, 'Sampling: ')
+
+    def test_update_samples(self):
+        old_number_of_samples = self.sampling_assistant.number_of_correct_samples
+        old_length_samples = len(self.sampling_assistant.samples)
+        old_length_samples_state_dict = len(self.sampling_assistant.samples_state_dict)
+        old_length_estimated_probabilities = len(self.sampling_assistant.estimated_probabilities)
+        implementation = Dummy()
+        estimated_probability = 0.9
+        self.sampling_assistant.update_samples(implementation=implementation,
+                                               estimated_probability=estimated_probability)
+        self.assertEqual(self.sampling_assistant.number_of_correct_samples, old_number_of_samples + 1)
+        self.assertEqual(len(self.sampling_assistant.samples), old_length_samples + 1)
+        self.assertEqual(len(self.sampling_assistant.samples_state_dict), old_length_samples_state_dict + 1)
+        self.assertEqual(len(self.sampling_assistant.estimated_probabilities), old_length_estimated_probabilities + 1)
+        self.assertTrue(self.sampling_assistant.estimated_probabilities[-1] == estimated_probability)
+        self.assertTrue(self.sampling_assistant.samples_state_dict[-1] == implementation.state_dict())
+        self.assertTrue(self.sampling_assistant.samples[-1] == [p.detach().clone() for p in implementation.parameters()
+                                                                if p.requires_grad])
+
+    def test_should_continue(self):
+        self.assertIsInstance(self.sampling_assistant.should_continue(), bool)
+
+        self.sampling_assistant.number_of_correct_samples = 1
+        self.sampling_assistant.desired_number_of_samples = 1
+        self.sampling_assistant.number_of_iterations_burnin = 1
+        self.assertTrue(self.sampling_assistant.should_continue())
+
+        self.sampling_assistant.number_of_correct_samples = 1
+        self.sampling_assistant.desired_number_of_samples = 1
+        self.sampling_assistant.number_of_iterations_burnin = 0
+        self.assertFalse(self.sampling_assistant.should_continue())
 
     def test_prepare_output(self):
         with self.assertRaises(Exception):
