@@ -36,7 +36,7 @@ class SamplingAssistant:
     def should_store_sample(self, iteration):
         return iteration >= self.number_of_iterations_burnin
 
-    def update_samples(self, implementation, estimated_probability):
+    def store_sample(self, implementation, estimated_probability):
         self.samples.append([p.detach().clone() for p in implementation.parameters() if p.requires_grad])
         self.samples_state_dict.append(copy.deepcopy(implementation.state_dict()))
         self.estimated_probabilities.append(estimated_probability)
@@ -515,11 +515,9 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                 if satisfies_constraint:
                     old_state_dict = copy.deepcopy(self.implementation.state_dict())
 
-                    # Store sample
                     if sampling_assistant.should_store_sample(iteration=t):
-                        sampling_assistant.update_samples(
-                            implementation=self.implementation, estimated_probability=estimated_prob
-                        )
+                        sampling_assistant.store_sample(implementation=self.implementation,
+                                                        estimated_probability=estimated_prob)
                         pbar.update(1)
 
                 # Otherwise, reject the new point.

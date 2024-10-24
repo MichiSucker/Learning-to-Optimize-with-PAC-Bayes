@@ -34,15 +34,14 @@ class TestSamplingAssistant(unittest.TestCase):
         self.assertTrue(hasattr(pbar, 'iterable'))
         self.assertEqual(pbar.desc, 'Sampling: ')
 
-    def test_update_samples(self):
+    def test_store_sample(self):
         old_number_of_samples = self.sampling_assistant.number_of_correct_samples
         old_length_samples = len(self.sampling_assistant.samples)
         old_length_samples_state_dict = len(self.sampling_assistant.samples_state_dict)
         old_length_estimated_probabilities = len(self.sampling_assistant.estimated_probabilities)
         implementation = Dummy()
         estimated_probability = 0.9
-        self.sampling_assistant.update_samples(implementation=implementation,
-                                               estimated_probability=estimated_probability)
+        self.sampling_assistant.store_sample(implementation=implementation, estimated_probability=estimated_probability)
         self.assertEqual(self.sampling_assistant.number_of_correct_samples, old_number_of_samples + 1)
         self.assertEqual(len(self.sampling_assistant.samples), old_length_samples + 1)
         self.assertEqual(len(self.sampling_assistant.samples_state_dict), old_length_samples_state_dict + 1)
