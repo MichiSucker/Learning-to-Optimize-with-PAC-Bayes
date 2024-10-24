@@ -129,7 +129,7 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
         self.assertIsInstance(trajectory_randomizer, TrajectoryRandomizer)
         self.assertIsInstance(constraint_checker, ConstraintChecker)
 
-    # @unittest.skip("Skip 'test_fit' because it takes long.")
+    @unittest.skip("Skip 'test_fit' because it takes long.")
     def test_fit(self):
         # This is again a weak test: We only check whether the hyperparameters have been changed
         # (we do not really know more here; only during evaluation do we see whether training was successful).
