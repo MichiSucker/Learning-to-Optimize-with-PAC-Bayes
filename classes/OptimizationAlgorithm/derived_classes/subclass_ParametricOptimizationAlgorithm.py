@@ -7,6 +7,7 @@ from classes.LossFunction.class_LossFunction import LossFunction
 import copy
 from tqdm import tqdm
 import numpy as np
+from torch.distributions import MultivariateNormal
 
 
 class ConstraintChecker:
