@@ -1,16 +1,14 @@
-from classes.Constraint.class_Constraint import Constraint
+from classes.Constraint.class_Constraint import Constraint, create_list_of_constraints_from_functions
 from classes.Constraint.class_BayesianProbabilityEstimator import BayesianProbabilityEstimator
 
 
 class ProbabilisticConstraint:
-    pass
+
+    def __init__(self, list_of_constraints):
+        self.list_of_constraint = list_of_constraints
 
 
-def create_list_of_constraints_from_functions(describing_property, list_of_functions):
-    list_of_constraints = [
-        Constraint(fun=lambda opt_algo, i=i: describing_property(f=list_of_functions[i], opt_algo=opt_algo))
-        for i in range(len(list_of_functions))]
-    return list_of_constraints
+
 
 
 def constraint_from_probabilistic_constraint(describing_property, loss_functions, parameters_probabilistic_constraint):
