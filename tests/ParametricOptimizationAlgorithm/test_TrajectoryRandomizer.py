@@ -17,19 +17,19 @@ class TestTrajectoryRandomizer(unittest.TestCase):
         self.assertIsInstance(self.trajectory_randomizer, TrajectoryRandomizer)
 
     def test_get_should_restart(self):
-        self.assertFalse(self.trajectory_randomizer.get_should_restart())
+        self.assertFalse(self.trajectory_randomizer.get_variable_should_restart())
 
     def test_set_should_restart(self):
         with self.assertRaises(TypeError):
-            self.trajectory_randomizer.set_should_restart(1)
+            self.trajectory_randomizer.set_variable_should_restart_to(1)
         with self.assertRaises(TypeError):
-            self.trajectory_randomizer.set_should_restart(1.)
+            self.trajectory_randomizer.set_variable_should_restart_to(1.)
         with self.assertRaises(TypeError):
-            self.trajectory_randomizer.set_should_restart('1')
+            self.trajectory_randomizer.set_variable_should_restart_to('1')
         with self.assertRaises(TypeError):
-            self.trajectory_randomizer.set_should_restart(lambda x: 1)
-        self.trajectory_randomizer.set_should_restart(True)
-        self.assertTrue(self.trajectory_randomizer.get_should_restart())
+            self.trajectory_randomizer.set_variable_should_restart_to(lambda x: 1)
+        self.trajectory_randomizer.set_variable_should_restart_to(True)
+        self.assertTrue(self.trajectory_randomizer.get_variable_should_restart())
 
     def test_get_restart_probability(self):
         self.assertEqual(self.restart_probability, self.trajectory_randomizer.get_restart_probability())

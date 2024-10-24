@@ -206,10 +206,10 @@ class TrajectoryRandomizer:
         self.restart_probability = restart_probability
         self.length_partial_trajectory = length_partial_trajectory
 
-    def get_should_restart(self):
+    def get_variable_should_restart(self):
         return self.should_restart
 
-    def set_should_restart(self, should_restart: bool):
+    def set_variable_should_restart_to(self, should_restart: bool):
         if not isinstance(should_restart, bool):
             raise TypeError("Type of 'should_restart' has to be bool.")
         self.should_restart = should_restart
@@ -348,12 +348,11 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             self.restart_with_new_loss(loss_functions=loss_functions)
             other_algorithm.reset_state_and_iteration_counter()
             other_algorithm.loss_function = self.loss_function
-            trajectory_randomizer.set_should_restart(False)
+            trajectory_randomizer.set_variable_should_restart_to(False)
         else:
             self.detach_current_state_from_computational_graph()
-            trajectory_randomizer.set_should_restart(
-                (torch.rand(1) <= trajectory_randomizer.restart_probability).item()
-            )
+            trajectory_randomizer.set_variable_should_restart_to(
+                (torch.rand(1) <= trajectory_randomizer.restart_probability).item())
 
     def fit(self,
             loss_functions: list,
@@ -449,12 +448,11 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                                       loss_functions: List[LossFunction]):
         if trajectory_randomizer.should_restart:
             self.restart_with_new_loss(loss_functions=loss_functions)
-            trajectory_randomizer.set_should_restart(False)
+            trajectory_randomizer.set_variable_should_restart_to(False)
         else:
             self.detach_current_state_from_computational_graph()
-            trajectory_randomizer.set_should_restart(
-                (torch.rand(1) <= trajectory_randomizer.restart_probability).item()
-            )
+            trajectory_randomizer.set_variable_should_restart_to(
+                (torch.rand(1) <= trajectory_randomizer.restart_probability).item())
 
     def restart_with_new_loss(self, loss_functions: List[LossFunction]):
         self.reset_state_and_iteration_counter()
@@ -493,7 +491,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             ratios_of_losses = self.compute_ratio_of_losses(predicted_iterates=predicted_iterates)
             if losses_are_invalid(ratios_of_losses):
                 print('Invalid losses.')
-                trajectory_randomizer.set_should_restart(True)
+                trajectory_randomizer.set_variable_should_restart_to(True)
                 add_noise_to_every_parameter_that_requires_grad(self, sampling_assistant=sampling_assistant)
                 continue
             sum_losses = torch.sum(torch.stack(ratios_of_losses))
