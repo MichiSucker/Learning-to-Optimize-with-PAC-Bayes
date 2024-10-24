@@ -206,7 +206,7 @@ class TrajectoryRandomizer:
         self.restart_probability = restart_probability
         self.length_partial_trajectory = length_partial_trajectory
 
-    def get_variable_should_restart(self):
+    def get_variable__should_restart(self):
         return self.should_restart
 
     def set_variable_should_restart_to(self, should_restart: bool):
