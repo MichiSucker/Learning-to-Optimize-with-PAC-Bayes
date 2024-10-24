@@ -234,21 +234,6 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         other_algorithm.reset_state_and_iteration_counter()
         initialization_assistant.final_message()
 
-    def determine_next_starting_point_for_both_algorithms(self,
-                                                          trajectory_randomizer: TrajectoryRandomizer,
-                                                          other_algorithm: OptimizationAlgorithm,
-                                                          loss_functions: List[LossFunction]):
-        if trajectory_randomizer.should_restart:
-            self.restart_with_new_loss(loss_functions=loss_functions)
-            other_algorithm.reset_state_and_iteration_counter()
-            other_algorithm.loss_function = self.loss_function
-            trajectory_randomizer.set_should_restart(False)
-        else:
-            self.detach_current_state_from_computational_graph()
-            trajectory_randomizer.set_should_restart(
-                (torch.rand(1) <= trajectory_randomizer.restart_probability).item()
-            )
-
     def initialize_helpers_for_initialization(self, parameters):
 
         initialization_assistant = InitializationAssistant(
@@ -291,6 +276,21 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         optimizer.step()
         with torch.no_grad():
             initialization_assistant.running_loss += loss
+
+    def determine_next_starting_point_for_both_algorithms(self,
+                                                          trajectory_randomizer: TrajectoryRandomizer,
+                                                          other_algorithm: OptimizationAlgorithm,
+                                                          loss_functions: List[LossFunction]):
+        if trajectory_randomizer.should_restart:
+            self.restart_with_new_loss(loss_functions=loss_functions)
+            other_algorithm.reset_state_and_iteration_counter()
+            other_algorithm.loss_function = self.loss_function
+            trajectory_randomizer.set_should_restart(False)
+        else:
+            self.detach_current_state_from_computational_graph()
+            trajectory_randomizer.set_should_restart(
+                (torch.rand(1) <= trajectory_randomizer.restart_probability).item()
+            )
 
     def fit(self,
             loss_functions: list,
