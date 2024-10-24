@@ -10,6 +10,10 @@ import numpy as np
 from torch.distributions import MultivariateNormal
 
 
+class SamplingAssistant:
+    pass
+
+
 class ConstraintChecker:
 
     def __init__(self,
