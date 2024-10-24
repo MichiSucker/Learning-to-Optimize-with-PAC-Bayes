@@ -141,7 +141,7 @@ class TrainingAssistant:
         else:
             self.bins = bins
 
-    def starting_message(self):
+    def print_starting_message(self):
         if self.printing_enabled:
             print("---------------------------------------------------------------------------------------------------")
             print("Fit Algorithm:")
@@ -149,7 +149,7 @@ class TrainingAssistant:
             print(f"\t-Optimizing for {self.maximal_number_of_iterations} iterations.")
             print(f"\t-Updating step-size every {self.update_stepsize_every} iterations.")
 
-    def final_message(self):
+    def print_final_message(self):
         if self.printing_enabled:
             print("---------------------------------------------------------------------------------------------------")
             print("End Fitting Algorithm.")
@@ -367,7 +367,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             update_parameters=update_parameters
         )
 
-        training_assistant.starting_message()
+        training_assistant.print_starting_message()
         pbar = training_assistant.get_progressbar()
         for i in pbar:
             if training_assistant.should_update_stepsize_of_optimizer(iteration=i):
@@ -387,7 +387,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
         constraint_checker.final_check(self)
         self.reset_state_and_iteration_counter()
-        training_assistant.final_message()
+        training_assistant.print_final_message()
 
     def initialize_helpers_for_training(
             self,

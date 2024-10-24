@@ -29,14 +29,14 @@ class TestTrainingAssistant(unittest.TestCase):
         # This is just a weak test: We only test whether it created an output.
         capturedOutput = io.StringIO()
         sys.stdout = capturedOutput
-        self.training_assistant.starting_message()
+        self.training_assistant.print_starting_message()
         self.assertTrue(len(capturedOutput.getvalue()) > 0)
         sys.stdout = sys.__stdout__
 
         self.training_assistant.printing_enabled = False
         capturedOutput = io.StringIO()
         sys.stdout = capturedOutput
-        self.training_assistant.starting_message()
+        self.training_assistant.print_starting_message()
         self.assertTrue(len(capturedOutput.getvalue()) == 0)
         sys.stdout = sys.__stdout__
 
@@ -44,14 +44,14 @@ class TestTrainingAssistant(unittest.TestCase):
         # This is just a weak test: We only test whether it created an output.
         capturedOutput = io.StringIO()
         sys.stdout = capturedOutput
-        self.training_assistant.final_message()
+        self.training_assistant.print_final_message()
         self.assertTrue(len(capturedOutput.getvalue()) > 0)
         sys.stdout = sys.__stdout__
 
         self.training_assistant.printing_enabled = False
         capturedOutput = io.StringIO()
         sys.stdout = capturedOutput
-        self.training_assistant.final_message()
+        self.training_assistant.print_final_message()
         self.assertTrue(len(capturedOutput.getvalue()) == 0)
         sys.stdout = sys.__stdout__
 
