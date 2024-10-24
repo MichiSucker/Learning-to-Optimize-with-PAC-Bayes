@@ -406,6 +406,149 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                   for k in range(1, len(predicted_iterates))]
         return ratios
 
+    def sample_with_sgld(self,
+                         loss_functions: List,
+                         sampling_parameters: Dict,
+                         constraint_parameters: Dict,
+                         ) -> (List, List):
+
+        print("----------------------- SAMPLING WITH NEW VERSION.---------------------------")
+
+        # Extract into variables
+        num_samples = sampling_parameters['num_samples']
+        num_iter_burnin = sampling_parameters['num_iter_burnin']
+        length_trajectory = sampling_parameters['length_trajectory']
+        init_lr = sampling_parameters['lr']
+        with_restarting = sampling_parameters['with_restarting']
+        restart_probability = sampling_parameters['restart_probability']
+
+        # List to store the samples_prior
+        samples, samples_state_dict, estimated_probabilities = [], [], []
+
+        # Variable for initialization procedure
+        fresh_init = True
+
+        # Set optimizer to SGD
+        optimizer = torch.optim.SGD(self.implementation.parameters(), lr=init_lr)
+
+        # Setup distributions for noise
+        noise_distributions = {}
+        for p in self.implementation.parameters():
+            if p.requires_grad:
+                dim = len(p.flatten())
+                noise_distributions[p] = MultivariateNormal(torch.zeros(dim), torch.eye(dim))
+
+        # For rejection procedure
+        # This assumes that the initialization of the sampling algorithm lies withing the constraint!
+        old_state_dict = copy.deepcopy(self.implementation.state_dict())
+        n_correct_samples = 0
+        t = 1
+        rejected, num_iter_update_rejection_rate = 0, 20
+        pbar = tqdm(total=num_samples + num_iter_burnin)
+        pbar.set_description('Sampling')
+        while n_correct_samples < num_samples + num_iter_burnin:
+
+            if (t >= 1) and (t % num_iter_update_rejection_rate == 0):
+                if rejected / num_iter_update_rejection_rate >= 0.5:
+                    print("Decrease Learning Rate.")
+                    init_lr *= 0.1
+                rejected = 0
+
+            # Decay learning-rate
+            lr = init_lr / t
+            for parameter in optimizer.param_groups:
+                parameter['lr'] = lr
+
+            # Update iteration counter (for reduction of step-size, to prevent getting stuck)
+            t += 1
+
+            # Reset optimizer
+            optimizer.zero_grad()
+
+            # Probabilistic Initialization of Algorithm
+            if fresh_init or not with_restarting:
+
+                # Start from zero again
+                self.reset_state()
+
+                # Don't restart directly again from zero
+                fresh_init = False
+            else:
+
+                # Detach trajectories from each other to prevent passing through graph quantile_distance second time
+                x_0 = self.current_state.detach().clone()
+                self.current_state = x_0
+                restart_probability = restart_probability
+                fresh_init = torch.rand(1) <= restart_probability
+
+            # Sample loss-function
+            current_loss_function = np.random.choice(loss_functions)
+            self.set_loss_function(current_loss_function)
+
+            # Predict iterates
+            # predicted_iterates = [self.current_state[-1]] + \
+            #                      [self.step(return_val=True) for _ in range(length_trajectory)]
+
+            # Predict iterates
+            predicted_iterates = self.compute_trajectory(num_steps=length_trajectory)
+
+            # Compute loss: Sum over relative decreases of the loss
+            losses = [(self.loss_function(predicted_iterates[k]) / self.loss_function(predicted_iterates[k - 1])).
+                      reshape((-1,))
+                      for k in range(1, len(predicted_iterates))]
+
+            sum_losses = torch.sum(torch.stack(losses))
+
+            if torch.isnan(sum_losses) or torch.isinf(sum_losses):
+                continue
+
+            if len(losses) == 0:
+                fresh_init = True
+                add_noise(self, lr=lr, noise_distributions=noise_distributions)
+                continue
+
+            sum_losses.backward()
+
+            # Perform noisy stochastic gradient step
+            for p in self.implementation.parameters():
+                if p.requires_grad:
+                    noise = lr ** 2 * noise_distributions[p].sample()
+                    with torch.no_grad():
+                        p.add_(-0.5 * lr * p.grad + noise.reshape(p.shape))
+
+            # Check constraint. Reject current step if it is not satisfied.
+            # Note that for the sampling procedure here, it is assumed that one starts with a point inside the
+            # constraint, i.e. one already has found a point inside.
+            if self.constraint is not None:
+                satisfies_constraint, estimated_prob = self.constraint(self, return_val=True)
+
+                # If constraint is satisfied, update the point.
+                if satisfies_constraint:
+                    old_state_dict = copy.deepcopy(self.implementation.state_dict())
+
+                    # Store sample
+                    if t >= num_iter_burnin:
+                        samples.append(
+                            [p.detach().clone() for p in self.implementation.parameters() if p.requires_grad])
+                        samples_state_dict.append(copy.deepcopy(self.implementation.state_dict()))
+                        estimated_probabilities.append(estimated_prob)
+
+                        # Increase sample counter
+                        n_correct_samples += 1
+                        pbar.update(1)
+
+                # Otherwise, reject the new point.
+                else:
+                    self.implementation.load_state_dict(old_state_dict)
+                    rejected += 1
+                    print("Reject.")
+                    continue
+
+        # Reset iteration counter of algorithm
+        self.iteration_counter = 0
+
+        return samples[-num_samples:], samples_state_dict[-num_samples:], estimated_probabilities[-num_samples:]
+
 
 def losses_are_invalid(losses: List) -> bool:
     if (len(losses) == 0) or (None in losses) or (torch.inf in losses):
