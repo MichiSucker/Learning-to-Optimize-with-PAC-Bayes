@@ -425,7 +425,6 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         # Extract into variables
         desired_number_of_samples = parameters['num_samples']
         number_of_iterations_burnin = parameters['num_iter_burnin']
-        length_trajectory = parameters['length_trajectory']
 
         sampling_assistant = SamplingAssistant(learning_rate=parameters['lr'])
 
@@ -461,7 +460,8 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             self.determine_next_starting_point(
                 trajectory_randomizer=trajectory_randomizer, loss_functions=loss_functions)
             self.set_loss_function(np.random.choice(loss_functions))    # For SGLD, we always sample a new loss-function
-            predicted_iterates = self.compute_partial_trajectory(number_of_steps=length_trajectory)
+            predicted_iterates = self.compute_partial_trajectory(
+                number_of_steps=trajectory_randomizer.length_partial_trajectory)
             ratios_of_losses = self.compute_ratio_of_losses(predicted_iterates=predicted_iterates)
             if losses_are_invalid(ratios_of_losses):
                 print('Invalid losses.')
