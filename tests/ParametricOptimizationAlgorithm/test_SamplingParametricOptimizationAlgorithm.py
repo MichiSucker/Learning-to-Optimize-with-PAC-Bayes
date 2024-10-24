@@ -4,7 +4,7 @@ import sys
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
     ParametricOptimizationAlgorithm, compute_initialization_loss, TrajectoryRandomizer, InitializationAssistant)
 import torch
-from algorithms.dummy import Dummy, NonTrainableDummy
+from algorithms.dummy import Dummy, DummyWithMoreTrainableParameters
 from classes.LossFunction.class_LossFunction import LossFunction
 from torch.distributions import MultivariateNormal
 import copy
@@ -50,3 +50,15 @@ class TestSamplingParametricOptimizationAlgorithm(unittest.TestCase):
         self.optimization_algorithm.perform_noisy_gradient_step_on_hyperparameters(
             lr=lr, noise_distributions=noise_distributions)
         self.assertEqual(self.optimization_algorithm.implementation.state_dict(), old_hyperparameters)
+
+    def test_set_up_noise_distributions(self):
+        self.optimization_algorithm.implementation = DummyWithMoreTrainableParameters()
+        noise_distributions = self.optimization_algorithm.set_up_noise_distributions()
+        self.assertIsInstance(noise_distributions, dict)
+        for name, parameter in self.optimization_algorithm.implementation.named_parameters():
+            if parameter.requires_grad:
+                self.assertTrue(name in list(noise_distributions.keys()))
+                self.assertIsInstance(noise_distributions[name], MultivariateNormal)
+                self.assertEqual(noise_distributions[name].loc.shape, parameter.reshape((-1,)).shape)
+            else:
+                self.assertFalse(name in list(noise_distributions.keys()))
