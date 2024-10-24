@@ -25,6 +25,20 @@ class SamplingAssistant:
     def decay_learning_rate(self, iteration):
         self.current_learning_rate = self.initial_learning_rate / iteration
 
+    def prepare_output(self):
+        if any((len(self.samples) < self.desired_number_of_samples,
+                len(self.samples_state_dict) < self.desired_number_of_samples,
+                len(self.estimated_probabilities) < self.desired_number_of_samples)):
+            raise Exception("Did not find enough samples to prepare output.")
+
+        if ((len(self.samples) != len(self.samples_state_dict))
+                or (len(self.samples) != len(self.estimated_probabilities))):
+            raise Exception("Something went wrong: Number of samples do not match up.")
+
+        return (self.samples[-self.desired_number_of_samples:],
+                self.samples_state_dict[-self.desired_number_of_samples:],
+                self.estimated_probabilities[-self.desired_number_of_samples:])
+
 
 class ConstraintChecker:
 
@@ -507,9 +521,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         # Reset iteration counter of algorithm
         self.iteration_counter = 0
 
-        return (sampling_assistant.samples[-sampling_assistant.desired_number_of_samples:],
-                sampling_assistant.samples_state_dict[-sampling_assistant.desired_number_of_samples:],
-                sampling_assistant.estimated_probabilities[-sampling_assistant.desired_number_of_samples:])
+        return sampling_assistant.prepare_output()
 
     def set_up_noise_distributions(self):
         noise_distributions = {}
