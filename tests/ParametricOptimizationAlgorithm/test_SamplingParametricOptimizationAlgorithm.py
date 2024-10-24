@@ -1,4 +1,6 @@
 import unittest
+from distutils.dep_util import newer
+
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
     ParametricOptimizationAlgorithm, TrajectoryRandomizer, SamplingAssistant)
 import torch
@@ -39,11 +41,11 @@ class TestSamplingParametricOptimizationAlgorithm(unittest.TestCase):
                                                number_of_iterations_burnin=number_of_iterations_burnin)
 
         noise_distributions = {}
-        for p in self.optimization_algorithm.implementation.parameters():
-            if p.requires_grad:
-                dim = len(p.flatten())
-                noise_distributions[p] = MultivariateNormal(torch.zeros(dim), torch.eye(dim))
-                p.grad = torch.randn(size=p.shape)
+        for name, parameter in self.optimization_algorithm.implementation.named_parameters():
+            if parameter.requires_grad:
+                dim = len(parameter.flatten())
+                noise_distributions[name] = MultivariateNormal(torch.zeros(dim), torch.eye(dim))
+                parameter.grad = torch.randn(size=parameter.shape)
         sampling_assistant.set_noise_distributions(noise_distributions)
         old_hyperparameters = copy.deepcopy(self.optimization_algorithm.implementation.state_dict())
         self.optimization_algorithm.perform_noisy_gradient_step_on_hyperparameters(sampling_assistant)
@@ -78,3 +80,28 @@ class TestSamplingParametricOptimizationAlgorithm(unittest.TestCase):
                 self.assertEqual(noise_distributions[name].loc.shape, parameter.reshape((-1,)).shape)
             else:
                 self.assertFalse(name in list(noise_distributions.keys()))
+
+    def test_compute_next_possible_sample(self):
+        self.optimization_algorithm.implementation = DummyWithMoreTrainableParameters()
+        noise_distributions = self.optimization_algorithm.set_up_noise_distributions()
+        loss_functions = [LossFunction(dummy_function) for _ in range(10)]
+        trajectory_randomizer = TrajectoryRandomizer(should_restart=True, restart_probability=1.,
+                                                     length_partial_trajectory=1)
+        sampling_assistant = SamplingAssistant(learning_rate=1e-4,
+                                               desired_number_of_samples=10,
+                                               number_of_iterations_burnin=10)
+        sampling_assistant.set_noise_distributions(noise_distributions=noise_distributions)
+        for name, parameter in self.optimization_algorithm.implementation.named_parameters():
+            if parameter.requires_grad:
+                dim = len(parameter.flatten())
+                noise_distributions[name] = MultivariateNormal(torch.zeros(dim), torch.eye(dim))
+                parameter.grad = torch.randn(size=parameter.shape)
+
+        old_hyperparameters = copy.deepcopy(self.optimization_algorithm.implementation.state_dict())
+        self.optimization_algorithm.compute_next_possible_sample(
+            loss_functions=loss_functions,
+            trajectory_randomizer=trajectory_randomizer,
+            sampling_assistant=sampling_assistant
+        )
+        new_hyperparameters = copy.deepcopy(self.optimization_algorithm.implementation.state_dict())
+        self.assertNotEqual(old_hyperparameters, new_hyperparameters)

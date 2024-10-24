@@ -540,6 +540,26 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         sampling_assistant.set_point_that_satisfies_constraint(state_dict=self.implementation.state_dict())
         return sampling_assistant, trajectory_randomizer
 
+    def compute_next_possible_sample(self, loss_functions, trajectory_randomizer, sampling_assistant):
+        # Note that this initialization refers to the optimization space: This is different from the
+        # hyperparameter-space, which is the one for sampling!
+        # Further: This restarting procedure is only a heuristic from our training-procedure.
+        # It is not inherent in SGLD!
+        self.determine_next_starting_point(
+            trajectory_randomizer=trajectory_randomizer, loss_functions=loss_functions)
+        self.set_loss_function(np.random.choice(loss_functions))  # For SGLD, we always sample a new loss-function
+        predicted_iterates = self.compute_partial_trajectory(
+            number_of_steps=trajectory_randomizer.length_partial_trajectory)
+        ratios_of_losses = self.compute_ratio_of_losses(predicted_iterates=predicted_iterates)
+        if losses_are_invalid(ratios_of_losses):
+            print('Invalid losses.')
+            trajectory_randomizer.set_variable__should_restart__to(True)
+            add_noise_to_every_parameter_that_requires_grad(self, sampling_assistant=sampling_assistant)
+            return
+        sum_losses = torch.sum(torch.stack(ratios_of_losses))
+        sum_losses.backward()
+        self.perform_noisy_gradient_step_on_hyperparameters(sampling_assistant)
+
     def set_up_noise_distributions(self):
         noise_distributions = {}
         for name, parameter in self.implementation.named_parameters():
@@ -549,22 +569,25 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         return noise_distributions
 
     def perform_noisy_gradient_step_on_hyperparameters(self, sampling_assistant):
-        for p in self.implementation.parameters():
-            if p.requires_grad:
+        for name, parameter in self.implementation.named_parameters():
+            if parameter.requires_grad:
                 noise = (sampling_assistant.current_learning_rate ** 2
-                         * sampling_assistant.noise_distributions[p].sample())
+                         * sampling_assistant.noise_distributions[name].sample())
                 with torch.no_grad():
-                    p.add_(-0.5 * sampling_assistant.current_learning_rate * p.grad + noise.reshape(p.shape))
+                    parameter.add_(
+                        -0.5 * sampling_assistant.current_learning_rate * parameter.grad
+                        + noise.reshape(parameter.shape)
+                    )
 
 
 def add_noise_to_every_parameter_that_requires_grad(
         opt_algo: OptimizationAlgorithm, sampling_assistant: SamplingAssistant) -> None:
     with torch.no_grad():
-        for p in opt_algo.implementation.parameters():
-            if p.requires_grad:
+        for name, parameter in opt_algo.implementation.named_parameters():
+            if parameter.requires_grad:
                 noise = (sampling_assistant.current_learning_rate ** 2
-                         * sampling_assistant.noise_distributions[p].sample())
-                p.add_(noise.reshape(p.shape))
+                         * sampling_assistant.noise_distributions[parameter].sample())
+                parameter.add_(noise.reshape(parameter.shape))
 
 
 def losses_are_invalid(losses: List) -> bool:
