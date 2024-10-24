@@ -471,27 +471,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                          parameters: dict
                          ) -> Tuple[list, list, list]:
 
-        sampling_assistant = SamplingAssistant(
-            learning_rate=parameters['lr'],
-            desired_number_of_samples=parameters['num_samples'],
-            number_of_iterations_burnin=parameters['num_iter_burnin']
-        )
-
-        trajectory_randomizer = TrajectoryRandomizer(
-            should_restart=True,
-            restart_probability=parameters['restart_probability'],
-            length_partial_trajectory=parameters['length_trajectory']
-        )
-
-        # Setup distributions for noise
-        noise_distributions = self.set_up_noise_distributions()
-
-        # For rejection procedure
-        # This assumes that the initialization of the sampling algorithm lies withing the constraint!
-        # Since 'fit' should be called before this method, the final output either got rejected or does indeed ly
-        # inside the constraint.
-        sampling_assistant.set_point_that_satisfies_constraint(state_dict=self.implementation.state_dict())
-
+        sampling_assistant, trajectory_randomizer = self.initialize_helpers_for_sampling(parameters=parameters)
         t = 1
         pbar = sampling_assistant.get_progressbar()
         while sampling_assistant.should_continue():
@@ -511,7 +491,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             if losses_are_invalid(ratios_of_losses):
                 print('Invalid losses.')
                 trajectory_randomizer.set_should_restart(True)
-                add_noise(self, lr=sampling_assistant.current_learning_rate, noise_distributions=noise_distributions)
+                add_noise(self, sampling_assistant=sampling_assistant)
                 continue
             sum_losses = torch.sum(torch.stack(ratios_of_losses))
             sum_losses.backward()
@@ -557,6 +537,10 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             number_of_iterations_burnin=parameters['num_iter_burnin']
         )
         sampling_assistant.set_noise_distributions(self.set_up_noise_distributions())
+        # For rejection procedure
+        # This assumes that the initialization of the sampling algorithm lies withing the constraint!
+        # Since 'fit' should be called before this method, the final output either got rejected or does indeed ly
+        # inside the constraint.
         sampling_assistant.set_point_that_satisfies_constraint(state_dict=self.implementation.state_dict())
         return sampling_assistant, trajectory_randomizer
 
@@ -577,14 +561,13 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
 
 def add_noise(opt_algo: OptimizationAlgorithm,
-              lr: float,
-              noise_distributions: dict
+              sampling_assistant: SamplingAssistant
               ) -> None:
     # Add noise to every hyperparameter that requires gradient
     with torch.no_grad():
         for p in opt_algo.implementation.parameters():
             if p.requires_grad:
-                noise = lr ** 2 * noise_distributions[p].sample()
+                noise = sampling_assistant.current_learning_rate ** 2 * sampling_assistant.noise_distributions[p].sample()
                 p.add_(noise.reshape(p.shape))
 
 
