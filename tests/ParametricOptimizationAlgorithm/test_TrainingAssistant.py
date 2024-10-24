@@ -62,7 +62,7 @@ class TestTrainingAssistant(unittest.TestCase):
         new_bins = [1, 2, 3]
         old_bins = self.training_assistant.get_variable__bins()
         self.assertNotEqual(old_bins, new_bins)
-        self.training_assistant.set_bins(new_bins=new_bins)
+        self.training_assistant.set_variable__bins__to(new_bins=new_bins)
         self.assertEqual(self.training_assistant.get_variable__bins(), new_bins)
 
     def test_should_print_update(self):

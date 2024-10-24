@@ -172,7 +172,7 @@ class TrainingAssistant:
     def get_variable__bins(self) -> list:
         return self.bins
 
-    def set_bins(self, new_bins: list):
+    def set_variable__bins__to(self, new_bins: list):
         self.bins = new_bins
 
     def should_print_update(self, iteration: int) -> bool:
