@@ -154,5 +154,6 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
         self.assertNotEqual(old_hyperparameters, self.optimization_algorithm.implementation.state_dict())
         self.assertTrue(torch.equal(self.optimization_algorithm.current_state,
                                     self.optimization_algorithm.initial_state))
+        self.assertEqual(self.optimization_algorithm.iteration_counter, 0)
         self.assertTrue(len(capturedOutput.getvalue()) > 0)
         sys.stdout = sys.__stdout__
