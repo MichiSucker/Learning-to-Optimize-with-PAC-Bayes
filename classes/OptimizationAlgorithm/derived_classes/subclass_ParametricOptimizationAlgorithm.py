@@ -550,6 +550,18 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         return samples[-num_samples:], samples_state_dict[-num_samples:], estimated_probabilities[-num_samples:]
 
 
+def add_noise(opt_algo: OptimizationAlgorithm,
+              lr: float,
+              noise_distributions: dict
+              ) -> None:
+    # Add noise to every hyperparameter that requires gradient
+    with torch.no_grad():
+        for p in opt_algo.implementation.parameters():
+            if p.requires_grad:
+                noise = lr ** 2 * noise_distributions[p].sample()
+                p.add_(noise.reshape(p.shape))
+
+
 def losses_are_invalid(losses: List) -> bool:
     if (len(losses) == 0) or (None in losses) or (torch.inf in losses):
         return True
