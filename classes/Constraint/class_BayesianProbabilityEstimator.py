@@ -81,7 +81,7 @@ class BayesianProbabilityEstimator:
         while current_upper_quantile - current_lower_quantile > self.quantile_distance:
 
             n_iterates += 1
-            result = sample_and_evaluate_random_constraint(point=input_to_constraint,
+            result = sample_and_evaluate_random_constraint(input_to_constraint=input_to_constraint,
                                                            list_of_constraints=self.list_of_constraints)
             a, b, current_upper_quantile, current_lower_quantile = update_parameters_and_uncertainty(
                 result=result, a=a, b=b, upper_quantile=self.upper_quantile, lower_quantile=self.lower_quantile)
@@ -123,12 +123,12 @@ def check_probabilities(probabilities: tuple) -> bool:
         return False
 
 
-def sample_and_evaluate_random_constraint(point: torch.Tensor, list_of_constraints: list[Callable]) -> int:
+def sample_and_evaluate_random_constraint(input_to_constraint: torch.Tensor, list_of_constraints: list[Callable]) -> int:
     if len(list_of_constraints) == 0:
         raise ValueError('There are no constraints to evaluate.')
     idx = np.random.randint(low=0, high=len(list_of_constraints))
     cur_fun = list_of_constraints[idx]
-    return int(cur_fun(point))
+    return int(cur_fun(input_to_constraint))
 
 
 def update_parameters_and_uncertainty(result, a, b, upper_quantile, lower_quantile):
