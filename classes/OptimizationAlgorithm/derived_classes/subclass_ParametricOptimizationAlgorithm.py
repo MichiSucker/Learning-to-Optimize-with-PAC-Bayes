@@ -551,12 +551,13 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                 noise_distributions[name] = MultivariateNormal(torch.zeros(dim), torch.eye(dim))
         return noise_distributions
 
-    def perform_noisy_gradient_step_on_hyperparameters(self, sampling_assist):
+    def perform_noisy_gradient_step_on_hyperparameters(self, sampling_assistant):
         for p in self.implementation.parameters():
             if p.requires_grad:
-                noise = sampling_assist.current_learning_rate ** 2 * sampling_assist.noise_distributions[p].sample()
+                noise = (sampling_assistant.current_learning_rate ** 2
+                         * sampling_assistant.noise_distributions[p].sample())
                 with torch.no_grad():
-                    p.add_(-0.5 * sampling_assist.current_learning_rate * p.grad + noise.reshape(p.shape))
+                    p.add_(-0.5 * sampling_assistant.current_learning_rate * p.grad + noise.reshape(p.shape))
 
 
 def add_noise_to_every_parameter_that_requires_grad(
