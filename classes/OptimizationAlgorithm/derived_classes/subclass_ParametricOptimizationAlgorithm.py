@@ -409,22 +409,23 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
     def sample_with_sgld(self,
                          loss_functions: list,
-                         sampling_parameters: dict
+                         parameters: dict
                          ) -> Tuple[list, list, list]:
 
         # Extract into variables
-        num_samples = sampling_parameters['num_samples']
-        num_iter_burnin = sampling_parameters['num_iter_burnin']
-        length_trajectory = sampling_parameters['length_trajectory']
-        init_lr = sampling_parameters['lr']
-        with_restarting = sampling_parameters['with_restarting']
-        restart_probability = sampling_parameters['restart_probability']
+        desired_number_of_samples = parameters['num_samples']
+        number_of_iterations_burnin = parameters['num_iter_burnin']
+        length_trajectory = parameters['length_trajectory']
+        init_lr = parameters['lr']
+
+        trajectory_randomizer = TrajectoryRandomizer(
+            should_restart=True,
+            restart_probability=parameters['restart_probability'],
+            length_partial_trajectory=parameters['length_trajectory']
+        )
 
         # List to store the samples_prior
         samples, samples_state_dict, estimated_probabilities = [], [], []
-
-        # Variable for initialization procedure
-        fresh_init = True
 
         # Set optimizer to SGD
         optimizer = torch.optim.SGD(self.implementation.parameters(), lr=init_lr)
@@ -441,11 +442,11 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         # Since 'fit' should be called before this method, the final output either got rejected or does indeed ly
         # inside the constraint.
         old_state_dict = copy.deepcopy(self.implementation.state_dict())
-        n_correct_samples = 0
+        number_of_correct_samples = 0
         t = 1
-        pbar = tqdm(total=num_samples + num_iter_burnin)
+        pbar = tqdm(total=desired_number_of_samples + number_of_iterations_burnin)
         pbar.set_description('Sampling')
-        while n_correct_samples < num_samples + num_iter_burnin:
+        while number_of_correct_samples < desired_number_of_samples + number_of_iterations_burnin:
 
             # Decay learning-rate
             lr = init_lr / t
@@ -456,45 +457,23 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             t += 1
 
             # Reset optimizer
-            optimizer.zero_grad()
+            optimizer.zero_grad()   # PROBABLY NOT NEEDED!
 
-            # Probabilistic Initialization of Algorithm
-            if fresh_init or not with_restarting:
-
-                # Start from zero again
-                self.reset_state_and_iteration_counter()
-
-                # Don't restart directly again from zero
-                fresh_init = False
-            else:
-
-                # Detach trajectories from each other to prevent passing through graph quantile_distance second time
-                x_0 = self.current_state.detach().clone()
-                self.current_state = x_0
-                fresh_init = torch.rand(1) <= restart_probability
-
-            # Sample loss-function
-            current_loss_function = np.random.choice(loss_functions)
-            self.set_loss_function(current_loss_function)
-
-            # Predict iterates
+            # Note that this initialization refers to the optimization space: This is different from the
+            # hyperparameter-space, which is the one for sampling!
+            # Further: This restarting procedure is only a heuristic from our training-procedure.
+            # It is not inherent in SGLD!
+            self.determine_next_starting_point(
+                trajectory_randomizer=trajectory_randomizer, loss_functions=loss_functions)
+            self.set_loss_function(np.random.choice(loss_functions))    # For SGLD, we always sample a new loss-function
             predicted_iterates = self.compute_partial_trajectory(number_of_steps=length_trajectory)
-
-            # Compute loss: Sum over relative decreases of the loss
-            losses = [(self.loss_function(predicted_iterates[k]) / self.loss_function(predicted_iterates[k - 1])).
-                      reshape((-1,))
-                      for k in range(1, len(predicted_iterates))]
-
-            sum_losses = torch.sum(torch.stack(losses))
-
-            if torch.isnan(sum_losses) or torch.isinf(sum_losses):
-                continue
-
-            if len(losses) == 0:
-                fresh_init = True
+            ratios_of_losses = self.compute_ratio_of_losses(predicted_iterates=predicted_iterates)
+            if losses_are_invalid(ratios_of_losses):
+                print('Invalid losses.')
+                trajectory_randomizer.set_should_restart(True)
                 add_noise(self, lr=lr, noise_distributions=noise_distributions)
                 continue
-
+            sum_losses = torch.sum(torch.stack(ratios_of_losses))
             sum_losses.backward()
 
             # Perform noisy stochastic gradient step
@@ -515,14 +494,14 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                     old_state_dict = copy.deepcopy(self.implementation.state_dict())
 
                     # Store sample
-                    if t >= num_iter_burnin:
+                    if t >= number_of_iterations_burnin:
                         samples.append(
                             [p.detach().clone() for p in self.implementation.parameters() if p.requires_grad])
                         samples_state_dict.append(copy.deepcopy(self.implementation.state_dict()))
                         estimated_probabilities.append(estimated_prob)
 
                         # Increase sample counter
-                        n_correct_samples += 1
+                        number_of_correct_samples += 1
                         pbar.update(1)
 
                 # Otherwise, reject the new point.
@@ -533,7 +512,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         # Reset iteration counter of algorithm
         self.iteration_counter = 0
 
-        return samples[-num_samples:], samples_state_dict[-num_samples:], estimated_probabilities[-num_samples:]
+        return samples[-desired_number_of_samples:], samples_state_dict[-desired_number_of_samples:], estimated_probabilities[-desired_number_of_samples:]
 
 
 def add_noise(opt_algo: OptimizationAlgorithm,
