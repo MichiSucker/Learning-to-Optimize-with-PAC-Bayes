@@ -34,15 +34,15 @@ class TestConstraintChecker(unittest.TestCase):
         self.assertFalse(self.constraint_checker.should_check_constraint(i))
         self.assertFalse(self.constraint_checker.should_check_constraint(0))
 
-        self.constraint_checker.set_variable_there_is_a_constraint_to(False)
+        self.constraint_checker.set_variable__there_is_a_constraint__to(False)
         i = torch.randint(low=1, high=9, size=(1,)).item() * self.check_constraint_every
         self.assertFalse(self.constraint_checker.should_check_constraint(i))
 
     def test_set_there_is_a_constraint(self):
         self.assertTrue(self.constraint_checker.there_is_a_constraint)
-        self.constraint_checker.set_variable_there_is_a_constraint_to(False)
+        self.constraint_checker.set_variable__there_is_a_constraint__to(False)
         self.assertFalse(self.constraint_checker.there_is_a_constraint)
-        self.constraint_checker.set_variable_there_is_a_constraint_to(True)
+        self.constraint_checker.set_variable__there_is_a_constraint__to(True)
         self.assertTrue(self.constraint_checker.there_is_a_constraint)
 
     def test_set_check_constraint_every(self):
