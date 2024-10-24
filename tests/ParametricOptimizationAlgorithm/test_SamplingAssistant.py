@@ -6,7 +6,11 @@ class TestSamplingAssistant(unittest.TestCase):
 
     def setUp(self):
         self.learning_rate = 1
-        self.sampling_assistant = SamplingAssistant(learning_rate=self.learning_rate)
+        self.number_of_iterations_burnin = 100
+        self.desired_number_of_samples = 10
+        self.sampling_assistant = SamplingAssistant(learning_rate=self.learning_rate,
+                                                    desired_number_of_samples=self.desired_number_of_samples,
+                                                    number_of_iterations_burnin=self.number_of_iterations_burnin)
 
     def test_creation(self):
         self.assertIsInstance(self.sampling_assistant, SamplingAssistant)

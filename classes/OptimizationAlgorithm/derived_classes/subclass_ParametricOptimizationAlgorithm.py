@@ -12,9 +12,12 @@ from torch.distributions import MultivariateNormal
 
 class SamplingAssistant:
 
-    def __init__(self, learning_rate):
+    def __init__(self, learning_rate, desired_number_of_samples, number_of_iterations_burnin):
         self.initial_learning_rate = learning_rate
         self.current_learning_rate = learning_rate
+        self.number_of_correct_samples = 0
+        self.desired_number_of_samples = desired_number_of_samples
+        self.number_of_iterations_burnin = number_of_iterations_burnin
 
     def decay_learning_rate(self, iteration):
         self.current_learning_rate = self.initial_learning_rate / iteration
@@ -422,11 +425,9 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                          parameters: dict
                          ) -> Tuple[list, list, list]:
 
-        # Extract into variables
-        desired_number_of_samples = parameters['num_samples']
-        number_of_iterations_burnin = parameters['num_iter_burnin']
-
-        sampling_assistant = SamplingAssistant(learning_rate=parameters['lr'])
+        sampling_assistant = SamplingAssistant(learning_rate=parameters['lr'],
+                                               desired_number_of_samples=parameters['num_samples'],
+                                               number_of_iterations_burnin=parameters['num_iter_burnin'])
 
         trajectory_randomizer = TrajectoryRandomizer(
             should_restart=True,
@@ -445,11 +446,11 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         # Since 'fit' should be called before this method, the final output either got rejected or does indeed ly
         # inside the constraint.
         old_state_dict = copy.deepcopy(self.implementation.state_dict())
-        number_of_correct_samples = 0
         t = 1
-        pbar = tqdm(total=desired_number_of_samples + number_of_iterations_burnin)
+        pbar = tqdm(total=sampling_assistant.desired_number_of_samples + sampling_assistant.number_of_iterations_burnin)
         pbar.set_description('Sampling')
-        while number_of_correct_samples < desired_number_of_samples + number_of_iterations_burnin:
+        while (sampling_assistant.number_of_correct_samples <
+               sampling_assistant.desired_number_of_samples + sampling_assistant.number_of_iterations_burnin):
 
             sampling_assistant.decay_learning_rate(iteration=t)
 
@@ -484,14 +485,14 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                     old_state_dict = copy.deepcopy(self.implementation.state_dict())
 
                     # Store sample
-                    if t >= number_of_iterations_burnin:
+                    if t >= sampling_assistant.number_of_iterations_burnin:
                         samples.append(
                             [p.detach().clone() for p in self.implementation.parameters() if p.requires_grad])
                         samples_state_dict.append(copy.deepcopy(self.implementation.state_dict()))
                         estimated_probabilities.append(estimated_prob)
 
                         # Increase sample counter
-                        number_of_correct_samples += 1
+                        sampling_assistant.number_of_correct_samples += 1
                         pbar.update(1)
 
                 # Otherwise, reject the new point.
@@ -504,7 +505,9 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         # Reset iteration counter of algorithm
         self.iteration_counter = 0
 
-        return samples[-desired_number_of_samples:], samples_state_dict[-desired_number_of_samples:], estimated_probabilities[-desired_number_of_samples:]
+        return (samples[-sampling_assistant.desired_number_of_samples:],
+                samples_state_dict[-sampling_assistant.desired_number_of_samples:],
+                estimated_probabilities[-sampling_assistant.desired_number_of_samples:])
 
     def set_up_noise_distributions(self):
         noise_distributions = {}
