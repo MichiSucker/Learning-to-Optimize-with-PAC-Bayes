@@ -427,9 +427,6 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         # List to store the samples_prior
         samples, samples_state_dict, estimated_probabilities = [], [], []
 
-        # Set optimizer to SGD
-        optimizer = torch.optim.SGD(self.implementation.parameters(), lr=init_lr)
-
         # Setup distributions for noise
         noise_distributions = self.set_up_noise_distributions()
 
@@ -446,10 +443,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
             # Decay learning-rate
             lr = init_lr / t
-            for parameter in optimizer.param_groups:
-                parameter['lr'] = lr
 
-            optimizer.zero_grad()   # PROBABLY NOT NEEDED!
             # Note that this initialization refers to the optimization space: This is different from the
             # hyperparameter-space, which is the one for sampling!
             # Further: This restarting procedure is only a heuristic from our training-procedure.
