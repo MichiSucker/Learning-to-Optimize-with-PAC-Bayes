@@ -495,8 +495,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                 continue
             sum_losses = torch.sum(torch.stack(ratios_of_losses))
             sum_losses.backward()
-            self.perform_noisy_gradient_step_on_hyperparameters(lr=sampling_assistant.current_learning_rate,
-                                                                noise_distributions=noise_distributions)
+            self.perform_noisy_gradient_step_on_hyperparameters(sampling_assistant)
 
             # Check constraint. Reject current step if it is not satisfied.
             # Note that for the sampling procedure here, it is assumed that one starts with a point inside the
@@ -552,12 +551,12 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                 noise_distributions[name] = MultivariateNormal(torch.zeros(dim), torch.eye(dim))
         return noise_distributions
 
-    def perform_noisy_gradient_step_on_hyperparameters(self, lr, noise_distributions):
+    def perform_noisy_gradient_step_on_hyperparameters(self, sampling_assist):
         for p in self.implementation.parameters():
             if p.requires_grad:
-                noise = lr ** 2 * noise_distributions[p].sample()
+                noise = sampling_assist.current_learning_rate ** 2 * sampling_assist.noise_distributions[p].sample()
                 with torch.no_grad():
-                    p.add_(-0.5 * lr * p.grad + noise.reshape(p.shape))
+                    p.add_(-0.5 * sampling_assist.current_learning_rate * p.grad + noise.reshape(p.shape))
 
 
 def add_noise_to_every_parameter_that_requires_grad(

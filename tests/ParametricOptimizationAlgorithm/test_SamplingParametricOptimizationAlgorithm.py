@@ -31,22 +31,27 @@ class TestSamplingParametricOptimizationAlgorithm(unittest.TestCase):
     def test_perform_noisy_gradient_step_on_hyperparameters(self):
         # This is a weak test: We only check whether the hyperparameters do change or not, depending on the learning
         # rate. For a stronger test, one would have to do a statistical test I guess.
+        learning_rate = 1e-4
+        number_of_iterations_burnin = 100
+        desired_number_of_samples = 10
+        sampling_assistant = SamplingAssistant(learning_rate=learning_rate,
+                                               desired_number_of_samples=desired_number_of_samples,
+                                               number_of_iterations_burnin=number_of_iterations_burnin)
+
         noise_distributions = {}
         for p in self.optimization_algorithm.implementation.parameters():
             if p.requires_grad:
                 dim = len(p.flatten())
                 noise_distributions[p] = MultivariateNormal(torch.zeros(dim), torch.eye(dim))
                 p.grad = torch.randn(size=p.shape)
-        lr = 1e-4
+        sampling_assistant.set_noise_distributions(noise_distributions)
         old_hyperparameters = copy.deepcopy(self.optimization_algorithm.implementation.state_dict())
-        self.optimization_algorithm.perform_noisy_gradient_step_on_hyperparameters(
-            lr=lr, noise_distributions=noise_distributions)
+        self.optimization_algorithm.perform_noisy_gradient_step_on_hyperparameters(sampling_assistant)
         self.assertNotEqual(self.optimization_algorithm.implementation.state_dict(), old_hyperparameters)
 
-        lr = 0
+        sampling_assistant.current_learning_rate = 0
         old_hyperparameters = copy.deepcopy(self.optimization_algorithm.implementation.state_dict())
-        self.optimization_algorithm.perform_noisy_gradient_step_on_hyperparameters(
-            lr=lr, noise_distributions=noise_distributions)
+        self.optimization_algorithm.perform_noisy_gradient_step_on_hyperparameters(sampling_assistant)
         self.assertEqual(self.optimization_algorithm.implementation.state_dict(), old_hyperparameters)
 
     def test_initialize_helpers_for_sampling(self):
