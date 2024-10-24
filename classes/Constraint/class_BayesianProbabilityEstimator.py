@@ -4,8 +4,6 @@ import torch
 from scipy.stats import beta
 
 
-# list_of_constraints, quantile_distance, lower_quantile, upper_quantile, p_l=None, p_u=None
-
 class BayesianProbabilityEstimator:
 
     def __init__(self, list_of_constraints: list, parameters_of_estimation: dict):
