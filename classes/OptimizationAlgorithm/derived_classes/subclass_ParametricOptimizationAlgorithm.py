@@ -491,7 +491,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             if losses_are_invalid(ratios_of_losses):
                 print('Invalid losses.')
                 trajectory_randomizer.set_should_restart(True)
-                add_noise(self, sampling_assistant=sampling_assistant)
+                add_noise_to_every_parameter_that_requires_grad(self, sampling_assist=sampling_assistant)
                 continue
             sum_losses = torch.sum(torch.stack(ratios_of_losses))
             sum_losses.backward()
@@ -560,14 +560,12 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                     p.add_(-0.5 * lr * p.grad + noise.reshape(p.shape))
 
 
-def add_noise(opt_algo: OptimizationAlgorithm,
-              sampling_assistant: SamplingAssistant
-              ) -> None:
-    # Add noise to every hyperparameter that requires gradient
+def add_noise_to_every_parameter_that_requires_grad(
+        opt_algo: OptimizationAlgorithm, sampling_assist: SamplingAssistant) -> None:
     with torch.no_grad():
         for p in opt_algo.implementation.parameters():
             if p.requires_grad:
-                noise = sampling_assistant.current_learning_rate ** 2 * sampling_assistant.noise_distributions[p].sample()
+                noise = sampling_assist.current_learning_rate ** 2 * sampling_assist.noise_distributions[p].sample()
                 p.add_(noise.reshape(p.shape))
 
 
