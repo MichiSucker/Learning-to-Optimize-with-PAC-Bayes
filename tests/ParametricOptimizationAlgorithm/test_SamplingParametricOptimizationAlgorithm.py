@@ -6,6 +6,7 @@ from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizati
 import torch
 from algorithms.dummy import Dummy, NonTrainableDummy
 from classes.LossFunction.class_LossFunction import LossFunction
+from torch.distributions import MultivariateNormal
 import copy
 
 
@@ -24,3 +25,28 @@ class TestSamplingParametricOptimizationAlgorithm(unittest.TestCase):
         self.optimization_algorithm = ParametricOptimizationAlgorithm(implementation=Dummy(),
                                                                       initial_state=self.initial_state,
                                                                       loss_function=self.loss_function)
+
+    # def test_create_next_sample(self):
+    #     self.optimization_algorithm.create_next_sample()
+    #     self.assertTrue()
+
+    def test_perform_noisy_gradient_step_on_hyperparameters(self):
+        # This is a weak test: We only check whether the hyperparameters do change or not, depending on the learning
+        # rate. For a stronger test, one would have to do a statistical test I guess.
+        noise_distributions = {}
+        for p in self.optimization_algorithm.implementation.parameters():
+            if p.requires_grad:
+                dim = len(p.flatten())
+                noise_distributions[p] = MultivariateNormal(torch.zeros(dim), torch.eye(dim))
+                p.grad = torch.randn(size=p.shape)
+        lr = 1e-4
+        old_hyperparameters = copy.deepcopy(self.optimization_algorithm.implementation.state_dict())
+        self.optimization_algorithm.perform_noisy_gradient_step_on_hyperparameters(
+            lr=lr, noise_distributions=noise_distributions)
+        self.assertNotEqual(self.optimization_algorithm.implementation.state_dict(), old_hyperparameters)
+
+        lr = 0
+        old_hyperparameters = copy.deepcopy(self.optimization_algorithm.implementation.state_dict())
+        self.optimization_algorithm.perform_noisy_gradient_step_on_hyperparameters(
+            lr=lr, noise_distributions=noise_distributions)
+        self.assertEqual(self.optimization_algorithm.implementation.state_dict(), old_hyperparameters)
