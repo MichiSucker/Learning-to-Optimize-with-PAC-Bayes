@@ -90,7 +90,7 @@ class ConstraintChecker:
         else:
             return False
 
-    def set_there_is_a_constraint(self, new_bool: bool):
+    def set_variable_there_is_a_constraint_to(self, new_bool: bool):
         self.there_is_a_constraint = new_bool
 
     def set_variable_check_constraint_every_to(self, new_number: int):
