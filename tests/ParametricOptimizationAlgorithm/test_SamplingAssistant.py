@@ -1,6 +1,7 @@
 import unittest
 from types import NoneType
 
+from sympy.stats import MultivariateNormal
 
 from algorithms.dummy import Dummy
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import SamplingAssistant
@@ -36,6 +37,14 @@ class TestSamplingAssistant(unittest.TestCase):
         self.assertTrue(hasattr(pbar, 'desc'))
         self.assertTrue(hasattr(pbar, 'iterable'))
         self.assertEqual(pbar.desc, 'Sampling: ')
+
+    def test_set_noise_distributions(self):
+        self.assertIsInstance(self.sampling_assistant.noise_distributions, NoneType)
+        noise_distributions = {'scale': 0.1}
+        self.sampling_assistant.set_noise_distributions(noise_distributions)
+        self.assertEqual(self.sampling_assistant.noise_distributions, noise_distributions)
+        with self.assertRaises(TypeError):
+            self.sampling_assistant.set_noise_distributions(1)
 
     def test_set_point_that_satisfies_constraint(self):
         self.assertIsInstance(self.sampling_assistant.point_that_satisfies_constraint, NoneType)

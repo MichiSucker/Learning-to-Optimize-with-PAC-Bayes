@@ -1,8 +1,6 @@
 import unittest
-import io
-import sys
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
-    ParametricOptimizationAlgorithm, compute_initialization_loss, TrajectoryRandomizer, InitializationAssistant)
+    ParametricOptimizationAlgorithm, TrajectoryRandomizer, SamplingAssistant)
 import torch
 from algorithms.dummy import Dummy, DummyWithMoreTrainableParameters
 from classes.LossFunction.class_LossFunction import LossFunction
@@ -50,6 +48,18 @@ class TestSamplingParametricOptimizationAlgorithm(unittest.TestCase):
         self.optimization_algorithm.perform_noisy_gradient_step_on_hyperparameters(
             lr=lr, noise_distributions=noise_distributions)
         self.assertEqual(self.optimization_algorithm.implementation.state_dict(), old_hyperparameters)
+
+    def test_initialize_helpers_for_sampling(self):
+
+        parameters = {'restart_probability': 0.9, 'length_trajectory': 10, 'lr': 1e-4, 'num_samples': 100,
+                      'num_iter_burnin': 100}
+
+        sampling_assistant, trajectory_randomizer = self.optimization_algorithm.initialize_helpers_for_sampling(
+            parameters=parameters
+        )
+        self.assertIsInstance(sampling_assistant, SamplingAssistant)
+        self.assertIsInstance(trajectory_randomizer, TrajectoryRandomizer)
+        self.assertIsInstance(sampling_assistant.noise_distributions, dict)
 
     def test_set_up_noise_distributions(self):
         self.optimization_algorithm.implementation = DummyWithMoreTrainableParameters()

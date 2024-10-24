@@ -19,6 +19,7 @@ class SamplingAssistant:
         self.desired_number_of_samples = desired_number_of_samples
         self.number_of_iterations_burnin = number_of_iterations_burnin
         self.point_that_satisfies_constraint = None
+        self.noise_distributions = None
         self.samples = []
         self.samples_state_dict = []
         self.estimated_probabilities = []
@@ -30,6 +31,11 @@ class SamplingAssistant:
         if not isinstance(state_dict, dict):
             raise TypeError("Provided point is not a dict (in particular not a state_dict()).")
         self.point_that_satisfies_constraint = copy.deepcopy(state_dict)
+
+    def set_noise_distributions(self, noise_distributions):
+        if not isinstance(noise_distributions, dict):
+            raise TypeError("Provided input is not a dict.")
+        self.noise_distributions = noise_distributions
 
     def get_progressbar(self):
         pbar = tqdm(total=self.desired_number_of_samples + self.number_of_iterations_burnin)
@@ -484,7 +490,8 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         # This assumes that the initialization of the sampling algorithm lies withing the constraint!
         # Since 'fit' should be called before this method, the final output either got rejected or does indeed ly
         # inside the constraint.
-        old_state_dict = copy.deepcopy(self.implementation.state_dict())
+        sampling_assistant.set_point_that_satisfies_constraint(state_dict=self.implementation.state_dict())
+
         t = 1
         pbar = sampling_assistant.get_progressbar()
         while sampling_assistant.should_continue():
@@ -519,7 +526,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
                 # If constraint is satisfied, update the point.
                 if satisfies_constraint:
-                    old_state_dict = copy.deepcopy(self.implementation.state_dict())
+                    sampling_assistant.set_point_that_satisfies_constraint(state_dict=self.implementation.state_dict())
 
                     if sampling_assistant.should_store_sample(iteration=t):
                         sampling_assistant.store_sample(implementation=self.implementation,
@@ -528,13 +535,29 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
                 # Otherwise, reject the new point.
                 else:
-                    self.implementation.load_state_dict(old_state_dict)
+                    self.implementation.load_state_dict(sampling_assistant.point_that_satisfies_constraint)
 
             # Update iteration counter (for reduction of step-size, to prevent getting stuck)
             t += 1
 
         self.reset_state_and_iteration_counter()
         return sampling_assistant.prepare_output()
+
+    def initialize_helpers_for_sampling(self, parameters):
+
+        trajectory_randomizer = TrajectoryRandomizer(
+            should_restart=True,
+            restart_probability=parameters['restart_probability'],
+            length_partial_trajectory=parameters['length_trajectory']
+        )
+
+        sampling_assistant = SamplingAssistant(
+            learning_rate=parameters['lr'],
+            desired_number_of_samples=parameters['num_samples'],
+            number_of_iterations_burnin=parameters['num_iter_burnin']
+        )
+        sampling_assistant.set_noise_distributions(self.set_up_noise_distributions())
+        return sampling_assistant, trajectory_randomizer
 
     def set_up_noise_distributions(self):
         noise_distributions = {}
