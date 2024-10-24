@@ -1,10 +1,10 @@
 import unittest
 import torch
 from scipy.stats import beta
-from classes.Constraint.class_ProbabilisticConstraint import (BayesianProbabilityEstimator,
-                                                              sample_and_evaluate_random_constraint,
-                                                              update_parameters_and_uncertainty,
-                                                              estimation_should_be_stopped)
+from classes.Constraint.class_BayesianProbabilityEstimator import (BayesianProbabilityEstimator,
+                                                                   sample_and_evaluate_random_constraint,
+                                                                   update_parameters_and_uncertainty,
+                                                                   estimation_should_be_stopped)
 
 
 class TestProbabilisticConstraint(unittest.TestCase):
