@@ -1,7 +1,7 @@
 import unittest
 import torch
 from scipy.stats import beta
-from classes.Constraint.class_ProbabilisticConstraint import (ProbabilisticConstraint,
+from classes.Constraint.class_ProbabilisticConstraint import (BayesianProbabilityEstimator,
                                                               sample_and_evaluate_random_constraint,
                                                               update_parameters_and_uncertainty,
                                                               estimation_should_be_stopped)
@@ -12,11 +12,11 @@ class TestProbabilisticConstraint(unittest.TestCase):
     def setUp(self):
         self.list_of_constraints = []
         self.parameters_estimation = {'quantile_distance': 0.05, 'quantiles': (0.01, 0.99), 'probabilities': (0.85, 0.95)}
-        self.probabilistic_constraint = ProbabilisticConstraint(list_of_constraints=self.list_of_constraints,
-                                                                parameters_of_estimation=self.parameters_estimation)
+        self.probabilistic_constraint = BayesianProbabilityEstimator(list_of_constraints=self.list_of_constraints,
+                                                                     parameters_of_estimation=self.parameters_estimation)
 
     def test_creation(self):
-        self.assertIsInstance(self.probabilistic_constraint, ProbabilisticConstraint)
+        self.assertIsInstance(self.probabilistic_constraint, BayesianProbabilityEstimator)
 
     def test_get_parameters_of_estimation(self):
 

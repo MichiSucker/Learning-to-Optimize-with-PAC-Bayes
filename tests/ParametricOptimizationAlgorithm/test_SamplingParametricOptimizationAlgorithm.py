@@ -1,6 +1,7 @@
 import unittest
 from distutils.dep_util import newer
 
+from classes.Constraint.class_Constraint import Constraint
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
     ParametricOptimizationAlgorithm, TrajectoryRandomizer, SamplingAssistant)
 import torch
@@ -8,6 +9,8 @@ from algorithms.dummy import Dummy, DummyWithMoreTrainableParameters
 from classes.LossFunction.class_LossFunction import LossFunction
 from torch.distributions import MultivariateNormal
 import copy
+
+from tests.OptimizationAlgorithm.test_OptimizationAlgorithm import dummy_constraint
 
 
 def dummy_function(x):
@@ -105,3 +108,18 @@ class TestSamplingParametricOptimizationAlgorithm(unittest.TestCase):
         )
         new_hyperparameters = copy.deepcopy(self.optimization_algorithm.implementation.state_dict())
         self.assertNotEqual(old_hyperparameters, new_hyperparameters)
+
+    def test_accept_or_reject_based_on_constraint(self):
+        dummy_constraint_always_false = Constraint(function=lambda x: False)
+        sampling_assistant = SamplingAssistant(learning_rate=1e-4,
+                                               desired_number_of_samples=10,
+                                               number_of_iterations_burnin=10)
+        self.optimization_algorithm.set_constraint(dummy_constraint_always_false)
+        sampling_assistant.set_point_that_satisfies_constraint(self.optimization_algorithm.implementation.state_dict())
+        self.optimization_algorithm.implementation.state_dict()['scale'] -= 0.1
+        self.assertNotEqual(sampling_assistant.point_that_satisfies_constraint,
+                            self.optimization_algorithm.implementation.state_dict())
+        self.optimization_algorithm.accept_or_reject_based_on_constraint(sampling_assistant=sampling_assistant,
+                                                                         iteration=10)
+        self.assertEqual(sampling_assistant.point_that_satisfies_constraint,
+                         self.optimization_algorithm.implementation.state_dict())
