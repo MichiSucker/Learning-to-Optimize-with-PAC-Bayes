@@ -438,19 +438,14 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
         # For rejection procedure
         # This assumes that the initialization of the sampling algorithm lies withing the constraint!
+        # Since 'fit' should be called before this method, the final output either got rejected or does indeed ly
+        # inside the constraint.
         old_state_dict = copy.deepcopy(self.implementation.state_dict())
         n_correct_samples = 0
         t = 1
-        rejected, num_iter_update_rejection_rate = 0, 20
         pbar = tqdm(total=num_samples + num_iter_burnin)
         pbar.set_description('Sampling')
         while n_correct_samples < num_samples + num_iter_burnin:
-
-            if (t >= 1) and (t % num_iter_update_rejection_rate == 0):
-                if rejected / num_iter_update_rejection_rate >= 0.5:
-                    print("Decrease Learning Rate.")
-                    init_lr *= 0.1
-                rejected = 0
 
             # Decay learning-rate
             lr = init_lr / t
@@ -476,7 +471,6 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                 # Detach trajectories from each other to prevent passing through graph quantile_distance second time
                 x_0 = self.current_state.detach().clone()
                 self.current_state = x_0
-                restart_probability = restart_probability
                 fresh_init = torch.rand(1) <= restart_probability
 
             # Sample loss-function
@@ -534,8 +528,6 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                 # Otherwise, reject the new point.
                 else:
                     self.implementation.load_state_dict(old_state_dict)
-                    rejected += 1
-                    print("Reject.")
                     continue
 
         # Reset iteration counter of algorithm
