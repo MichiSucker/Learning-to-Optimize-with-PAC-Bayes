@@ -32,4 +32,4 @@ class TestTrajectoryRandomizer(unittest.TestCase):
         self.assertTrue(self.trajectory_randomizer.get_variable__should_restart())
 
     def test_get_restart_probability(self):
-        self.assertEqual(self.restart_probability, self.trajectory_randomizer.get_restart_probability())
+        self.assertEqual(self.restart_probability, self.trajectory_randomizer.get_variable__restart_probability())

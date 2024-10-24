@@ -214,7 +214,7 @@ class TrajectoryRandomizer:
             raise TypeError("Type of 'should_restart' has to be bool.")
         self.should_restart = should_restart
 
-    def get_restart_probability(self):
+    def get_variable__restart_probability(self):
         return self.restart_probability
 
 
