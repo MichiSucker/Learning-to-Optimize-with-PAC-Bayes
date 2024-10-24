@@ -101,10 +101,10 @@ class TestProbabilisticConstraint(unittest.TestCase):
 
     def test_sample_and_evaluate_random_constraint(self):
         with self.assertRaises(ValueError):
-            sample_and_evaluate_random_constraint(point=torch.Tensor([1.]), list_of_constraints=[])
+            sample_and_evaluate_random_constraint(input_to_constraint=torch.Tensor([1.]), list_of_constraints=[])
 
         list_of_constraints = [lambda x: True]
-        self.assertIsInstance(sample_and_evaluate_random_constraint(point=torch.Tensor([1.]),
+        self.assertIsInstance(sample_and_evaluate_random_constraint(input_to_constraint=torch.Tensor([1.]),
                                                                     list_of_constraints=list_of_constraints),
                               int)
 
