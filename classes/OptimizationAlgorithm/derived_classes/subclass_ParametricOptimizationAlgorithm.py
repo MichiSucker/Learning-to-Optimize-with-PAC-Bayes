@@ -169,7 +169,7 @@ class TrainingAssistant:
         for g in optimizer.param_groups:
             g['lr'] = self.factor_update_stepsize * g['lr']
 
-    def get_bins(self) -> list:
+    def get_variable__bins(self) -> list:
         return self.bins
 
     def set_bins(self, new_bins: list):
