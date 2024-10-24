@@ -30,6 +30,9 @@ class SamplingAssistant:
         pbar.set_description('Sampling')
         return pbar
 
+    def should_store_sample(self, iteration):
+        return iteration >= self.number_of_iterations_burnin
+
     def prepare_output(self):
         if any((len(self.samples) < self.desired_number_of_samples,
                 len(self.samples_state_dict) < self.desired_number_of_samples,

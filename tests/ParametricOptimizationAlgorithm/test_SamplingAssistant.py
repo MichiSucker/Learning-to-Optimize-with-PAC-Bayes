@@ -22,6 +22,11 @@ class TestSamplingAssistant(unittest.TestCase):
         self.assertEqual(self.sampling_assistant.current_learning_rate,
                          self.sampling_assistant.initial_learning_rate / iteration)
 
+    def test_should_store_sample(self):
+        self.assertIsInstance(self.sampling_assistant.should_store_sample(iteration=10), bool)
+        self.assertTrue(self.sampling_assistant.should_store_sample(iteration=self.number_of_iterations_burnin + 1))
+        self.assertFalse(self.sampling_assistant.should_store_sample(iteration=self.number_of_iterations_burnin - 1))
+
     def test_get_progressbar(self):
         pbar = self.sampling_assistant.get_progressbar()
         self.assertTrue(hasattr(pbar, 'desc'))
