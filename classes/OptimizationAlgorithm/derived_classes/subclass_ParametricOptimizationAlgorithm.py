@@ -11,7 +11,13 @@ from torch.distributions import MultivariateNormal
 
 
 class SamplingAssistant:
-    pass
+
+    def __init__(self, learning_rate):
+        self.initial_learning_rate = learning_rate
+        self.current_learning_rate = learning_rate
+
+    def decay_learning_rate(self, iteration):
+        self.current_learning_rate = self.initial_learning_rate / iteration
 
 
 class ConstraintChecker:
@@ -420,7 +426,8 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         desired_number_of_samples = parameters['num_samples']
         number_of_iterations_burnin = parameters['num_iter_burnin']
         length_trajectory = parameters['length_trajectory']
-        init_lr = parameters['lr']
+
+        sampling_assistant = SamplingAssistant(learning_rate=parameters['lr'])
 
         trajectory_randomizer = TrajectoryRandomizer(
             should_restart=True,
@@ -445,8 +452,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         pbar.set_description('Sampling')
         while number_of_correct_samples < desired_number_of_samples + number_of_iterations_burnin:
 
-            # Decay learning-rate
-            lr = init_lr / t
+            sampling_assistant.decay_learning_rate(iteration=t)
 
             # Note that this initialization refers to the optimization space: This is different from the
             # hyperparameter-space, which is the one for sampling!
@@ -460,11 +466,12 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             if losses_are_invalid(ratios_of_losses):
                 print('Invalid losses.')
                 trajectory_randomizer.set_should_restart(True)
-                add_noise(self, lr=lr, noise_distributions=noise_distributions)
+                add_noise(self, lr=sampling_assistant.current_learning_rate, noise_distributions=noise_distributions)
                 continue
             sum_losses = torch.sum(torch.stack(ratios_of_losses))
             sum_losses.backward()
-            self.perform_noisy_gradient_step_on_hyperparameters(lr=lr, noise_distributions=noise_distributions)
+            self.perform_noisy_gradient_step_on_hyperparameters(lr=sampling_assistant.current_learning_rate,
+                                                                noise_distributions=noise_distributions)
 
             # Check constraint. Reject current step if it is not satisfied.
             # Note that for the sampling procedure here, it is assumed that one starts with a point inside the
