@@ -48,6 +48,9 @@ class SamplingAssistant:
     def should_store_sample(self, iteration):
         return iteration >= self.number_of_iterations_burnin
 
+    def reject_sample(self, optimization_algorithm):
+        optimization_algorithm.implementation.load_state_dict(self.point_that_satisfies_constraint)
+
     def store_sample(self, implementation, estimated_probability):
         self.samples.append([p.detach().clone() for p in implementation.parameters() if p.requires_grad])
         self.samples_state_dict.append(copy.deepcopy(implementation.state_dict()))
@@ -503,18 +506,14 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             if self.constraint is not None:
                 satisfies_constraint, estimated_prob = self.constraint(self, return_val=True)
 
-                # If constraint is satisfied, update the point.
                 if satisfies_constraint:
                     sampling_assistant.set_point_that_satisfies_constraint(state_dict=self.implementation.state_dict())
-
                     if sampling_assistant.should_store_sample(iteration=t):
                         sampling_assistant.store_sample(implementation=self.implementation,
                                                         estimated_probability=estimated_prob)
                         pbar.update(1)
-
-                # Otherwise, reject the new point.
                 else:
-                    self.implementation.load_state_dict(sampling_assistant.point_that_satisfies_constraint)
+                    sampling_assistant.reject_sample(self)
 
             # Update iteration counter (for reduction of step-size, to prevent getting stuck)
             t += 1

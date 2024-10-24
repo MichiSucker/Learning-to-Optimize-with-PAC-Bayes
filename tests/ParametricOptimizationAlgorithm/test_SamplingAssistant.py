@@ -1,10 +1,18 @@
+import copy
 import unittest
 from types import NoneType
 
-from sympy.stats import MultivariateNormal
-
+import torch
+from torch.distributions import MultivariateNormal
+from classes.LossFunction.class_LossFunction import LossFunction
+from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
+    ParametricOptimizationAlgorithm)
 from algorithms.dummy import Dummy
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import SamplingAssistant
+
+
+def dummy_function(x):
+    return 0.5 * torch.linalg.norm(x) ** 2
 
 
 class TestSamplingAssistant(unittest.TestCase):
@@ -31,6 +39,21 @@ class TestSamplingAssistant(unittest.TestCase):
         self.assertIsInstance(self.sampling_assistant.should_store_sample(iteration=10), bool)
         self.assertTrue(self.sampling_assistant.should_store_sample(iteration=self.number_of_iterations_burnin + 1))
         self.assertFalse(self.sampling_assistant.should_store_sample(iteration=self.number_of_iterations_burnin - 1))
+
+    def test_reject_sample(self):
+        dim = torch.randint(low=1, high=1000, size=(1,)).item()
+        length_state = 1
+        initial_state = torch.randn(size=(length_state, dim))
+        loss_function = LossFunction(function=dummy_function)
+        optimization_algorithm = ParametricOptimizationAlgorithm(implementation=Dummy(),
+                                                                 initial_state=initial_state,
+                                                                 loss_function=loss_function)
+        self.sampling_assistant.set_point_that_satisfies_constraint(optimization_algorithm.implementation.state_dict())
+        old_point = copy.deepcopy(self.sampling_assistant.point_that_satisfies_constraint)
+        optimization_algorithm.implementation.state_dict()['scale'] -= 0.1
+        self.assertNotEqual(optimization_algorithm.implementation.state_dict(), old_point)
+        self.sampling_assistant.reject_sample(optimization_algorithm)
+        self.assertEqual(optimization_algorithm.implementation.state_dict(), old_point)
 
     def test_get_progressbar(self):
         pbar = self.sampling_assistant.get_progressbar()
