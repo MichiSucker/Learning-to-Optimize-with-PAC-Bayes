@@ -70,7 +70,7 @@ class BayesianProbabilityEstimator:
         self.lower_probability = probabilities[0]
         self.upper_probability = probabilities[1]
 
-    def estimate_probability(self, point):
+    def estimate_probability(self, input_to_constraint):
 
         # Setup non-informative prior
         a, b = 1, 1
@@ -81,7 +81,8 @@ class BayesianProbabilityEstimator:
         while current_upper_quantile - current_lower_quantile > self.quantile_distance:
 
             n_iterates += 1
-            result = sample_and_evaluate_random_constraint(point=point, list_of_constraints=self.list_of_constraints)
+            result = sample_and_evaluate_random_constraint(point=input_to_constraint,
+                                                           list_of_constraints=self.list_of_constraints)
             a, b, current_upper_quantile, current_lower_quantile = update_parameters_and_uncertainty(
                 result=result, a=a, b=b, upper_quantile=self.upper_quantile, lower_quantile=self.lower_quantile)
 
