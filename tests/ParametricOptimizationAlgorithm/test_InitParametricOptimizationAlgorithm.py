@@ -61,7 +61,7 @@ class TestInitParametricOptimizationAlgorithm(unittest.TestCase):
         self.assertTrue(self.optimization_algorithm.loss_function in loss_functions)
         self.assertEqual(self.optimization_algorithm.loss_function, other_algorithm.loss_function)
 
-        trajectory_randomizer.set_variable_should_restart_to(False)
+        trajectory_randomizer.set_variable__should_restart__to(False)
         current_loss_function = self.optimization_algorithm.loss_function
         current_state = self.optimization_algorithm.current_state.clone()
         self.optimization_algorithm.set_iteration_counter(10)

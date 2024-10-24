@@ -21,14 +21,14 @@ class TestTrajectoryRandomizer(unittest.TestCase):
 
     def test_set_should_restart(self):
         with self.assertRaises(TypeError):
-            self.trajectory_randomizer.set_variable_should_restart_to(1)
+            self.trajectory_randomizer.set_variable__should_restart__to(1)
         with self.assertRaises(TypeError):
-            self.trajectory_randomizer.set_variable_should_restart_to(1.)
+            self.trajectory_randomizer.set_variable__should_restart__to(1.)
         with self.assertRaises(TypeError):
-            self.trajectory_randomizer.set_variable_should_restart_to('1')
+            self.trajectory_randomizer.set_variable__should_restart__to('1')
         with self.assertRaises(TypeError):
-            self.trajectory_randomizer.set_variable_should_restart_to(lambda x: 1)
-        self.trajectory_randomizer.set_variable_should_restart_to(True)
+            self.trajectory_randomizer.set_variable__should_restart__to(lambda x: 1)
+        self.trajectory_randomizer.set_variable__should_restart__to(True)
         self.assertTrue(self.trajectory_randomizer.get_variable__should_restart())
 
     def test_get_restart_probability(self):
