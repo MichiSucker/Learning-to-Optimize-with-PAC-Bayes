@@ -23,8 +23,6 @@ class SamplingAssistant:
         self.samples = []
         self.samples_state_dict = []
         self.estimated_probabilities = []
-        self.progressbar = tqdm(total=self.desired_number_of_samples + self.number_of_iterations_burnin)
-        self.progressbar.set_description('Sampling')
 
     def decay_learning_rate(self, iteration):
         self.current_learning_rate = self.initial_learning_rate / iteration
@@ -543,18 +541,6 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         sum_losses = torch.sum(torch.stack(ratios_of_losses))
         sum_losses.backward()
         self.perform_noisy_gradient_step_on_hyperparameters(sampling_assistant)
-
-    def accept_or_reject_based_on_constraint(self, sampling_assistant, iteration):
-        satisfies_constraint, estimated_prob = self.constraint(self, return_val=True)
-
-        if satisfies_constraint:
-            sampling_assistant.set_point_that_satisfies_constraint(state_dict=self.implementation.state_dict())
-            if sampling_assistant.should_store_sample(iteration=iteration):
-                sampling_assistant.store_sample(implementation=self.implementation,
-                                                estimated_probability=estimated_prob)
-                sampling_assistant.progressbar.update(1)
-        else:
-            sampling_assistant.reject_sample(self)
 
     def set_up_noise_distributions(self):
         noise_distributions = {}
