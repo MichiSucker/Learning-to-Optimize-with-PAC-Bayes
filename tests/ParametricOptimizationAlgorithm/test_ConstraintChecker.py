@@ -123,5 +123,3 @@ class TestConstraintChecker(unittest.TestCase):
         self.constraint_checker.found_point_inside_constraint = False
         with self.assertRaises(Exception):
             self.constraint_checker.final_check(dummy_algorithm)
-
-
