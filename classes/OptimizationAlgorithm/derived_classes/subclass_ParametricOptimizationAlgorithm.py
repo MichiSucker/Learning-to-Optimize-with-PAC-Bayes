@@ -25,6 +25,11 @@ class SamplingAssistant:
     def decay_learning_rate(self, iteration):
         self.current_learning_rate = self.initial_learning_rate / iteration
 
+    def get_progressbar(self):
+        pbar = tqdm(total=self.desired_number_of_samples + self.number_of_iterations_burnin)
+        pbar.set_description('Sampling')
+        return pbar
+
     def prepare_output(self):
         if any((len(self.samples) < self.desired_number_of_samples,
                 len(self.samples_state_dict) < self.desired_number_of_samples,
@@ -463,8 +468,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         # inside the constraint.
         old_state_dict = copy.deepcopy(self.implementation.state_dict())
         t = 1
-        pbar = tqdm(total=sampling_assistant.desired_number_of_samples + sampling_assistant.number_of_iterations_burnin)
-        pbar.set_description('Sampling')
+        pbar = sampling_assistant.get_progressbar()
         while (sampling_assistant.number_of_correct_samples <
                sampling_assistant.desired_number_of_samples + sampling_assistant.number_of_iterations_burnin):
 
@@ -518,9 +522,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             # Update iteration counter (for reduction of step-size, to prevent getting stuck)
             t += 1
 
-        # Reset iteration counter of algorithm
-        self.iteration_counter = 0
-
+        self.reset_state_and_iteration_counter()
         return sampling_assistant.prepare_output()
 
     def set_up_noise_distributions(self):

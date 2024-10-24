@@ -22,6 +22,12 @@ class TestSamplingAssistant(unittest.TestCase):
         self.assertEqual(self.sampling_assistant.current_learning_rate,
                          self.sampling_assistant.initial_learning_rate / iteration)
 
+    def test_get_progressbar(self):
+        pbar = self.sampling_assistant.get_progressbar()
+        self.assertTrue(hasattr(pbar, 'desc'))
+        self.assertTrue(hasattr(pbar, 'iterable'))
+        self.assertEqual(pbar.desc, 'Sampling: ')
+
     def test_prepare_output(self):
         with self.assertRaises(Exception):
             samples, state_dict_samples, estimated_probabilities = self.sampling_assistant.prepare_output()
