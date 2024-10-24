@@ -48,7 +48,7 @@ class TestConstraintChecker(unittest.TestCase):
     def test_set_check_constraint_every(self):
         self.assertEqual(self.constraint_checker.check_constraint_every, self.check_constraint_every)
         random_number = torch.randint(low=1, high=9, size=(1,)).item()
-        self.constraint_checker.set_check_constraint_every(new_number=random_number)
+        self.constraint_checker.set_variable_check_constraint_every_to(new_number=random_number)
         self.assertEqual(self.constraint_checker.check_constraint_every, random_number)
 
     def test_check_constraint(self):

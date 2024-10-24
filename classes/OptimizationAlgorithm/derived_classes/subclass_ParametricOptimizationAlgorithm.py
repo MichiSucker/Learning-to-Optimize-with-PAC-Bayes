@@ -93,7 +93,7 @@ class ConstraintChecker:
     def set_there_is_a_constraint(self, new_bool: bool):
         self.there_is_a_constraint = new_bool
 
-    def set_check_constraint_every(self, new_number: int):
+    def set_variable_check_constraint_every_to(self, new_number: int):
         self.check_constraint_every = new_number
 
     def update_point_inside_constraint_or_reject(self, optimization_algorithm: OptimizationAlgorithm):
