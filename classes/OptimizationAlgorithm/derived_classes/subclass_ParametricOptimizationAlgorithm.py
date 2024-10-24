@@ -407,12 +407,9 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         return ratios
 
     def sample_with_sgld(self,
-                         loss_functions: List,
-                         sampling_parameters: Dict,
-                         constraint_parameters: Dict,
-                         ) -> (List, List):
-
-        print("----------------------- SAMPLING WITH NEW VERSION.---------------------------")
+                         loss_functions: list,
+                         sampling_parameters: dict
+                         ) -> Tuple[list]:
 
         # Extract into variables
         num_samples = sampling_parameters['num_samples']
@@ -484,10 +481,6 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             # Sample loss-function
             current_loss_function = np.random.choice(loss_functions)
             self.set_loss_function(current_loss_function)
-
-            # Predict iterates
-            # predicted_iterates = [self.current_state[-1]] + \
-            #                      [self.step(return_val=True) for _ in range(length_trajectory)]
 
             # Predict iterates
             predicted_iterates = self.compute_trajectory(num_steps=length_trajectory)
