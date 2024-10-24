@@ -409,7 +409,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
     def sample_with_sgld(self,
                          loss_functions: list,
                          sampling_parameters: dict
-                         ) -> Tuple[list]:
+                         ) -> Tuple[list, list, list]:
 
         # Extract into variables
         num_samples = sampling_parameters['num_samples']
@@ -466,7 +466,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             if fresh_init or not with_restarting:
 
                 # Start from zero again
-                self.reset_state()
+                self.reset_state_and_iteration_counter()
 
                 # Don't restart directly again from zero
                 fresh_init = False
@@ -483,7 +483,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             self.set_loss_function(current_loss_function)
 
             # Predict iterates
-            predicted_iterates = self.compute_trajectory(num_steps=length_trajectory)
+            predicted_iterates = self.compute_partial_trajectory(number_of_steps=length_trajectory)
 
             # Compute loss: Sum over relative decreases of the loss
             losses = [(self.loss_function(predicted_iterates[k]) / self.loss_function(predicted_iterates[k - 1])).
