@@ -557,6 +557,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             number_of_iterations_burnin=parameters['num_iter_burnin']
         )
         sampling_assistant.set_noise_distributions(self.set_up_noise_distributions())
+        sampling_assistant.set_point_that_satisfies_constraint(state_dict=self.implementation.state_dict())
         return sampling_assistant, trajectory_randomizer
 
     def set_up_noise_distributions(self):

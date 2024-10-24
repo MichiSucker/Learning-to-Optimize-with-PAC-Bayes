@@ -60,6 +60,7 @@ class TestSamplingParametricOptimizationAlgorithm(unittest.TestCase):
         self.assertIsInstance(sampling_assistant, SamplingAssistant)
         self.assertIsInstance(trajectory_randomizer, TrajectoryRandomizer)
         self.assertIsInstance(sampling_assistant.noise_distributions, dict)
+        self.assertIsInstance(sampling_assistant.point_that_satisfies_constraint, dict)
 
     def test_set_up_noise_distributions(self):
         self.optimization_algorithm.implementation = DummyWithMoreTrainableParameters()
