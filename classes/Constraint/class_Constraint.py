@@ -1,8 +1,6 @@
 from typing import Callable
 from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
 
-import torch
-
 
 class Constraint:
 
