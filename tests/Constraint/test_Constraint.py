@@ -1,13 +1,21 @@
 import unittest
-from classes.Constraint.class_Constraint import Constraint
+from classes.Constraint.class_Constraint import Constraint, create_list_of_constraints_from_functions
 import torch
+from algorithms.dummy import Dummy
+from classes.LossFunction.class_LossFunction import LossFunction
+from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
+    ParametricOptimizationAlgorithm)
 
 
-def dummy_constraint(x):
-    if torch.all(x >= 0):
+def dummy_constraint(optimization_algorithm):
+    if torch.all(optimization_algorithm.current_state > 0):
         return True
     else:
         return False
+
+
+def dummy_function(x):
+    return 0.5 * torch.linalg.norm(x) ** 2
 
 
 class TestConstraint(unittest.TestCase):
@@ -19,6 +27,39 @@ class TestConstraint(unittest.TestCase):
         self.assertIsInstance(self.constraint, Constraint)
 
     def test_call_constraint(self):
-        self.assertTrue(self.constraint(torch.tensor([1., 0.])))
-        self.assertFalse(self.constraint(torch.tensor([-1., 0.])))
-        self.assertIsInstance(self.constraint(torch.tensor([1., 0.])), bool)
+        dim = torch.randint(low=1, high=1000, size=(1,)).item()
+        length_state = 1
+        initial_state = torch.randn(size=(length_state, dim))
+        loss_function = LossFunction(function=dummy_function)
+        optimization_algorithm = ParametricOptimizationAlgorithm(implementation=Dummy(),
+                                                                 initial_state=initial_state,
+                                                                 loss_function=loss_function)
+        self.assertIsInstance(self.constraint(optimization_algorithm), bool)
+        optimization_algorithm.set_current_state(torch.ones(initial_state.shape))
+        self.assertTrue(self.constraint(optimization_algorithm))
+        optimization_algorithm.set_current_state(torch.zeros(initial_state.shape))
+        self.assertFalse(self.constraint(optimization_algorithm))
+
+    def test_create_list_of_constraints_from_functions(self):
+
+        def describing_property(function, optimization_algorithm):
+            return function(optimization_algorithm.current_iterate) >= 0
+
+        list_of_functions = [lambda x: torch.linalg.norm(x)**2, lambda y: -torch.linalg.norm(y)**2]
+        list_of_constraints = create_list_of_constraints_from_functions(describing_property=describing_property,
+                                                                        list_of_functions=list_of_functions)
+        self.assertEqual(len(list_of_constraints), len(list_of_functions))
+        for constraint in list_of_constraints:
+            self.assertIsInstance(constraint, Constraint)
+
+        self.dim = torch.randint(low=1, high=1000, size=(1,)).item()
+        self.length_state = 1
+        self.initial_state = torch.randn(size=(self.length_state, self.dim))
+        self.current_state = self.initial_state.clone()
+        self.loss_function = LossFunction(function=dummy_function)
+        optimization_algorithm = ParametricOptimizationAlgorithm(implementation=Dummy(),
+                                                                 initial_state=self.initial_state,
+                                                                 loss_function=self.loss_function)
+
+        self.assertTrue(list_of_constraints[0](optimization_algorithm))
+        self.assertFalse(list_of_constraints[1](optimization_algorithm))

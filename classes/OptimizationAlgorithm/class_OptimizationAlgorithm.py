@@ -78,5 +78,5 @@ class OptimizationAlgorithm:
     def evaluate_loss_function_at_current_iterate(self) -> torch.Tensor:
         return self.loss_function(self.current_iterate)
 
-    def evaluate_constraint_at_current_iterate(self) -> bool:
-        return self.constraint(self.current_iterate)
+    def evaluate_constraint(self) -> bool:
+        return self.constraint(self)

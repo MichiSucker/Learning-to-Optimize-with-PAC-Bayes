@@ -12,8 +12,8 @@ def dummy_function(x):
     return 0.5 * torch.linalg.norm(x) ** 2
 
 
-def dummy_constraint(x):
-    if torch.all(x >= 0):
+def dummy_constraint(optimization_algorithm):
+    if torch.all(optimization_algorithm.current_state >= 0):
         return True
     else:
         return False
@@ -125,9 +125,9 @@ class TestClassOptimizationAlgorithm(unittest.TestCase):
 
     def test_evaluate_constraint(self):
         self.optimization_algorithm.set_constraint(Constraint(dummy_constraint))
-        self.assertIsInstance(self.optimization_algorithm.evaluate_constraint_at_current_iterate(), bool)
+        self.assertIsInstance(self.optimization_algorithm.evaluate_constraint(), bool)
         self.optimization_algorithm.set_current_state(torch.ones(size=self.initial_state.shape))
-        self.assertTrue(self.optimization_algorithm.evaluate_constraint_at_current_iterate())
+        self.assertTrue(self.optimization_algorithm.evaluate_constraint())
 
     def test_set_constraint(self):
         old_constraint = self.optimization_algorithm.constraint
