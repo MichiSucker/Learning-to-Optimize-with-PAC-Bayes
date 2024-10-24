@@ -123,7 +123,7 @@ def check_probabilities(probabilities: tuple) -> bool:
         return False
 
 
-def sample_and_evaluate_random_constraint(input_to_constraint: torch.Tensor, list_of_constraints: list[Callable]) -> int:
+def sample_and_evaluate_random_constraint(input_to_constraint, list_of_constraints: list[Callable]) -> int:
     if len(list_of_constraints) == 0:
         raise ValueError('There are no constraints to evaluate.')
     idx = np.random.randint(low=0, high=len(list_of_constraints))
