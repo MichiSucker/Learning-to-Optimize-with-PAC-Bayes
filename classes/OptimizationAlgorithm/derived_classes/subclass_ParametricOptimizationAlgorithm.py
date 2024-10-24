@@ -18,12 +18,18 @@ class SamplingAssistant:
         self.number_of_correct_samples = 0
         self.desired_number_of_samples = desired_number_of_samples
         self.number_of_iterations_burnin = number_of_iterations_burnin
+        self.point_that_satisfies_constraint = None
         self.samples = []
         self.samples_state_dict = []
         self.estimated_probabilities = []
 
     def decay_learning_rate(self, iteration):
         self.current_learning_rate = self.initial_learning_rate / iteration
+
+    def set_point_that_satisfies_constraint(self, state_dict):
+        if not isinstance(state_dict, dict):
+            raise TypeError("Provided point is not a dict (in particular not a state_dict()).")
+        self.point_that_satisfies_constraint = copy.deepcopy(state_dict)
 
     def get_progressbar(self):
         pbar = tqdm(total=self.desired_number_of_samples + self.number_of_iterations_burnin)

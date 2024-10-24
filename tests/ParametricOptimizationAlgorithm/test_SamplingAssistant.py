@@ -1,4 +1,7 @@
 import unittest
+from types import NoneType
+
+
 from algorithms.dummy import Dummy
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import SamplingAssistant
 
@@ -34,6 +37,14 @@ class TestSamplingAssistant(unittest.TestCase):
         self.assertTrue(hasattr(pbar, 'iterable'))
         self.assertEqual(pbar.desc, 'Sampling: ')
 
+    def test_set_point_that_satisfies_constraint(self):
+        self.assertIsInstance(self.sampling_assistant.point_that_satisfies_constraint, NoneType)
+        implementation = Dummy()
+        self.sampling_assistant.set_point_that_satisfies_constraint(implementation.state_dict())
+        self.assertEqual(self.sampling_assistant.point_that_satisfies_constraint, implementation.state_dict())
+        with self.assertRaises(TypeError):
+            self.sampling_assistant.set_point_that_satisfies_constraint(1.)
+
     def test_store_sample(self):
         old_number_of_samples = self.sampling_assistant.number_of_correct_samples
         old_length_samples = len(self.sampling_assistant.samples)
@@ -66,16 +77,16 @@ class TestSamplingAssistant(unittest.TestCase):
 
     def test_prepare_output(self):
         with self.assertRaises(Exception):
-            samples, state_dict_samples, estimated_probabilities = self.sampling_assistant.prepare_output()
+            self.sampling_assistant.prepare_output()
 
         self.sampling_assistant.desired_number_of_samples = 1
         self.sampling_assistant.samples.append(1)
         with self.assertRaises(Exception):
-            samples, state_dict_samples, estimated_probabilities = self.sampling_assistant.prepare_output()
+            self.sampling_assistant.prepare_output()
 
         self.sampling_assistant.samples_state_dict.append(1)
         with self.assertRaises(Exception):
-            samples, state_dict_samples, estimated_probabilities = self.sampling_assistant.prepare_output()
+            self.sampling_assistant.prepare_output()
 
         self.sampling_assistant.estimated_probabilities.append(1)
         samples, state_dict_samples, estimated_probabilities = self.sampling_assistant.prepare_output()
@@ -84,4 +95,3 @@ class TestSamplingAssistant(unittest.TestCase):
         self.assertIsInstance(estimated_probabilities, list)
         self.assertEqual(len(samples), len(state_dict_samples))
         self.assertEqual(len(state_dict_samples), len(estimated_probabilities))
-
