@@ -456,9 +456,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             # Update iteration counter (for reduction of step-size, to prevent getting stuck)
             t += 1
 
-            # Reset optimizer
             optimizer.zero_grad()   # PROBABLY NOT NEEDED!
-
             # Note that this initialization refers to the optimization space: This is different from the
             # hyperparameter-space, which is the one for sampling!
             # Further: This restarting procedure is only a heuristic from our training-procedure.
@@ -475,13 +473,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                 continue
             sum_losses = torch.sum(torch.stack(ratios_of_losses))
             sum_losses.backward()
-
-            # Perform noisy stochastic gradient step
-            for p in self.implementation.parameters():
-                if p.requires_grad:
-                    noise = lr ** 2 * noise_distributions[p].sample()
-                    with torch.no_grad():
-                        p.add_(-0.5 * lr * p.grad + noise.reshape(p.shape))
+            self.perform_noisy_gradient_step_on_hyperparameters(lr=lr, noise_distributions=noise_distributions)
 
             # Check constraint. Reject current step if it is not satisfied.
             # Note that for the sampling procedure here, it is assumed that one starts with a point inside the
@@ -513,6 +505,13 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         self.iteration_counter = 0
 
         return samples[-desired_number_of_samples:], samples_state_dict[-desired_number_of_samples:], estimated_probabilities[-desired_number_of_samples:]
+
+    def perform_noisy_gradient_step_on_hyperparameters(self, lr, noise_distributions):
+        for p in self.implementation.parameters():
+            if p.requires_grad:
+                noise = lr ** 2 * noise_distributions[p].sample()
+                with torch.no_grad():
+                    p.add_(-0.5 * lr * p.grad + noise.reshape(p.shape))
 
 
 def add_noise(opt_algo: OptimizationAlgorithm,
