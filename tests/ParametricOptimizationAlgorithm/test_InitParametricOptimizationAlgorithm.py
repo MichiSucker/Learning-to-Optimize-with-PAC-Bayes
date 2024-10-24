@@ -1,10 +1,13 @@
 import unittest
+import io
+import sys
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
     ParametricOptimizationAlgorithm, compute_initialization_loss, TrajectoryRandomizer, InitializationAssistant)
 import torch
-from algorithms.dummy import Dummy
+from algorithms.dummy import Dummy, NonTrainableDummy
 from classes.LossFunction.class_LossFunction import LossFunction
 import copy
+
 
 def dummy_function(x):
     return 0.5 * torch.linalg.norm(x) ** 2
@@ -102,10 +105,37 @@ class TestInitParametricOptimizationAlgorithm(unittest.TestCase):
 
     @unittest.skip("Skip 'test_initialize_helpers_for_initialization' because it takes long.")
     def test_initialize_helpers_for_initialization(self):
-        parameters = {'with_print': True, 'num_iter_max': 100, 'lr': 1e-4,
-                      'num_iter_update_stepsize': 10, 'num_iter_print_update': 10}
+        parameters_init = {'with_print': True, 'num_iter_max': 100, 'lr': 1e-4,
+                           'num_iter_update_stepsize': 10, 'num_iter_print_update': 10}
         optimizer, initialization_assistant, trajectory_randomizer = (
-            self.optimization_algorithm.initialize_helpers_for_initialization(parameters=parameters))
+            self.optimization_algorithm.initialize_helpers_for_initialization(parameters=parameters_init))
         self.assertIsInstance(optimizer, torch.optim.Adam)
         self.assertIsInstance(trajectory_randomizer, TrajectoryRandomizer)
         self.assertIsInstance(initialization_assistant, InitializationAssistant)
+
+    @unittest.skip("Skip 'test_initialize_with_other_algorithm' because it takes long.")
+    def test_initialize_with_other_algorithm(self):
+        other_algorithm = ParametricOptimizationAlgorithm(implementation=NonTrainableDummy(),
+                                                          initial_state=self.initial_state,
+                                                          loss_function=self.loss_function)
+        loss_functions = [LossFunction(dummy_function) for _ in range(10)]
+        parameters_init = {
+            'with_print': True, 'num_iter_max': 100, 'num_iter_update_stepsize': 30, 'num_iter_print_update': 10,
+            'lr': 1e-4
+        }
+        # Make step-size small enough; otherwise the algorithm will directly explode.
+        old_hyperparameters = copy.deepcopy(self.optimization_algorithm.implementation.state_dict())
+
+        capturedOutput = io.StringIO()
+        sys.stdout = capturedOutput
+        self.optimization_algorithm.initialize_with_other_algorithm(
+            other_algorithm=other_algorithm, loss_functions=loss_functions, parameters=parameters_init
+        )
+        sys.stdout = sys.__stdout__
+        self.assertNotEqual(old_hyperparameters, self.optimization_algorithm.implementation.state_dict())
+        self.assertTrue(torch.equal(self.optimization_algorithm.current_state,
+                                    self.optimization_algorithm.initial_state))
+        self.assertEqual(self.optimization_algorithm.iteration_counter, 0)
+        self.assertTrue(len(capturedOutput.getvalue()) > 0)
+        self.assertFalse(torch.isnan(self.optimization_algorithm.implementation.state_dict()['scale']) or
+                         torch.isinf(self.optimization_algorithm.implementation.state_dict()['scale']))
