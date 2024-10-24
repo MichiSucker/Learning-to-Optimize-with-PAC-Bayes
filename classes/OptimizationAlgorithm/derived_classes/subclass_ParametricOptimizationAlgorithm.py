@@ -478,25 +478,11 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         while sampling_assistant.should_continue():
 
             sampling_assistant.decay_learning_rate(iteration=t)
-
-            # Note that this initialization refers to the optimization space: This is different from the
-            # hyperparameter-space, which is the one for sampling!
-            # Further: This restarting procedure is only a heuristic from our training-procedure.
-            # It is not inherent in SGLD!
-            self.determine_next_starting_point(
-                trajectory_randomizer=trajectory_randomizer, loss_functions=loss_functions)
-            self.set_loss_function(np.random.choice(loss_functions))    # For SGLD, we always sample a new loss-function
-            predicted_iterates = self.compute_partial_trajectory(
-                number_of_steps=trajectory_randomizer.length_partial_trajectory)
-            ratios_of_losses = self.compute_ratio_of_losses(predicted_iterates=predicted_iterates)
-            if losses_are_invalid(ratios_of_losses):
-                print('Invalid losses.')
-                trajectory_randomizer.set_variable__should_restart__to(True)
-                add_noise_to_every_parameter_that_requires_grad(self, sampling_assistant=sampling_assistant)
-                continue
-            sum_losses = torch.sum(torch.stack(ratios_of_losses))
-            sum_losses.backward()
-            self.perform_noisy_gradient_step_on_hyperparameters(sampling_assistant)
+            self.compute_next_possible_sample(
+                loss_functions=loss_functions,
+                trajectory_randomizer=trajectory_randomizer,
+                sampling_assistant=sampling_assistant
+            )
 
             # Check constraint. Reject current step if it is not satisfied.
             # Note that for the sampling procedure here, it is assumed that one starts with a point inside the
