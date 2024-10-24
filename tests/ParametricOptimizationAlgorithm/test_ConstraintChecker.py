@@ -1,8 +1,7 @@
 import unittest
 from types import NoneType
 import copy
-from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (ConstraintChecker,
-                                                                                                    check_constraint)
+from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import ConstraintChecker
 import torch
 from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
 from classes.Constraint.class_Constraint import Constraint
@@ -50,14 +49,6 @@ class TestConstraintChecker(unittest.TestCase):
         random_number = torch.randint(low=1, high=9, size=(1,)).item()
         self.constraint_checker.set_variable__check_constraint_every__to(new_number=random_number)
         self.assertEqual(self.constraint_checker.check_constraint_every, random_number)
-
-    def test_check_constraint(self):
-        constraint_always_true = Constraint(function=lambda x: True)
-        dummy_algorithm = OptimizationAlgorithm(implementation=Dummy(),
-                                                initial_state=torch.randn((3, 2)),
-                                                loss_function=LossFunction(function=dummy_function),
-                                                constraint=constraint_always_true)
-        self.assertTrue(check_constraint(optimization_algorithm=dummy_algorithm))
 
     def test_update_point_inside_constraint_or_reject(self):
         # Test case 1: Constraint is true

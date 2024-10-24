@@ -97,7 +97,7 @@ class ConstraintChecker:
         self.check_constraint_every = new_number
 
     def update_point_inside_constraint_or_reject(self, optimization_algorithm: OptimizationAlgorithm):
-        satisfies_constraint = check_constraint(optimization_algorithm)
+        satisfies_constraint = optimization_algorithm.evaluate_constraint_at_current_iterate()
 
         if satisfies_constraint:
             self.found_point_inside_constraint = True
@@ -107,17 +107,13 @@ class ConstraintChecker:
             optimization_algorithm.implementation.load_state_dict(self.point_inside_constraint)
 
     def final_check(self, optimization_algorithm: OptimizationAlgorithm):
-        satisfies_constraint = check_constraint(optimization_algorithm)
+        satisfies_constraint = optimization_algorithm.evaluate_constraint_at_current_iterate()
         if satisfies_constraint:
             return
         elif self.found_point_inside_constraint and (not satisfies_constraint):
             optimization_algorithm.implementation.load_state_dict(self.point_inside_constraint)
         else:
             raise Exception("Did not find a point that lies within the constraint!")
-
-
-def check_constraint(optimization_algorithm: OptimizationAlgorithm) -> bool:
-    return optimization_algorithm.constraint(optimization_algorithm)
 
 
 class TrainingAssistant:
