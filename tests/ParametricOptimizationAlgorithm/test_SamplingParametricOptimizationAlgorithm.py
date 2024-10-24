@@ -1,7 +1,4 @@
 import unittest
-from distutils.dep_util import newer
-
-from classes.Constraint.class_Constraint import Constraint
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
     ParametricOptimizationAlgorithm, TrajectoryRandomizer, SamplingAssistant)
 import torch
@@ -9,8 +6,6 @@ from algorithms.dummy import Dummy, DummyWithMoreTrainableParameters
 from classes.LossFunction.class_LossFunction import LossFunction
 from torch.distributions import MultivariateNormal
 import copy
-
-from tests.OptimizationAlgorithm.test_OptimizationAlgorithm import dummy_constraint
 
 
 def dummy_function(x):
@@ -28,10 +23,6 @@ class TestSamplingParametricOptimizationAlgorithm(unittest.TestCase):
         self.optimization_algorithm = ParametricOptimizationAlgorithm(implementation=Dummy(),
                                                                       initial_state=self.initial_state,
                                                                       loss_function=self.loss_function)
-
-    # def test_create_next_sample(self):
-    #     self.optimization_algorithm.create_next_sample()
-    #     self.assertTrue()
 
     def test_perform_noisy_gradient_step_on_hyperparameters(self):
         # This is a weak test: We only check whether the hyperparameters do change or not, depending on the learning

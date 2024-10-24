@@ -3,7 +3,6 @@ import unittest
 from types import NoneType
 
 import torch
-from torch.distributions import MultivariateNormal
 from classes.LossFunction.class_LossFunction import LossFunction
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
     ParametricOptimizationAlgorithm)

@@ -3,8 +3,6 @@ import torch
 import io
 import sys
 
-from networkx.algorithms.structuralholes import constraint
-
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (TrainingAssistant,
                                                                                                     ConstraintChecker)
 

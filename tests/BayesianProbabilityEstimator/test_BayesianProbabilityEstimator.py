@@ -156,7 +156,7 @@ class TestProbabilisticConstraint(unittest.TestCase):
         self.probabilistic_constraint.set_list_of_constraints(new_list_of_constraints)
         self.assertEqual(self.probabilistic_constraint.get_list_of_constraints(), new_list_of_constraints)
 
-    @unittest.skip("Skip 'test_estimate_probability' because it takes long.")
+    # @unittest.skip("Skip 'test_estimate_probability' because it takes long.")
     def test_estimate_probability(self):
         dummy_point = torch.tensor([1.])
         true_probability = torch.distributions.uniform.Uniform(0.1, 0.9).sample((1,)).item()

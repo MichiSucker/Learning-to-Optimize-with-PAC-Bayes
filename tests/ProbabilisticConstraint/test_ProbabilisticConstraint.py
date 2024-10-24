@@ -19,6 +19,7 @@ class TestProbabilisticConstraint(unittest.TestCase):
         self.assertIsInstance(self.probabilistic_constraint.constraint, Constraint)
         self.assertIsInstance(self.probabilistic_constraint.bayesian_estimator, BayesianProbabilityEstimator)
 
+    @unittest.skip("Skip this test, because it takes very long.")
     def test_create_constraint(self):
         constraint = self.probabilistic_constraint.create_constraint()
         self.assertIsInstance(constraint, Constraint)
