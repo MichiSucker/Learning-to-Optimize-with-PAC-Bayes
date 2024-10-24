@@ -11,7 +11,9 @@ class TestProbabilisticConstraint(unittest.TestCase):
 
     def setUp(self):
         self.list_of_constraints = []
-        self.parameters_estimation = {'quantile_distance': 0.05, 'quantiles': (0.01, 0.99), 'probabilities': (0.85, 0.95)}
+        self.parameters_estimation = {'quantile_distance': 0.05,
+                                      'quantiles': (0.01, 0.99),
+                                      'probabilities': (0.85, 0.95)}
         self.probabilistic_constraint = BayesianProbabilityEstimator(list_of_constraints=self.list_of_constraints,
                                                                      parameters_of_estimation=self.parameters_estimation)
 
