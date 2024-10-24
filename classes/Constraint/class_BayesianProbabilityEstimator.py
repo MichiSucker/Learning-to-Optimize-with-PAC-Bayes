@@ -1,6 +1,5 @@
 from collections.abc import Callable
 import numpy as np
-import torch
 from scipy.stats import beta
 
 
