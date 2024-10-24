@@ -18,6 +18,9 @@ class SamplingAssistant:
         self.number_of_correct_samples = 0
         self.desired_number_of_samples = desired_number_of_samples
         self.number_of_iterations_burnin = number_of_iterations_burnin
+        self.samples = []
+        self.samples_state_dict = []
+        self.estimated_probabilities = []
 
     def decay_learning_rate(self, iteration):
         self.current_learning_rate = self.initial_learning_rate / iteration
@@ -425,18 +428,17 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                          parameters: dict
                          ) -> Tuple[list, list, list]:
 
-        sampling_assistant = SamplingAssistant(learning_rate=parameters['lr'],
-                                               desired_number_of_samples=parameters['num_samples'],
-                                               number_of_iterations_burnin=parameters['num_iter_burnin'])
+        sampling_assistant = SamplingAssistant(
+            learning_rate=parameters['lr'],
+            desired_number_of_samples=parameters['num_samples'],
+            number_of_iterations_burnin=parameters['num_iter_burnin']
+        )
 
         trajectory_randomizer = TrajectoryRandomizer(
             should_restart=True,
             restart_probability=parameters['restart_probability'],
             length_partial_trajectory=parameters['length_trajectory']
         )
-
-        # List to store the samples_prior
-        samples, samples_state_dict, estimated_probabilities = [], [], []
 
         # Setup distributions for noise
         noise_distributions = self.set_up_noise_distributions()
@@ -486,10 +488,10 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
                     # Store sample
                     if t >= sampling_assistant.number_of_iterations_burnin:
-                        samples.append(
+                        sampling_assistant.samples.append(
                             [p.detach().clone() for p in self.implementation.parameters() if p.requires_grad])
-                        samples_state_dict.append(copy.deepcopy(self.implementation.state_dict()))
-                        estimated_probabilities.append(estimated_prob)
+                        sampling_assistant.samples_state_dict.append(copy.deepcopy(self.implementation.state_dict()))
+                        sampling_assistant.estimated_probabilities.append(estimated_prob)
 
                         # Increase sample counter
                         sampling_assistant.number_of_correct_samples += 1
@@ -505,9 +507,9 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         # Reset iteration counter of algorithm
         self.iteration_counter = 0
 
-        return (samples[-sampling_assistant.desired_number_of_samples:],
-                samples_state_dict[-sampling_assistant.desired_number_of_samples:],
-                estimated_probabilities[-sampling_assistant.desired_number_of_samples:])
+        return (sampling_assistant.samples[-sampling_assistant.desired_number_of_samples:],
+                sampling_assistant.samples_state_dict[-sampling_assistant.desired_number_of_samples:],
+                sampling_assistant.estimated_probabilities[-sampling_assistant.desired_number_of_samples:])
 
     def set_up_noise_distributions(self):
         noise_distributions = {}
