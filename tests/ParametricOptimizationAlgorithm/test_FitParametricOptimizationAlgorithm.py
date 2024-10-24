@@ -129,7 +129,7 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
         self.assertIsInstance(trajectory_randomizer, TrajectoryRandomizer)
         self.assertIsInstance(constraint_checker, ConstraintChecker)
 
-    @unittest.skip("Skip 'test_fit' because it takes long.")
+    # @unittest.skip("Skip 'test_fit' because it takes long.")
     def test_fit(self):
         # This is again a weak test: We only check whether the hyperparameters have been changed
         # (we do not really know more here; only during evaluation do we see whether training was successful).
@@ -151,9 +151,11 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
                                         fitting_parameters=fitting_parameters,
                                         constraint_parameters=constraint_parameters,
                                         update_parameters=update_parameters)
+        sys.stdout = sys.__stdout__
         self.assertNotEqual(old_hyperparameters, self.optimization_algorithm.implementation.state_dict())
         self.assertTrue(torch.equal(self.optimization_algorithm.current_state,
                                     self.optimization_algorithm.initial_state))
         self.assertEqual(self.optimization_algorithm.iteration_counter, 0)
         self.assertTrue(len(capturedOutput.getvalue()) > 0)
-        sys.stdout = sys.__stdout__
+        self.assertFalse(torch.isnan(self.optimization_algorithm.implementation.state_dict()['scale']) or
+                         torch.isinf(self.optimization_algorithm.implementation.state_dict()['scale']))
