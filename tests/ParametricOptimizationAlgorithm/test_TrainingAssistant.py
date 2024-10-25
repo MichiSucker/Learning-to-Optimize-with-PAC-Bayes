@@ -54,7 +54,8 @@ class TestTrainingAssistant(unittest.TestCase):
         sys.stdout = sys.__stdout__
 
     def test_get_bins(self):
-        self.assertEqual(self.training_assistant.get_variable__bins(), [1e0, 1e-4, 1e-8, 1e-12, 1e-16, 1e-20, 1e-24, 1e-28][::-1])
+        self.assertEqual(self.training_assistant.get_variable__bins(),
+                         [1e0, 1e-4, 1e-8, 1e-12, 1e-16, 1e-20, 1e-24, 1e-28][::-1])
 
     def test_set_bins(self):
         new_bins = [1, 2, 3]
@@ -84,7 +85,7 @@ class TestTrainingAssistant(unittest.TestCase):
 
     def test_reset_running_loss_and_loss_histogram(self):
         self.training_assistant.running_loss = 100
-        self.training_assistant.loss_histogram = [1,2,3]
+        self.training_assistant.loss_histogram = [1, 2, 3]
         self.training_assistant.reset_running_loss_and_loss_histogram()
         self.assertEqual(self.training_assistant.running_loss, 0)
         self.assertEqual(self.training_assistant.loss_histogram, [])
