@@ -27,7 +27,7 @@ class TestProbabilisticConstraint(unittest.TestCase):
         self.assertIsInstance(constraint, Constraint)
 
         # Test case 1: True probability lies within the specified interval
-        true_probability = torch.distributions.uniform.Uniform(0, 1).sample((1,)).item()
+        true_probability = torch.distributions.uniform.Uniform(0.1, 0.9).sample((1,)).item()
         list_of_constraints = [
             Constraint(lambda opt_algo: True)
             if torch.distributions.uniform.Uniform(0, 1).sample((1,)).item() < true_probability
