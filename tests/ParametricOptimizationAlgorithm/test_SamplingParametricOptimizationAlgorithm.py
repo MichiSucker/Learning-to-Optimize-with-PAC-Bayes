@@ -192,4 +192,3 @@ class TestSamplingParametricOptimizationAlgorithm(unittest.TestCase):
         self.assertEqual(len(sampling_assistant.estimated_probabilities), old_number_of_samples)
         self.assertEqual(sampling_assistant.point_that_satisfies_constraint, old_point_inside_constraint)
         self.assertEqual(self.optimization_algorithm.implementation.state_dict(), old_point_inside_constraint)
-
