@@ -7,7 +7,7 @@ from classes.LossFunction.class_LossFunction import LossFunction
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
     ParametricOptimizationAlgorithm)
 from algorithms.dummy import Dummy
-from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import SamplingAssistant
+from classes.Helpers.class_SamplingAssistant import SamplingAssistant
 
 
 def dummy_function(x):

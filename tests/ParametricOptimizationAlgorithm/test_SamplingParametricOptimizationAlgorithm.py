@@ -1,6 +1,7 @@
 import unittest
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
-    ParametricOptimizationAlgorithm, TrajectoryRandomizer, SamplingAssistant)
+    ParametricOptimizationAlgorithm, TrajectoryRandomizer)
+from classes.Helpers.class_SamplingAssistant import SamplingAssistant
 from classes.Constraint.class_ProbabilisticConstraint import ProbabilisticConstraint
 from classes.Constraint.class_Constraint import Constraint
 import torch

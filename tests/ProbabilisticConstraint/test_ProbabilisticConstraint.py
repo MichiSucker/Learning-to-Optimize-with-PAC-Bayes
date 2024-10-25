@@ -65,4 +65,3 @@ class TestProbabilisticConstraint(unittest.TestCase):
         self.assertFalse(result)
         self.assertFalse(self.parameters_estimation['probabilities'][0]
                          <= estimation <= self.parameters_estimation['probabilities'][1])
-
