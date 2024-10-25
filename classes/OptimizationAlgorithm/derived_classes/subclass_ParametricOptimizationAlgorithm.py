@@ -23,6 +23,8 @@ class SamplingAssistant:
         self.samples = []
         self.samples_state_dict = []
         self.estimated_probabilities = []
+        self.progressbar = tqdm(total=self.desired_number_of_samples + self.number_of_iterations_burnin)
+        self.progressbar.set_description('Sampling')
 
     def decay_learning_rate(self, iteration):
         self.current_learning_rate = self.initial_learning_rate / iteration
@@ -36,11 +38,6 @@ class SamplingAssistant:
         if not isinstance(noise_distributions, dict):
             raise TypeError("Provided input is not a dict.")
         self.noise_distributions = noise_distributions
-
-    def get_progressbar(self):
-        pbar = tqdm(total=self.desired_number_of_samples + self.number_of_iterations_burnin)
-        pbar.set_description('Sampling')
-        return pbar
 
     def should_continue(self):
         return self.number_of_correct_samples < self.desired_number_of_samples + self.number_of_iterations_burnin
@@ -56,6 +53,7 @@ class SamplingAssistant:
         self.samples_state_dict.append(copy.deepcopy(implementation.state_dict()))
         self.estimated_probabilities.append(estimated_probability)
         self.number_of_correct_samples += 1
+        self.progressbar.update(1)
 
     def prepare_output(self):
         if any((len(self.samples) < self.desired_number_of_samples,
@@ -470,7 +468,6 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
         sampling_assistant, trajectory_randomizer = self.initialize_helpers_for_sampling(parameters=parameters)
         t = 1
-        pbar = sampling_assistant.get_progressbar()
         while sampling_assistant.should_continue():
 
             sampling_assistant.decay_learning_rate(iteration=t)
@@ -480,20 +477,8 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                 sampling_assistant=sampling_assistant
             )
 
-            # Check constraint. Reject current step if it is not satisfied.
-            # Note that for the sampling procedure here, it is assumed that one starts with a point inside the
-            # constraint, i.e. one already has found a point inside.
             if self.constraint is not None:
-                satisfies_constraint, estimated_prob = self.constraint(self, return_val=True)
-
-                if satisfies_constraint:
-                    sampling_assistant.set_point_that_satisfies_constraint(state_dict=self.implementation.state_dict())
-                    if sampling_assistant.should_store_sample(iteration=t):
-                        sampling_assistant.store_sample(implementation=self.implementation,
-                                                        estimated_probability=estimated_prob)
-                        pbar.update(1)
-                else:
-                    sampling_assistant.reject_sample(self)
+                self.accept_or_reject_based_on_constraint(sampling_assistant=sampling_assistant, iteration=t)
 
             t += 1
 
@@ -540,6 +525,18 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         sum_losses = torch.sum(torch.stack(ratios_of_losses))
         sum_losses.backward()
         self.perform_noisy_gradient_step_on_hyperparameters(sampling_assistant)
+
+    def accept_or_reject_based_on_constraint(self, sampling_assistant, iteration):
+        # TODO: For more readability, adjust that to probabilistic constraint.
+        #  Like this, its not obvious from the code that self.constraint has to be create from a ProbabilisticConstraint
+        satisfies_constraint, estimated_prob = self.constraint(self, also_return_value=True)
+        if satisfies_constraint:
+            sampling_assistant.set_point_that_satisfies_constraint(state_dict=self.implementation.state_dict())
+            if sampling_assistant.should_store_sample(iteration=iteration):
+                sampling_assistant.store_sample(implementation=self.implementation,
+                                                estimated_probability=estimated_prob)
+        else:
+            sampling_assistant.reject_sample(self)
 
     def set_up_noise_distributions(self):
         noise_distributions = {}

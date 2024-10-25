@@ -1,6 +1,8 @@
 import unittest
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
     ParametricOptimizationAlgorithm, TrajectoryRandomizer, SamplingAssistant)
+from classes.Constraint.class_ProbabilisticConstraint import ProbabilisticConstraint
+from classes.Constraint.class_Constraint import Constraint
 import torch
 from algorithms.dummy import Dummy, DummyWithMoreTrainableParameters
 from classes.LossFunction.class_LossFunction import LossFunction
@@ -99,3 +101,92 @@ class TestSamplingParametricOptimizationAlgorithm(unittest.TestCase):
         )
         new_hyperparameters = copy.deepcopy(self.optimization_algorithm.implementation.state_dict())
         self.assertNotEqual(old_hyperparameters, new_hyperparameters)
+
+    def test_accept_or_reject_based_on_constraint(self):
+
+        number_of_iterations_burnin = 10
+        sampling_assistant = SamplingAssistant(learning_rate=1e-4,
+                                               desired_number_of_samples=10,
+                                               number_of_iterations_burnin=number_of_iterations_burnin)
+        # Test case 1: Sample gets accepted
+        true_probability = torch.distributions.uniform.Uniform(0, 1).sample((1,)).item()
+        list_of_constraints = [
+            Constraint(lambda opt_algo: True)
+            if torch.distributions.uniform.Uniform(0, 1).sample((1,)).item() < true_probability
+            else Constraint(lambda opt_algo: False) for _ in range(100)
+        ]
+        parameters_estimation = {'quantile_distance': 0.05,
+                                 'quantiles': (0.01, 0.99),
+                                 'probabilities': (true_probability - 0.1, true_probability + 0.1)}
+        probabilistic_constraint = ProbabilisticConstraint(list_of_constraints=list_of_constraints,
+                                                           parameters_of_estimation=parameters_estimation)
+        constraint = probabilistic_constraint.create_constraint()
+        self.optimization_algorithm.set_constraint(constraint)
+        # Here, since the constraints to not really need an optimization algorithm, we can just call the constraint
+        # in any way we want.
+        result, estimation = constraint(1, also_return_value=True)
+        self.assertTrue(result)
+        self.assertTrue(parameters_estimation['probabilities'][0] <= estimation
+                        <= parameters_estimation['probabilities'][1])
+
+        # Test case 1 a: Sample gets accepted and stored
+        old_number_of_samples = len(sampling_assistant.samples_state_dict)
+        old_point_inside_constraint = copy.deepcopy(sampling_assistant.point_that_satisfies_constraint)
+        self.optimization_algorithm.implementation.state_dict()['scale'] -= 0.1
+        self.assertNotEqual(old_point_inside_constraint, self.optimization_algorithm.implementation.state_dict())
+        iteration = number_of_iterations_burnin + 1
+        self.optimization_algorithm.accept_or_reject_based_on_constraint(sampling_assistant=sampling_assistant,
+                                                                         iteration=iteration)
+        self.assertEqual(len(sampling_assistant.samples_state_dict), old_number_of_samples + 1)
+        self.assertEqual(len(sampling_assistant.samples), old_number_of_samples + 1)
+        self.assertEqual(len(sampling_assistant.estimated_probabilities), old_number_of_samples + 1)
+        self.assertTrue(parameters_estimation['probabilities'][0] <= sampling_assistant.estimated_probabilities[-1]
+                        <= parameters_estimation['probabilities'][1])
+        self.assertEqual(sampling_assistant.point_that_satisfies_constraint,
+                         self.optimization_algorithm.implementation.state_dict())
+        self.assertNotEqual(sampling_assistant.point_that_satisfies_constraint, old_point_inside_constraint)
+
+        # Test case 1 b: Sample gets accepted but not stored
+        old_number_of_samples = len(sampling_assistant.samples_state_dict)
+        old_point_inside_constraint = copy.deepcopy(sampling_assistant.point_that_satisfies_constraint)
+        self.optimization_algorithm.implementation.state_dict()['scale'] -= 0.1
+        self.assertNotEqual(old_point_inside_constraint, self.optimization_algorithm.implementation.state_dict())
+        iteration = number_of_iterations_burnin - 1
+        self.optimization_algorithm.accept_or_reject_based_on_constraint(sampling_assistant=sampling_assistant,
+                                                                         iteration=iteration)
+        self.assertEqual(len(sampling_assistant.samples_state_dict), old_number_of_samples)
+        self.assertEqual(len(sampling_assistant.samples), old_number_of_samples)
+        self.assertEqual(len(sampling_assistant.estimated_probabilities), old_number_of_samples)
+        self.assertEqual(sampling_assistant.point_that_satisfies_constraint,
+                         self.optimization_algorithm.implementation.state_dict())
+        self.assertNotEqual(sampling_assistant.point_that_satisfies_constraint, old_point_inside_constraint)
+
+        # Test case 2: Sample gets rejected
+        true_probability = torch.distributions.uniform.Uniform(0.75, 1).sample((1,)).item()
+        list_of_constraints = [
+            Constraint(lambda opt_algo: True)
+            if torch.distributions.uniform.Uniform(0, 1).sample((1,)).item() < true_probability
+            else Constraint(lambda opt_algo: False) for _ in range(100)
+        ]
+        parameters_estimation['probabilities'] = (0.0, 0.1)
+        probabilistic_constraint = ProbabilisticConstraint(list_of_constraints, parameters_estimation)
+        constraint = probabilistic_constraint.create_constraint()
+
+        result, estimation = constraint(1, also_return_value=True)
+        self.assertFalse(result)
+        self.assertFalse(parameters_estimation['probabilities'][0] <= estimation <=
+                         parameters_estimation['probabilities'][1])
+
+        old_number_of_samples = len(sampling_assistant.samples_state_dict)
+        old_point_inside_constraint = copy.deepcopy(sampling_assistant.point_that_satisfies_constraint)
+        self.optimization_algorithm.implementation.state_dict()['scale'] -= 0.1
+        self.assertNotEqual(old_point_inside_constraint, self.optimization_algorithm.implementation.state_dict())
+        iteration = number_of_iterations_burnin + 1
+        self.optimization_algorithm.accept_or_reject_based_on_constraint(sampling_assistant=sampling_assistant,
+                                                                         iteration=iteration)
+        self.assertEqual(len(sampling_assistant.samples_state_dict), old_number_of_samples)
+        self.assertEqual(len(sampling_assistant.samples), old_number_of_samples)
+        self.assertEqual(len(sampling_assistant.estimated_probabilities), old_number_of_samples)
+        self.assertEqual(sampling_assistant.point_that_satisfies_constraint, old_point_inside_constraint)
+        self.assertEqual(self.optimization_algorithm.implementation.state_dict(), old_point_inside_constraint)
+
