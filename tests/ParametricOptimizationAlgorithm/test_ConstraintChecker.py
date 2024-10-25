@@ -1,7 +1,7 @@
 import unittest
 from types import NoneType
 import copy
-from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import ConstraintChecker
+from classes.Helpers.class_ConstraintChecker import ConstraintChecker
 import torch
 from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
 from classes.Constraint.class_Constraint import Constraint

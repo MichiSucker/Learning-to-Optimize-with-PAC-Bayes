@@ -3,8 +3,8 @@ import torch
 import io
 import sys
 from main import TESTING_LEVEL
-from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (TrainingAssistant,
-                                                                                                    ConstraintChecker)
+from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import TrainingAssistant
+from classes.Helpers.class_ConstraintChecker import ConstraintChecker
 
 
 class TestTrainingAssistant(unittest.TestCase):
