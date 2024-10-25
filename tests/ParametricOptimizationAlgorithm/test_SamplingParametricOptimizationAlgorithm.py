@@ -108,17 +108,20 @@ class TestSamplingParametricOptimizationAlgorithm(unittest.TestCase):
     @unittest.skipIf(condition=(TESTING_LEVEL == 'SKIP_EXPENSIVE_TESTS'),
                      reason='Too expensive to test all the time.')
     def test_accept_or_reject_based_on_constraint(self):
+        # Three things can happen:
+        # a) the constraint is satisfied, and the sample gets stored
+        # b) the constraint is satisfied, but the sample does not get stored (during burnin)
+        # c) the constraint is not satisfied
 
         number_of_iterations_burnin = 10
         sampling_assistant = SamplingAssistant(learning_rate=1e-4,
                                                desired_number_of_samples=10,
                                                number_of_iterations_burnin=number_of_iterations_burnin)
-        # Test case 1: Sample gets accepted
-        true_probability = torch.distributions.uniform.Uniform(0, 1).sample((1,)).item()
+        true_probability = torch.distributions.uniform.Uniform(0.1, 0.9).sample().item()
         list_of_constraints = [
             Constraint(lambda opt_algo: True)
-            if torch.distributions.uniform.Uniform(0, 1).sample((1,)).item() < true_probability
-            else Constraint(lambda opt_algo: False) for _ in range(100)
+            if torch.rand((1,)).item() < true_probability
+            else Constraint(lambda opt_algo: False) for _ in range(150)
         ]
         parameters_estimation = {'quantile_distance': 0.05,
                                  'quantiles': (0.01, 0.99),
@@ -130,6 +133,8 @@ class TestSamplingParametricOptimizationAlgorithm(unittest.TestCase):
         # Here, since the constraints to not really need an optimization algorithm, we can just call the constraint
         # in any way we want.
         result, estimation = constraint(1, also_return_value=True)
+        # Make sure that the result of the estimation process yields 'accept' (True) and the estimate does lie within
+        # the specified interval. Note that this can fail, but quite unlikely.
         self.assertTrue(result)
         self.assertTrue(parameters_estimation['probabilities'][0] <= estimation
                         <= parameters_estimation['probabilities'][1])
@@ -137,16 +142,20 @@ class TestSamplingParametricOptimizationAlgorithm(unittest.TestCase):
         # Test case 1 a: Sample gets accepted and stored
         old_number_of_samples = len(sampling_assistant.samples_state_dict)
         old_point_inside_constraint = copy.deepcopy(sampling_assistant.point_that_satisfies_constraint)
-        self.optimization_algorithm.implementation.state_dict()['scale'] -= 0.1
+        sampling_assistant.point_that_satisfies_constraint = old_point_inside_constraint
+        self.optimization_algorithm.implementation.state_dict()['scale'] -= 0.1  # Change current state_dict()
         self.assertNotEqual(old_point_inside_constraint, self.optimization_algorithm.implementation.state_dict())
-        iteration = number_of_iterations_burnin + 1
+        iteration = number_of_iterations_burnin + 1  # Sample can be stored only after burnin-phase
         self.optimization_algorithm.accept_or_reject_based_on_constraint(sampling_assistant=sampling_assistant,
                                                                          iteration=iteration)
+        # Check that sample got stored
         self.assertEqual(len(sampling_assistant.samples_state_dict), old_number_of_samples + 1)
         self.assertEqual(len(sampling_assistant.samples), old_number_of_samples + 1)
         self.assertEqual(len(sampling_assistant.estimated_probabilities), old_number_of_samples + 1)
+        # Check that estimated probability does lie within the interval
         self.assertTrue(parameters_estimation['probabilities'][0] <= sampling_assistant.estimated_probabilities[-1]
                         <= parameters_estimation['probabilities'][1])
+        # Check that the point got accepted
         self.assertEqual(sampling_assistant.point_that_satisfies_constraint,
                          self.optimization_algorithm.implementation.state_dict())
         self.assertNotEqual(sampling_assistant.point_that_satisfies_constraint, old_point_inside_constraint)
@@ -154,14 +163,17 @@ class TestSamplingParametricOptimizationAlgorithm(unittest.TestCase):
         # Test case 1 b: Sample gets accepted but not stored
         old_number_of_samples = len(sampling_assistant.samples_state_dict)
         old_point_inside_constraint = copy.deepcopy(sampling_assistant.point_that_satisfies_constraint)
+        sampling_assistant.point_that_satisfies_constraint = old_point_inside_constraint
         self.optimization_algorithm.implementation.state_dict()['scale'] -= 0.1
         self.assertNotEqual(old_point_inside_constraint, self.optimization_algorithm.implementation.state_dict())
-        iteration = number_of_iterations_burnin - 1
+        iteration = number_of_iterations_burnin - 1  # Still in burnin-phase
         self.optimization_algorithm.accept_or_reject_based_on_constraint(sampling_assistant=sampling_assistant,
                                                                          iteration=iteration)
+        # Check that the sample did not get stored
         self.assertEqual(len(sampling_assistant.samples_state_dict), old_number_of_samples)
         self.assertEqual(len(sampling_assistant.samples), old_number_of_samples)
         self.assertEqual(len(sampling_assistant.estimated_probabilities), old_number_of_samples)
+        # Check that the sample did get accepted as new point
         self.assertEqual(sampling_assistant.point_that_satisfies_constraint,
                          self.optimization_algorithm.implementation.state_dict())
         self.assertNotEqual(sampling_assistant.point_that_satisfies_constraint, old_point_inside_constraint)
@@ -177,6 +189,8 @@ class TestSamplingParametricOptimizationAlgorithm(unittest.TestCase):
         probabilistic_constraint = ProbabilisticConstraint(list_of_constraints, parameters_estimation)
         constraint = probabilistic_constraint.create_constraint()
 
+        # Make sure that the point would be rejected. Since the estimation would break soon, the estimate does not lie
+        # within the specified interval (highly likely).
         result, estimation = constraint(1, also_return_value=True)
         self.assertFalse(result)
         self.assertFalse(parameters_estimation['probabilities'][0] <= estimation <=
@@ -184,13 +198,16 @@ class TestSamplingParametricOptimizationAlgorithm(unittest.TestCase):
 
         old_number_of_samples = len(sampling_assistant.samples_state_dict)
         old_point_inside_constraint = copy.deepcopy(sampling_assistant.point_that_satisfies_constraint)
+        sampling_assistant.point_that_satisfies_constraint = old_point_inside_constraint
         self.optimization_algorithm.implementation.state_dict()['scale'] -= 0.1
         self.assertNotEqual(old_point_inside_constraint, self.optimization_algorithm.implementation.state_dict())
-        iteration = number_of_iterations_burnin + 1
+        iteration = number_of_iterations_burnin + 1  # The sample could be stored
         self.optimization_algorithm.accept_or_reject_based_on_constraint(sampling_assistant=sampling_assistant,
                                                                          iteration=iteration)
+        # Make sure the sample did not get stored
         self.assertEqual(len(sampling_assistant.samples_state_dict), old_number_of_samples)
         self.assertEqual(len(sampling_assistant.samples), old_number_of_samples)
         self.assertEqual(len(sampling_assistant.estimated_probabilities), old_number_of_samples)
+        # Make sure the point got rejected
         self.assertEqual(sampling_assistant.point_that_satisfies_constraint, old_point_inside_constraint)
         self.assertEqual(self.optimization_algorithm.implementation.state_dict(), old_point_inside_constraint)
