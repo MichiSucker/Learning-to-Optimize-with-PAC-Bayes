@@ -8,6 +8,7 @@ from classes.Constraint.class_Constraint import Constraint
 from classes.LossFunction.class_LossFunction import LossFunction
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
     ParametricOptimizationAlgorithm, TrajectoryRandomizer, TrainingAssistant, losses_are_invalid, ConstraintChecker)
+from main import TESTING_LEVEL
 
 
 def dummy_function(x):
@@ -87,7 +88,8 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
         self.assertTrue(losses_are_invalid([1., None]))
         self.assertTrue(losses_are_invalid([1., torch.inf]))
 
-    @unittest.skip("Skip 'test_update_hyperparameters' because it takes long.")
+    @unittest.skipIf(condition=(TESTING_LEVEL == 'SKIP_EXPENSIVE_TESTS'),
+                     reason='Too expensive to test all the time.')
     def test_update_hyperparameters(self):
         # Note that this is a weak test! We only check whether the hyperparameters did change.
         trajectory_randomizer = TrajectoryRandomizer(should_restart=True, restart_probability=1.,
@@ -113,7 +115,8 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
                                if p.requires_grad]
         self.assertNotEqual(old_hyperparameters, new_hyperparameters)
 
-    @unittest.skip("Skip 'test_initialize_helpers_for_training' because it takes long.")
+    @unittest.skipIf(condition=(TESTING_LEVEL == 'SKIP_EXPENSIVE_TESTS'),
+                     reason='Too expensive to test all the time.')
     def test_initialize_helpers_for_training(self):
         fitting_parameters = {'restart_probability': 0.5, 'length_trajectory': 1, 'n_max': 100,
                               'num_iter_update_stepsize': 5, 'factor_stepsize_update': 0.5, 'lr': 1e-4}
@@ -129,7 +132,8 @@ class TestFitOfParametricOptimizationAlgorithm(unittest.TestCase):
         self.assertIsInstance(trajectory_randomizer, TrajectoryRandomizer)
         self.assertIsInstance(constraint_checker, ConstraintChecker)
 
-    @unittest.skip("Skip 'test_fit' because it takes long.")
+    @unittest.skipIf(condition=(TESTING_LEVEL == 'SKIP_EXPENSIVE_TESTS'),
+                     reason='Too expensive to test all the time.')
     def test_fit(self):
         # This is again a weak test: We only check whether the hyperparameters have been changed
         # (we do not really know more here; only during evaluation do we see whether training was successful).

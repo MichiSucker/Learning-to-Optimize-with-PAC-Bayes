@@ -2,7 +2,7 @@ import unittest
 import torch
 import io
 import sys
-
+from main import TESTING_LEVEL
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (TrainingAssistant,
                                                                                                     ConstraintChecker)
 
@@ -95,7 +95,8 @@ class TestTrainingAssistant(unittest.TestCase):
         self.assertFalse(self.training_assistant.should_update_stepsize_of_optimizer(iteration=random_multiple-1))
         self.assertFalse(self.training_assistant.should_update_stepsize_of_optimizer(iteration=0))
 
-    @unittest.skip("Skip 'test_update_stepsize_of_optimizer' because it takes long.")
+    @unittest.skipIf(condition=(TESTING_LEVEL == 'SKIP_EXPENSIVE_TESTS'),
+                     reason='Too expensive to test all the time.')
     def test_update_stepsize_of_optimizer(self):
         dummy_parameters = [torch.tensor([1., 2.], requires_grad=True)]
         lr = 4e-3

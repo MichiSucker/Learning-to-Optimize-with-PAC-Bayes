@@ -8,6 +8,7 @@ from algorithms.dummy import Dummy, DummyWithMoreTrainableParameters
 from classes.LossFunction.class_LossFunction import LossFunction
 from torch.distributions import MultivariateNormal
 import copy
+from main import TESTING_LEVEL
 
 
 def dummy_function(x):
@@ -102,6 +103,8 @@ class TestSamplingParametricOptimizationAlgorithm(unittest.TestCase):
         new_hyperparameters = copy.deepcopy(self.optimization_algorithm.implementation.state_dict())
         self.assertNotEqual(old_hyperparameters, new_hyperparameters)
 
+    @unittest.skipIf(condition=(TESTING_LEVEL == 'SKIP_EXPENSIVE_TESTS'),
+                     reason='Too expensive to test all the time.')
     def test_accept_or_reject_based_on_constraint(self):
 
         number_of_iterations_burnin = 10

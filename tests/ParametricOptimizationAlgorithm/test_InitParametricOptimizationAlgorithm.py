@@ -7,6 +7,7 @@ import torch
 from algorithms.dummy import Dummy, NonTrainableDummy
 from classes.LossFunction.class_LossFunction import LossFunction
 import copy
+from main import TESTING_LEVEL
 
 
 def dummy_function(x):
@@ -74,7 +75,8 @@ class TestInitParametricOptimizationAlgorithm(unittest.TestCase):
         self.assertTrue(torch.equal(self.optimization_algorithm.current_state, current_state))
         self.assertEqual(current_loss_function, self.optimization_algorithm.loss_function)
 
-    @unittest.skip("Skip 'test_update_initialization_of_hyperparameters' because it takes long.")
+    @unittest.skipIf(condition=(TESTING_LEVEL == 'SKIP_EXPENSIVE_TESTS'),
+                     reason='Too expensive to test all the time.')
     def test_update_initialization_of_hyperparameters(self):
         # Note that this is a weak test! We only check whether the hyperparameters did change.
         trajectory_randomizer = TrajectoryRandomizer(should_restart=True, restart_probability=1.,
@@ -103,7 +105,8 @@ class TestInitParametricOptimizationAlgorithm(unittest.TestCase):
                                if p.requires_grad]
         self.assertNotEqual(old_hyperparameters, new_hyperparameters)
 
-    @unittest.skip("Skip 'test_initialize_helpers_for_initialization' because it takes long.")
+    @unittest.skipIf(condition=(TESTING_LEVEL == 'SKIP_EXPENSIVE_TESTS'),
+                     reason='Too expensive to test all the time.')
     def test_initialize_helpers_for_initialization(self):
         parameters_init = {'with_print': True, 'num_iter_max': 100, 'lr': 1e-4,
                            'num_iter_update_stepsize': 10, 'num_iter_print_update': 10}
@@ -113,7 +116,8 @@ class TestInitParametricOptimizationAlgorithm(unittest.TestCase):
         self.assertIsInstance(trajectory_randomizer, TrajectoryRandomizer)
         self.assertIsInstance(initialization_assistant, InitializationAssistant)
 
-    @unittest.skip("Skip 'test_initialize_with_other_algorithm' because it takes long.")
+    @unittest.skipIf(condition=(TESTING_LEVEL == 'SKIP_EXPENSIVE_TESTS'),
+                     reason='Too expensive to test all the time.')
     def test_initialize_with_other_algorithm(self):
         other_algorithm = ParametricOptimizationAlgorithm(implementation=NonTrainableDummy(),
                                                           initial_state=self.initial_state,

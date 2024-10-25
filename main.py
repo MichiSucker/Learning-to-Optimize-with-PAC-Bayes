@@ -1,6 +1,7 @@
 import unittest
 import coverage
 
+TESTING_LEVEL = 'SKIP_EXPENSIVE_TESTS'
 
 if __name__ == '__main__':
 

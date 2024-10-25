@@ -5,6 +5,7 @@ from classes.Constraint.class_BayesianProbabilityEstimator import (BayesianProba
                                                                    sample_and_evaluate_random_constraint,
                                                                    update_parameters_and_uncertainty,
                                                                    estimation_should_be_stopped)
+from main import TESTING_LEVEL
 
 
 class TestProbabilisticConstraint(unittest.TestCase):
@@ -14,8 +15,8 @@ class TestProbabilisticConstraint(unittest.TestCase):
         self.parameters_estimation = {'quantile_distance': 0.05,
                                       'quantiles': (0.01, 0.99),
                                       'probabilities': (0.85, 0.95)}
-        self.probabilistic_constraint = BayesianProbabilityEstimator(list_of_constraints=self.list_of_constraints,
-                                                                     parameters_of_estimation=self.parameters_estimation)
+        self.probabilistic_constraint = BayesianProbabilityEstimator(
+            list_of_constraints=self.list_of_constraints, parameters_of_estimation=self.parameters_estimation)
 
     def test_creation(self):
         self.assertIsInstance(self.probabilistic_constraint, BayesianProbabilityEstimator)
@@ -156,7 +157,8 @@ class TestProbabilisticConstraint(unittest.TestCase):
         self.probabilistic_constraint.set_list_of_constraints(new_list_of_constraints)
         self.assertEqual(self.probabilistic_constraint.get_list_of_constraints(), new_list_of_constraints)
 
-    # @unittest.skip("Skip 'test_estimate_probability' because it takes long.")
+    @unittest.skipIf(condition=(TESTING_LEVEL == 'SKIP_EXPENSIVE_TESTS'),
+                     reason='Too expensive to test all the time.')
     def test_estimate_probability(self):
         dummy_point = torch.tensor([1.])
         true_probability = torch.distributions.uniform.Uniform(0.1, 0.9).sample((1,)).item()

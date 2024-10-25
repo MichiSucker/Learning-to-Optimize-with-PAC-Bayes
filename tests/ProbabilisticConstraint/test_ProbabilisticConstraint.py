@@ -3,6 +3,7 @@ from classes.Constraint.class_ProbabilisticConstraint import ProbabilisticConstr
 from classes.Constraint.class_Constraint import Constraint
 from classes.Constraint.class_BayesianProbabilityEstimator import BayesianProbabilityEstimator
 import torch
+from main import TESTING_LEVEL
 
 
 class TestProbabilisticConstraint(unittest.TestCase):
@@ -19,7 +20,8 @@ class TestProbabilisticConstraint(unittest.TestCase):
         self.assertIsInstance(self.probabilistic_constraint.constraint, Constraint)
         self.assertIsInstance(self.probabilistic_constraint.bayesian_estimator, BayesianProbabilityEstimator)
 
-    @unittest.skip("Skip this test, because it takes very long.")
+    @unittest.skipIf(condition=(TESTING_LEVEL == 'SKIP_EXPENSIVE_TESTS'),
+                     reason='Too expensive to test all the time.')
     def test_create_constraint(self):
         constraint = self.probabilistic_constraint.create_constraint()
         self.assertIsInstance(constraint, Constraint)
