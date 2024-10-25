@@ -7,8 +7,9 @@ from algorithms.dummy import Dummy
 from classes.Constraint.class_Constraint import Constraint
 from classes.LossFunction.class_LossFunction import LossFunction
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
-    ParametricOptimizationAlgorithm, TrajectoryRandomizer, TrainingAssistant, losses_are_invalid)
+    ParametricOptimizationAlgorithm, TrajectoryRandomizer, losses_are_invalid)
 from classes.Helpers.class_ConstraintChecker import ConstraintChecker
+from classes.Helpers.class_TrainingAssistant import TrainingAssistant
 from main import TESTING_LEVEL
 
 
