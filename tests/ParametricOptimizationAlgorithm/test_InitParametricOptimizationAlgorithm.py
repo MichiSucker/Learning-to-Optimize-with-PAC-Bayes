@@ -2,7 +2,8 @@ import unittest
 import io
 import sys
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
-    ParametricOptimizationAlgorithm, compute_initialization_loss, TrajectoryRandomizer, InitializationAssistant)
+    ParametricOptimizationAlgorithm, compute_initialization_loss, InitializationAssistant)
+from classes.Helpers.class_TrajectoryRandomizer import TrajectoryRandomizer
 import torch
 from algorithms.dummy import Dummy, NonTrainableDummy
 from classes.LossFunction.class_LossFunction import LossFunction

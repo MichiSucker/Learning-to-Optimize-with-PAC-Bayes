@@ -1,6 +1,7 @@
 import unittest
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
-    ParametricOptimizationAlgorithm, TrajectoryRandomizer)
+    ParametricOptimizationAlgorithm)
+from classes.Helpers.class_TrajectoryRandomizer import TrajectoryRandomizer
 from classes.Helpers.class_SamplingAssistant import SamplingAssistant
 from classes.Constraint.class_ProbabilisticConstraint import ProbabilisticConstraint
 from classes.Constraint.class_Constraint import Constraint

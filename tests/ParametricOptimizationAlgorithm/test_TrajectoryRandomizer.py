@@ -1,6 +1,5 @@
 import unittest
-
-from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import TrajectoryRandomizer
+from classes.Helpers.class_TrajectoryRandomizer import TrajectoryRandomizer
 
 
 class TestTrajectoryRandomizer(unittest.TestCase):
