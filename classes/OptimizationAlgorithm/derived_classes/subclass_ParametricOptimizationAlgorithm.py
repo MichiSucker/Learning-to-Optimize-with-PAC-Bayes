@@ -228,7 +228,7 @@ class InitializationAssistant:
             print("Init. network to mimic algorithm.")
             print(f"Optimizing for {self.maximal_number_of_iterations} iterations.")
 
-    def final_message(self):
+    def print_final_message(self):
         if self.printing_enabled:
             print("Finished initialization.")
 
@@ -289,7 +289,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
         self.reset_state_and_iteration_counter()
         other_algorithm.reset_state_and_iteration_counter()
-        initialization_assistant.final_message()
+        initialization_assistant.print_final_message()
 
     def initialize_helpers_for_initialization(self, parameters):
 
