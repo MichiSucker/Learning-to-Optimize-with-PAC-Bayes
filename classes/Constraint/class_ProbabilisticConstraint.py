@@ -1,6 +1,4 @@
-from sympy.plotting.intervalmath import interval
-
-from classes.Constraint.class_Constraint import Constraint, create_list_of_constraints_from_functions
+from classes.Constraint.class_Constraint import Constraint
 from classes.Constraint.class_BayesianProbabilityEstimator import BayesianProbabilityEstimator
 
 

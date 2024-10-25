@@ -2,8 +2,7 @@ import unittest
 import sys
 import io
 import torch
-from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
-    InitializationAssistant)
+from classes.Helpers.class_InitializationAssistant import InitializationAssistant
 from main import TESTING_LEVEL
 
 
