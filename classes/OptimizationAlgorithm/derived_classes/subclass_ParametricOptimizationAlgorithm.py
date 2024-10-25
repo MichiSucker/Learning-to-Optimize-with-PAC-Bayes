@@ -223,7 +223,7 @@ class InitializationAssistant:
         self.factor_update_stepsize = factor_update_stepsize
         self.running_loss = 0
 
-    def starting_message(self):
+    def print_starting_message(self):
         if self.printing_enabled:
             print("Init. network to mimic algorithm.")
             print(f"Optimizing for {self.maximal_number_of_iterations} iterations.")
@@ -271,7 +271,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
         optimizer, initialization_assistant, trajectory_randomizer = self.initialize_helpers_for_initialization(
             parameters=parameters)
-        initialization_assistant.starting_message()
+        initialization_assistant.print_starting_message()
         pbar = initialization_assistant.get_progressbar()
         for i in pbar:
 

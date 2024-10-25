@@ -30,14 +30,14 @@ class TestInitializationAssistant(unittest.TestCase):
         # This is just a weak test: We only test whether it created an output.
         capturedOutput = io.StringIO()
         sys.stdout = capturedOutput
-        self.initialization_assistant.starting_message()
+        self.initialization_assistant.print_starting_message()
         self.assertTrue(len(capturedOutput.getvalue()) > 0)
         sys.stdout = sys.__stdout__
 
         self.initialization_assistant.printing_enabled = False
         capturedOutput = io.StringIO()
         sys.stdout = capturedOutput
-        self.initialization_assistant.starting_message()
+        self.initialization_assistant.print_starting_message()
         self.assertTrue(len(capturedOutput.getvalue()) == 0)
         sys.stdout = sys.__stdout__
 
