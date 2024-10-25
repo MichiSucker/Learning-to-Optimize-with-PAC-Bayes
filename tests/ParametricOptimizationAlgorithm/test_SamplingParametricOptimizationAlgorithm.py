@@ -39,17 +39,19 @@ class TestSamplingParametricOptimizationAlgorithm(unittest.TestCase):
                                                desired_number_of_samples=desired_number_of_samples,
                                                number_of_iterations_burnin=number_of_iterations_burnin)
 
-        noise_distributions = {}
+        noise_distributions = self.optimization_algorithm.set_up_noise_distributions()
+        sampling_assistant.set_noise_distributions(noise_distributions)
+        # Make sure that, if a parameter requires a gradient, it actually has one. Normally, this would be true through
+        # the call of backward().
         for name, parameter in self.optimization_algorithm.implementation.named_parameters():
             if parameter.requires_grad:
-                dim = len(parameter.flatten())
-                noise_distributions[name] = MultivariateNormal(torch.zeros(dim), torch.eye(dim))
                 parameter.grad = torch.randn(size=parameter.shape)
-        sampling_assistant.set_noise_distributions(noise_distributions)
+
+        # Make sure the hyperparameters did change through the step.
         old_hyperparameters = copy.deepcopy(self.optimization_algorithm.implementation.state_dict())
         self.optimization_algorithm.perform_noisy_gradient_step_on_hyperparameters(sampling_assistant)
         self.assertNotEqual(self.optimization_algorithm.implementation.state_dict(), old_hyperparameters)
-
+        # If the learning rate is zero, the step should not change the hyperparameters anymore.
         sampling_assistant.current_learning_rate = 0
         old_hyperparameters = copy.deepcopy(self.optimization_algorithm.implementation.state_dict())
         self.optimization_algorithm.perform_noisy_gradient_step_on_hyperparameters(sampling_assistant)
@@ -72,6 +74,10 @@ class TestSamplingParametricOptimizationAlgorithm(unittest.TestCase):
         self.optimization_algorithm.implementation = DummyWithMoreTrainableParameters()
         noise_distributions = self.optimization_algorithm.set_up_noise_distributions()
         self.assertIsInstance(noise_distributions, dict)
+        # For every parameter that will require a gradient, we have to add normal-distributed noise. So make sure every
+        # such parameter has an entry in the noise_distributions-dictionary, and that this entry is actually a
+        # MultivariateNormal.
+        # For all the other entries, we do not want to store anything.
         for name, parameter in self.optimization_algorithm.implementation.named_parameters():
             if parameter.requires_grad:
                 self.assertTrue(name in list(noise_distributions.keys()))
@@ -90,12 +96,13 @@ class TestSamplingParametricOptimizationAlgorithm(unittest.TestCase):
                                                desired_number_of_samples=10,
                                                number_of_iterations_burnin=10)
         sampling_assistant.set_noise_distributions(noise_distributions=noise_distributions)
+
+        # Make sure that the parameters that do require a gradient actually have a gradient.
         for name, parameter in self.optimization_algorithm.implementation.named_parameters():
             if parameter.requires_grad:
-                dim = len(parameter.flatten())
-                noise_distributions[name] = MultivariateNormal(torch.zeros(dim), torch.eye(dim))
                 parameter.grad = torch.randn(size=parameter.shape)
 
+        # Compute a proposal and make sure that it is not the same as at the current point.
         old_hyperparameters = copy.deepcopy(self.optimization_algorithm.implementation.state_dict())
         self.optimization_algorithm.compute_next_possible_sample(
             loss_functions=loss_functions,
