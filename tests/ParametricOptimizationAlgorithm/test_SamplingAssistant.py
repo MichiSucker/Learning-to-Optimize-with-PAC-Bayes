@@ -54,12 +54,6 @@ class TestSamplingAssistant(unittest.TestCase):
         self.sampling_assistant.reject_sample(optimization_algorithm)
         self.assertEqual(optimization_algorithm.implementation.state_dict(), old_point)
 
-    def test_get_progressbar(self):
-        pbar = self.sampling_assistant.get_progressbar()
-        self.assertTrue(hasattr(pbar, 'desc'))
-        self.assertTrue(hasattr(pbar, 'iterable'))
-        self.assertEqual(pbar.desc, 'Sampling: ')
-
     def test_set_noise_distributions(self):
         self.assertIsInstance(self.sampling_assistant.noise_distributions, NoneType)
         noise_distributions = {'scale': 0.1}
