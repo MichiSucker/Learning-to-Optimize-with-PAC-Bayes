@@ -495,7 +495,6 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                 else:
                     sampling_assistant.reject_sample(self)
 
-            # Update iteration counter (for reduction of step-size, to prevent getting stuck)
             t += 1
 
         self.reset_state_and_iteration_counter()
