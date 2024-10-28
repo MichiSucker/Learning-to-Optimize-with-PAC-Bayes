@@ -1,8 +1,6 @@
 import unittest
 from typing import Callable
-
 import torch
-
 from classes.OptimizationAlgorithm.derived_classes.derived_classes.subclass_PacBayesOptimizationAlgorithm import \
     PacBayesOptimizationAlgorithm
 from classes.LossFunction.class_LossFunction import LossFunction
