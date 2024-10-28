@@ -1,19 +1,21 @@
 import unittest
 from types import NoneType
 
+from classes.LossFunction.derived_classes.subclass_ParametricLossFunction import ParametricLossFunction
 from classes.OptimizationAlgorithm.derived_classes.derived_classes.subclass_PacBayesOptimizationAlgorithm import (
     PacBayesOptimizationAlgorithm, compute_loss_at_end)
 import torch
 from typing import Callable
 from classes.LossFunction.class_LossFunction import LossFunction
-from classes.Constraint.class_Constraint import Constraint
+from classes.Constraint.class_ProbabilisticConstraint import Constraint, ProbabilisticConstraint
 from algorithms.dummy import Dummy
+from describing_property.reduction_property import instantiate_reduction_property_with
 import copy
 import io
 import sys
 
 
-def dummy_function(x):
+def dummy_function(x, parameter=None):
     return 0.5 * torch.linalg.norm(x) ** 2
 
 
@@ -256,3 +258,49 @@ class TestPacBayesOptimizationAlgorithm(unittest.TestCase):
             estimated_convergence_probabilities=estimated_convergence_probabilities)
         self.assertIsInstance(prior_potentials, torch.Tensor)
         self.assertEqual(len(prior_potentials), len(hyperparameters))
+
+    def test_pac_bayes_fit(self):
+
+        def sufficient_statistics(optimization_algorithm, parameter, probability):
+            return torch.tensor([parameter['p']/probability, (parameter['p']/probability) ** 2])
+
+        def natural_parameters(x):
+            return torch.tensor([x, -0.5 * x**2])
+        self.pac_algorithm.sufficient_statistics = sufficient_statistics
+        self.pac_algorithm.natural_parameters = natural_parameters
+        true_probability = torch.distributions.uniform.Uniform(0.9, 1.0).sample((1,)).item()
+        list_of_constraints = [
+            Constraint(lambda opt_algo: True)
+            if torch.distributions.uniform.Uniform(0, 1).sample((1,)).item() < true_probability
+            else Constraint(lambda opt_algo: False) for _ in range(200)
+        ]
+        parameters_estimation = {'quantile_distance': 0.05, 'quantiles': (0.01, 0.99),
+                                 'probabilities': (true_probability - 0.1, 1)}
+        probabilistic_constraint = ProbabilisticConstraint(list_of_constraints, parameters_estimation)
+        constraint = probabilistic_constraint.create_constraint()
+        self.pac_algorithm.set_constraint(constraint)
+        self.pac_algorithm.n_max = 10
+        self.pac_algorithm.covering_number = torch.randint(low=10, high=100, size=(1,))
+        self.pac_algorithm.epsilon = torch.rand(size=(1,))
+        loss_functions_prior = [ParametricLossFunction(function=dummy_function, parameter={'p': 1}) for _ in range(5)]
+        loss_functions_train = [ParametricLossFunction(function=dummy_function, parameter={'p': 1}) for _ in range(5)]
+        fitting_parameters = {'restart_probability': 0.5, 'length_trajectory': 1, 'n_max': 10,
+                              'num_iter_update_stepsize': 5, 'factor_stepsize_update': 0.5, 'lr': 1e-4}
+        number_of_samples = 2
+        sampling_parameters = {'restart_probability': 0.9, 'length_trajectory': 1, 'lr': 1e-4,
+                               'num_samples': number_of_samples, 'num_iter_burnin': 1}
+        reduction_property, convergence_risk_constraint, empirical_second_moment = (
+            instantiate_reduction_property_with(factor=1., exponent=2.))
+        constraint_parameters = {'num_iter_update_constraint': 5, 'describing_property': reduction_property}
+        update_parameters = {'with_print': True, 'num_iter_print_update': 10, 'bins': []}
+
+        pac_bound, state_dict_samples_prior = self.pac_algorithm.pac_bayes_fit(
+            loss_functions_prior=loss_functions_prior, loss_functions_train=loss_functions_train,
+            fitting_parameters=fitting_parameters, sampling_parameters=sampling_parameters,
+            constraint_parameters=constraint_parameters, update_parameters=update_parameters)
+
+        self.assertIsInstance(pac_bound, torch.Tensor)
+        self.assertIsInstance(pac_bound.item(), float)
+        self.assertEqual(pac_bound, self.pac_algorithm.pac_bound)
+        self.assertTrue(len(state_dict_samples_prior), number_of_samples)
+        self.assertTrue(self.pac_algorithm.implementation.state_dict() in state_dict_samples_prior)

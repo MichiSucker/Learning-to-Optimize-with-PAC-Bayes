@@ -2,6 +2,7 @@ from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizati
     ParametricOptimizationAlgorithm)
 import torch
 from tqdm import tqdm
+from classes.Constraint.class_Constraint import create_list_of_constraints_from_functions
 
 
 class PacBayesOptimizationAlgorithm(ParametricOptimizationAlgorithm):
@@ -129,6 +130,45 @@ class PacBayesOptimizationAlgorithm(ParametricOptimizationAlgorithm):
                                                               estimated_convergence_probability=estimated_probability)
             potentials.append(-convergence_risk)
         return torch.tensor(potentials)
+
+    def pac_bayes_fit(self,
+                      loss_functions_prior,
+                      loss_functions_train,
+                      fitting_parameters,
+                      sampling_parameters,
+                      constraint_parameters,
+                      update_parameters):
+
+        self.fit(loss_functions=loss_functions_prior,
+                 fitting_parameters=fitting_parameters,
+                 constraint_parameters=constraint_parameters,
+                 update_parameters=update_parameters)
+
+        _, state_dict_samples_prior, estimated_convergence_probabilities = self.sample_with_sgld(
+            loss_functions=loss_functions_prior,
+            parameters=sampling_parameters)
+
+        constraint_functions_prior = create_list_of_constraints_from_functions(
+            describing_property=constraint_parameters['describing_property'],
+            list_of_functions=loss_functions_prior)
+
+        potentials_prior = self.evaluate_prior_potentials(
+            loss_functions_prior=loss_functions_prior,
+            constraint_functions_prior=constraint_functions_prior,
+            samples_prior=state_dict_samples_prior,
+            estimated_convergence_probabilities=estimated_convergence_probabilities)
+        optimal_posterior_potentials = self.compute_posterior_potentials_and_pac_bound(
+            samples_prior=state_dict_samples_prior,
+            potentials_prior=potentials_prior,
+            estimated_convergence_probabilities=estimated_convergence_probabilities,
+            list_of_parameters_train=[loss.get_parameter() for loss in loss_functions_train],
+            )
+
+        posterior_probabilities = torch.softmax(optimal_posterior_potentials, dim=0)
+        alpha_opt = state_dict_samples_prior[torch.argmax(posterior_probabilities)]
+        self.set_hyperparameters_to(alpha_opt)
+
+        return self.pac_bound, state_dict_samples_prior
 
 
 def compute_loss_at_end(optimization_algorithm):
