@@ -61,16 +61,17 @@ class TestPacBayesOptimizationAlgorithm(unittest.TestCase):
             self.pac_algorithm.set_hyperparameters_to(current_hyperparameters)
             for i, current_parameters in enumerate(parameters):
                 desired_values[i, j, :] = sufficient_statistics(
-                    self.pac_algorithm, parameter=current_parameters, probability=estimated_convergence_probabilities[j])
+                    self.pac_algorithm, parameter=current_parameters,
+                    probability=estimated_convergence_probabilities[j])
 
         self.assertTrue(torch.equal(values_of_sufficient_statistics, torch.mean(desired_values, dim=0)))
 
     def test_get_upper_bound_as_function_of_lambda(self):
-        def potentials(lamb):
-            return torch.exp(lamb)
+        def potentials(x):
+            return torch.exp(x)
 
-        def natural_parameters(lamb):
-            return torch.tensor([lamb, -0.5 * lamb ** 2])
+        def natural_parameters(x):
+            return torch.tensor([x, -0.5 * x ** 2])
 
         self.pac_algorithm.epsilon = torch.rand(size=(1,))
         self.pac_algorithm.covering_number = torch.randint(low=1, high=100, size=(1,))
