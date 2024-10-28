@@ -40,10 +40,3 @@ class PacBayesOptimizationAlgorithm(ParametricOptimizationAlgorithm):
         return lambda lamb: -(torch.logsumexp(potentials(lamb), dim=0)
                               + torch.log(self.epsilon)
                               - torch.log(self.covering_number)) / (self.natural_parameters(lamb)[0])
-
-    # def upper_bound_in_lambda(self,
-    #                           potentials: Callable
-    #                           ) -> Callable:
-    #     return lambda lamb: -(torch.logsumexp(potentials(lamb), dim=0)
-    #                           + torch.log(self.epsilon)
-    #                           - torch.log(self.covering_number)) / (self.natural_parameters(lamb)[0])
