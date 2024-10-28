@@ -38,7 +38,8 @@ class TestProbabilisticConstraint(unittest.TestCase):
                                                                 self.parameters_estimation)
         constraint = self.probabilistic_constraint.create_constraint()
         # Here, since the constraints to not really need an optimization algorithm, we can just call the constraint
-        # in any way we want.
+        # in any way we want. Note that this test can fail from time to time.
+        # TODO: Make the test more robust.
         result = constraint(1, also_return_value=False)
         self.assertTrue(result)
 
