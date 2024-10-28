@@ -95,3 +95,26 @@ class PacBayesOptimizationAlgorithm(ParametricOptimizationAlgorithm):
             self.optimal_lambda = optimal_lambda
         else:
             raise Exception("Optimal lambda already set.")
+
+    def evaluate_convergence_risk(self, loss_functions, constraint_functions, estimated_convergence_probability):
+        losses = []
+        for loss_func, constraint_func in zip(loss_functions, constraint_functions):
+
+            self.reset_state_and_iteration_counter()
+            self.set_loss_function(loss_func)
+
+            # If the constraint is not satisfied, one does not have to compute the losses
+            # as they do only occur as a 0 in the convergence risk. Note that one has to append 0 here,
+            # as later on, we take the mean, which takes the NUMBER OF LOSSES into account,
+            # i.e. the final output would be too large, if one does not include 0.
+            if not constraint_func(self):
+                losses.append(torch.tensor(0.0))
+                continue
+            losses.append(compute_loss_at_end(self))
+        return torch.mean(torch.tensor(losses)) / estimated_convergence_probability
+
+
+def compute_loss_at_end(optimization_algorithm):
+    _ = [optimization_algorithm.perform_step() for _ in range(optimization_algorithm.n_max)]
+    loss_at_end = optimization_algorithm.evaluate_loss_function_at_current_iterate().item()
+    return loss_at_end

@@ -2,10 +2,11 @@ import unittest
 from types import NoneType
 
 from classes.OptimizationAlgorithm.derived_classes.derived_classes.subclass_PacBayesOptimizationAlgorithm import (
-    PacBayesOptimizationAlgorithm)
+    PacBayesOptimizationAlgorithm, compute_loss_at_end)
 import torch
 from typing import Callable
 from classes.LossFunction.class_LossFunction import LossFunction
+from classes.Constraint.class_Constraint import Constraint
 from algorithms.dummy import Dummy
 import copy
 import io
@@ -206,3 +207,35 @@ class TestPacBayesOptimizationAlgorithm(unittest.TestCase):
         self.assertIsInstance(self.pac_algorithm.pac_bound, torch.Tensor)
         self.assertIsInstance(self.pac_algorithm.optimal_lambda, torch.Tensor)
         self.assertTrue(len(optimal_values_potentials_posterior), len(hyperparameters))
+
+    def test_evaluate_convergence_risk(self):
+        estimated_convergence_probability = torch.rand((1,))
+        n_max = torch.randint(low=1, high=100, size=(1,)).item()
+        self.pac_algorithm.n_max = n_max
+        loss_functions = [LossFunction(function=dummy_function) for _ in range(10)]
+        constraint_functions = [Constraint(function=lambda x: True) for _ in range(10)]
+        convergence_risk = self.pac_algorithm.evaluate_convergence_risk(
+            loss_functions=loss_functions,
+            constraint_functions=constraint_functions,
+            estimated_convergence_probability=estimated_convergence_probability)
+        self.assertIsInstance(convergence_risk, torch.Tensor)
+
+        self.pac_algorithm.reset_state_and_iteration_counter()
+        loss_at_end = compute_loss_at_end(self.pac_algorithm)
+        self.assertTrue(torch.allclose(convergence_risk, loss_at_end/estimated_convergence_probability))
+
+        # Test case 2: Constraint is not satisfied. Should yield zero loss.
+        constraint_functions = [Constraint(function=lambda x: False) for _ in range(10)]
+        convergence_risk = self.pac_algorithm.evaluate_convergence_risk(
+            loss_functions=loss_functions,
+            constraint_functions=constraint_functions,
+            estimated_convergence_probability=estimated_convergence_probability)
+        self.assertIsInstance(convergence_risk, torch.Tensor)
+        self.assertTrue(torch.allclose(convergence_risk, torch.zeros(1)))
+
+    def test_compute_loss_at_end(self):
+        n_max = torch.randint(low=1, high=100, size=(1,)).item()
+        self.pac_algorithm.n_max = n_max
+        loss_at_end = compute_loss_at_end(self.pac_algorithm)
+        self.assertIsInstance(loss_at_end, float)
+        self.assertEqual(self.pac_algorithm.iteration_counter, n_max)
