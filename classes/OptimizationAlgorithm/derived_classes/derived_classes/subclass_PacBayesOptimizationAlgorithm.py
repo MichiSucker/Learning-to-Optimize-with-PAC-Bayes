@@ -113,6 +113,23 @@ class PacBayesOptimizationAlgorithm(ParametricOptimizationAlgorithm):
             losses.append(compute_loss_at_end(self))
         return torch.mean(torch.tensor(losses)) / estimated_convergence_probability
 
+    def evaluate_prior_potentials(self,
+                                  loss_functions_prior,
+                                  constraint_functions_prior,
+                                  samples_prior,
+                                  estimated_convergence_probabilities):
+        potentials = []
+        pbar = tqdm(zip(samples_prior, estimated_convergence_probabilities))
+        pbar.set_description('Computing prior potentials')
+        for current_hyperparameter, estimated_probability in pbar:
+
+            self.set_hyperparameters_to(current_hyperparameter)
+            convergence_risk = self.evaluate_convergence_risk(loss_functions=loss_functions_prior,
+                                                              constraint_functions=constraint_functions_prior,
+                                                              estimated_convergence_probability=estimated_probability)
+            potentials.append(-convergence_risk)
+        return torch.tensor(potentials)
+
 
 def compute_loss_at_end(optimization_algorithm):
     _ = [optimization_algorithm.perform_step() for _ in range(optimization_algorithm.n_max)]

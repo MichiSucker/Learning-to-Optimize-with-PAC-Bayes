@@ -239,3 +239,20 @@ class TestPacBayesOptimizationAlgorithm(unittest.TestCase):
         loss_at_end = compute_loss_at_end(self.pac_algorithm)
         self.assertIsInstance(loss_at_end, float)
         self.assertEqual(self.pac_algorithm.iteration_counter, n_max)
+
+    def test_evaluate_prior_potentials(self):
+        number_of_hyperparameters = torch.randint(low=1, high=10, size=(1,)).item()
+        self.pac_algorithm.n_max = torch.randint(low=1, high=10, size=(1,)).item()
+        hyperparameters = [copy.deepcopy(self.pac_algorithm.implementation.state_dict())
+                           for _ in range(number_of_hyperparameters)]
+        estimated_convergence_probabilities = list(torch.rand((len(hyperparameters), )))
+        self.assertEqual(len(hyperparameters), len(estimated_convergence_probabilities))
+        loss_functions = [LossFunction(function=dummy_function) for _ in range(5)]
+        constraint_functions = [Constraint(function=lambda x: True) for _ in range(5)]
+        prior_potentials = self.pac_algorithm.evaluate_prior_potentials(
+            loss_functions_prior=loss_functions,
+            constraint_functions_prior=constraint_functions,
+            samples_prior=hyperparameters,
+            estimated_convergence_probabilities=estimated_convergence_probabilities)
+        self.assertIsInstance(prior_potentials, torch.Tensor)
+        self.assertEqual(len(prior_potentials), len(hyperparameters))
