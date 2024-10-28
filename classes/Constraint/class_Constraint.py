@@ -13,7 +13,6 @@ class Constraint:
 
 def create_list_of_constraints_from_functions(describing_property, list_of_functions):
     list_of_constraints = [
-        Constraint(function=lambda opt_algo, i=i: describing_property(function=list_of_functions[i],
-                                                                      optimization_algorithm=opt_algo))
+        Constraint(function=lambda opt_algo, i=i: describing_property(list_of_functions[i], opt_algo))
         for i in range(len(list_of_functions))]
     return list_of_constraints
