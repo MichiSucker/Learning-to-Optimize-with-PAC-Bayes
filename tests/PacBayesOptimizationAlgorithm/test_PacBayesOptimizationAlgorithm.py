@@ -198,9 +198,8 @@ class TestPacBayesOptimizationAlgorithm(unittest.TestCase):
         self.assertIsInstance(self.pac_algorithm.pac_bound, NoneType)
         self.assertIsInstance(self.pac_algorithm.optimal_lambda, NoneType)
 
-        optimal_values_potentials_posterior = self.pac_algorithm.compute_pac_bound(
-            samples_prior=hyperparameters,
-            potentials_prior=potentials_prior,
+        optimal_values_potentials_posterior = self.pac_algorithm.compute_posterior_potentials_and_pac_bound(
+            samples_prior=hyperparameters, potentials_prior=potentials_prior,
             estimated_convergence_probabilities=estimated_convergence_probabilities,
             list_of_parameters_train=parameters)
 

@@ -36,11 +36,11 @@ class PacBayesOptimizationAlgorithm(ParametricOptimizationAlgorithm):
         # one cannot exchange exp and summation.
         return torch.mean(values_of_sufficient_statistics, dim=0)
 
-    def compute_pac_bound(self,
-                          samples_prior,
-                          potentials_prior,
-                          estimated_convergence_probabilities,
-                          list_of_parameters_train):
+    def compute_posterior_potentials_and_pac_bound(self,
+                                                   samples_prior,
+                                                   potentials_prior,
+                                                   estimated_convergence_probabilities,
+                                                   list_of_parameters_train):
 
         potentials_posterior = self.get_posterior_potentials_as_function_of_lambda(
             list_of_parameters_train=list_of_parameters_train,
