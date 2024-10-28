@@ -36,7 +36,100 @@ class PacBayesOptimizationAlgorithm(ParametricOptimizationAlgorithm):
         # one cannot exchange exp and summation.
         return torch.mean(values_of_sufficient_statistics, dim=0)
 
+    def compute_pac_bound(self,
+                          samples_prior,
+                          potentials_prior,
+                          estimated_convergence_probabilities,
+                          list_of_parameters_train):
+
+        potentials_posterior = self.get_posterior_potentials_as_function_of_lambda(
+            list_of_parameters_train=list_of_parameters_train,
+            samples_prior=samples_prior,
+            estimated_convergence_probabilities=estimated_convergence_probabilities,
+            potentials_prior=potentials_prior
+        )
+        upper_bound_as_function_of_lambda = self.get_upper_bound_as_function_of_lambda(potentials=potentials_posterior)
+        best_value, best_lambda = self.minimize_upper_bound_in_lambda(upper_bound_as_function_of_lambda)
+        self.set_variable__optimal_lambda__to(best_lambda)
+        self.set_variable__pac_bound__to(best_value)
+        return potentials_posterior(best_lambda)
+
+    def get_posterior_potentials_as_function_of_lambda(self,
+                                                       list_of_parameters_train,
+                                                       samples_prior,
+                                                       estimated_convergence_probabilities,
+                                                       potentials_prior):
+
+        values_sufficient_statistics = self.evaluate_sufficient_statistics_on_all_parameters_and_hyperparameters(
+            list_of_parameters=list_of_parameters_train,
+            list_of_hyperparameters=samples_prior,
+            estimated_convergence_probabilities=estimated_convergence_probabilities
+        )
+
+        return lambda x: torch.matmul(values_sufficient_statistics, self.natural_parameters(x)) + potentials_prior
+
     def get_upper_bound_as_function_of_lambda(self, potentials):
         return lambda lamb: -(torch.logsumexp(potentials(lamb), dim=0)
                               + torch.log(self.epsilon)
                               - torch.log(self.covering_number)) / (self.natural_parameters(lamb)[0])
+
+    def minimize_upper_bound_in_lambda(self, upper_bound):
+        capital_lambda = torch.linspace(start=1e-8, end=1e2, steps=int(self.covering_number))
+        values_upper_bound = torch.stack([upper_bound(lamb) for lamb in capital_lambda])
+        best_lambda = capital_lambda[torch.argmin(values_upper_bound)]
+        if best_lambda == capital_lambda[0]:
+            print("Note: Optimal lambda found at left boundary!")
+        if best_lambda == capital_lambda[-1]:
+            print("Note: Optimal lambda found at right boundary!")
+        best_value = torch.min(values_upper_bound)
+        return best_value, best_lambda
+
+    def set_variable__pac_bound__to(self, pac_bound):
+        if self.pac_bound is None:
+            self.pac_bound = pac_bound
+        else:
+            raise Exception("PAC-bound already set.")
+
+    def set_variable__optimal_lambda__to(self, optimal_lambda):
+        if self.optimal_lambda is None:
+            self.optimal_lambda = optimal_lambda
+        else:
+            raise Exception("Optimal lambda already set.")
+
+    # def compute_pac_bound(self,
+    #                       state_dict_samples_prior: List,
+    #                       prior_potentials: torch.tensor,
+    #                       estimated_convergence_probabilities: List,
+    #                       parameters_train: List
+    #                       ) -> torch.tensor:
+    #
+    #     # Evaluate sufficient statistics on samples_prior from prior
+    #     empirical_sufficient_statistics = self.compute_sufficient_statistics(
+    #         parameters=parameters_train,
+    #         hyperparameters=state_dict_samples_prior,
+    #         estimated_convergence_probabilities=estimated_convergence_probabilities)
+    #
+    #     # Define Lambda ==> Gives covering number
+    #     big_lambda = torch.linspace(start=1e-8, end=1e2, steps=int(self.covering_number))
+    #
+    #     # Setup posterior potentials as function of lambda
+    #     def posterior_potentials(lamb):
+    #         return torch.matmul(empirical_sufficient_statistics, self.natural_parameters(lamb)) + prior_potentials
+    #
+    #     upper_bound = self.upper_bound_in_lambda(potentials=posterior_potentials)
+    #
+    #     # Select best lambda and corresponding upper bound ==> Gives PAC-bound
+    #     values_upper_bound = torch.stack([upper_bound(lamb) for lamb in big_lambda])
+    #     lambda_opt = big_lambda[torch.argmin(values_upper_bound)]
+    #
+    #     if lambda_opt == big_lambda[0]:
+    #         print("Note: Optimal lambda found at left boundary!")
+    #     if lambda_opt == big_lambda[-1]:
+    #         print("Note: Optimal lambda found at right boundary!")
+    #
+    #     best_upper_bound = torch.min(values_upper_bound)
+    #
+    #     # Store found values
+    #     self.pac_bound = best_upper_bound
+    #     self.optimal_lambda = lambda_opt
+    #     return posterior_potentials(lambda_opt)
