@@ -35,3 +35,15 @@ class PacBayesOptimizationAlgorithm(ParametricOptimizationAlgorithm):
         # Note that we have to take the mean over parameters here, as the Pac-Bound holds for the empirical mean and
         # one cannot exchange exp and summation.
         return torch.mean(values_of_sufficient_statistics, dim=0)
+
+    def get_upper_bound_as_function_of_lambda(self, potentials):
+        return lambda lamb: -(torch.logsumexp(potentials(lamb), dim=0)
+                              + torch.log(self.epsilon)
+                              - torch.log(self.covering_number)) / (self.natural_parameters(lamb)[0])
+
+    # def upper_bound_in_lambda(self,
+    #                           potentials: Callable
+    #                           ) -> Callable:
+    #     return lambda lamb: -(torch.logsumexp(potentials(lamb), dim=0)
+    #                           + torch.log(self.epsilon)
+    #                           - torch.log(self.covering_number)) / (self.natural_parameters(lamb)[0])

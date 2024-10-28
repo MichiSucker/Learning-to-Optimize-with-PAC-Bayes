@@ -2,6 +2,7 @@ import unittest
 from classes.OptimizationAlgorithm.derived_classes.derived_classes.subclass_PacBayesOptimizationAlgorithm import (
     PacBayesOptimizationAlgorithm)
 import torch
+from typing import Callable
 from classes.LossFunction.class_LossFunction import LossFunction
 from algorithms.dummy import Dummy
 import copy
@@ -59,3 +60,24 @@ class TestPacBayesOptimizationAlgorithm(unittest.TestCase):
                     self.pac_algorithm, parameter=current_parameters, probability=estimated_convergence_probabilities[j])
 
         self.assertTrue(torch.equal(values_of_sufficient_statistics, torch.mean(desired_values, dim=0)))
+
+    def test_get_upper_bound_as_function_of_lambda(self):
+        def potentials(lamb):
+            return torch.exp(lamb)
+
+        def natural_parameters(lamb):
+            return torch.tensor([lamb, -0.5 * lamb ** 2])
+
+        self.pac_algorithm.epsilon = torch.rand(size=(1,))
+        self.pac_algorithm.covering_number = torch.randint(low=1, high=100, size=(1,))
+        self.pac_algorithm.natural_parameters = natural_parameters
+
+        upper_bound = self.pac_algorithm.get_upper_bound_as_function_of_lambda(potentials=potentials)
+        self.assertIsInstance(upper_bound, Callable)
+        lamb = torch.rand(size=(1,))
+        self.assertIsInstance(upper_bound(lamb), torch.Tensor)
+        self.assertEqual(upper_bound(lamb),
+                         -(torch.logsumexp(potentials(lamb), dim=0)
+                           + torch.log(self.pac_algorithm.epsilon)
+                           - torch.log(self.pac_algorithm.covering_number))
+                         / (self.pac_algorithm.natural_parameters(lamb)[0]))
