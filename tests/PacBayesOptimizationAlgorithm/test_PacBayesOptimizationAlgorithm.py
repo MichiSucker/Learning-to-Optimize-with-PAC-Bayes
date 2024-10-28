@@ -4,6 +4,7 @@ from classes.OptimizationAlgorithm.derived_classes.derived_classes.subclass_PacB
 import torch
 from classes.LossFunction.class_LossFunction import LossFunction
 from algorithms.dummy import Dummy
+import copy
 
 
 def dummy_function(x):
@@ -30,3 +31,31 @@ class TestPacBayesOptimizationAlgorithm(unittest.TestCase):
 
     def test_creation(self):
         self.assertIsInstance(self.pac_algorithm, PacBayesOptimizationAlgorithm)
+
+    def test_evaluate_sufficient_statistics_on_all_parameters_and_hyperparameters(self):
+
+        def sufficient_statistics(optimization_algorithm, parameter, probability):
+            return torch.tensor([parameter['p']/probability, (parameter['p']/probability) ** 2])
+
+        self.pac_algorithm.sufficient_statistics = sufficient_statistics
+        number_of_parameters = torch.randint(low=1, high=10, size=(1,)).item()
+        number_of_hyperparameters = torch.randint(low=1, high=10, size=(1,)).item()
+        parameters = [{'p': torch.randn((1,)).item()} for _ in range(number_of_parameters)]
+        hyperparameters = [copy.deepcopy(self.pac_algorithm.implementation.state_dict())
+                           for _ in range(number_of_hyperparameters)]
+        estimated_convergence_probabilities = [torch.randn((1,)).item() for _ in range(number_of_hyperparameters)]
+        values_of_sufficient_statistics = (
+            self.pac_algorithm.evaluate_sufficient_statistics_on_all_parameters_and_hyperparameters(
+                list_of_parameters=parameters,
+                list_of_hyperparameters=hyperparameters,
+                estimated_convergence_probabilities=estimated_convergence_probabilities))
+        self.assertEqual(values_of_sufficient_statistics.shape, torch.Size((len(hyperparameters), 2)))
+
+        desired_values = torch.zeros((len(parameters), len(hyperparameters), 2))
+        for j, current_hyperparameters in enumerate(hyperparameters):
+            self.pac_algorithm.set_hyperparameters_to(current_hyperparameters)
+            for i, current_parameters in enumerate(parameters):
+                desired_values[i, j, :] = sufficient_statistics(
+                    self.pac_algorithm, parameter=current_parameters, probability=estimated_convergence_probabilities[j])
+
+        self.assertTrue(torch.equal(values_of_sufficient_statistics, torch.mean(desired_values, dim=0)))

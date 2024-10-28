@@ -1,5 +1,7 @@
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
     ParametricOptimizationAlgorithm)
+import torch
+from tqdm import tqdm
 
 
 class PacBayesOptimizationAlgorithm(ParametricOptimizationAlgorithm):
@@ -16,3 +18,20 @@ class PacBayesOptimizationAlgorithm(ParametricOptimizationAlgorithm):
         self.n_max = pac_parameters['n_max']
         self.pac_bound = None
         self.optimal_lambda = None
+
+    def evaluate_sufficient_statistics_on_all_parameters_and_hyperparameters(
+            self, list_of_parameters, list_of_hyperparameters, estimated_convergence_probabilities):
+
+        values_of_sufficient_statistics = torch.zeros((len(list_of_parameters), len(list_of_hyperparameters), 2))
+        pbar = tqdm(enumerate(list_of_hyperparameters))
+        pbar.set_description('Compute Sufficient Statistics')
+        for j, current_hyperparameters in pbar:
+
+            self.set_hyperparameters_to(current_hyperparameters)
+            for i, current_parameters in enumerate(list_of_parameters):
+                values_of_sufficient_statistics[i, j, :] = self.sufficient_statistics(
+                    self, parameter=current_parameters, probability=estimated_convergence_probabilities[j])
+
+        # Note that we have to take the mean over parameters here, as the Pac-Bound holds for the empirical mean and
+        # one cannot exchange exp and summation.
+        return torch.mean(values_of_sufficient_statistics, dim=0)
