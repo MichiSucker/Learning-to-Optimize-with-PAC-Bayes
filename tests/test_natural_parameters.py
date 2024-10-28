@@ -1,7 +1,5 @@
 import unittest
-
 import torch
-
 from natural_parameters.natural_parameters import evaluate_natural_parameters_at
 
 
