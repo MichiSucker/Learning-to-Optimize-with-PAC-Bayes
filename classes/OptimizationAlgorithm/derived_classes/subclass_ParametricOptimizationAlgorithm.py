@@ -24,6 +24,9 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         super().__init__(initial_state=initial_state, implementation=implementation, loss_function=loss_function,
                          constraint=constraint)
 
+    def set_hyperparameters_to(self, new_hyperparameters):
+        self.implementation.load_state_dict(new_hyperparameters)
+
     def initialize_with_other_algorithm(self,
                                         other_algorithm: OptimizationAlgorithm,
                                         loss_functions: List[LossFunction],
