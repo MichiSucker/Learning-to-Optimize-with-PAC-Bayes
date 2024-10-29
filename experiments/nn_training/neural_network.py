@@ -9,7 +9,7 @@ def polynomial_features(x: torch.Tensor, degree: int) -> torch.Tensor:
     return torch.cat([x ** i for i in range(1, degree + 1)], 1).reshape((-1, degree))
 
 
-class NeuralNetworkStandardTraining(nn.Module):
+class NeuralNetworkForStandardTraining(nn.Module):
 
     def __init__(self, degree: int):
         super().__init__()
@@ -47,7 +47,7 @@ class NeuralNetworkStandardTraining(nn.Module):
         return res
 
 
-def train_model(net: NeuralNetworkStandardTraining,
+def train_model(net: NeuralNetworkForStandardTraining,
                 data: dict,
                 criterion: Callable,
                 n_it: int,
