@@ -9,19 +9,7 @@ def polynomial_features(x: torch.Tensor, degree: int) -> torch.Tensor:
     return torch.cat([x ** i for i in range(1, degree + 1)], 1).reshape((-1, degree))
 
 
-# def load_tensor_as_parameters_of_nn(tensor: torch.Tensor, neural_network_template: nn.Module) -> None:
-#     counter = 0
-#     # If the parameter is updated by the (learned) optimization algorithm, then they have corresponding entries in
-#     # the tensor, which should be loaded into the template.
-#     for param in neural_network_template.parameters():
-#         if param.requires_grad:
-#             cur_size = torch.prod(torch.tensor(param.size()))
-#             cur_shape = param.shape
-#             param.data = tensor[counter:counter + cur_size].reshape(cur_shape)
-#             counter += cur_size
-
-
-class NetStdTraining(nn.Module):
+class NeuralNetworkStandardTraining(nn.Module):
 
     def __init__(self, degree: int):
         super().__init__()
@@ -59,7 +47,7 @@ class NetStdTraining(nn.Module):
         return res
 
 
-def train_model(net: NetStdTraining,
+def train_model(net: NeuralNetworkStandardTraining,
                 data: dict,
                 criterion: Callable,
                 n_it: int,
@@ -79,7 +67,7 @@ def train_model(net: NetStdTraining,
     return net, losses, iterates
 
 
-class Net(nn.Module):
+class NeuralNetworkForLearning(nn.Module):
 
     def __init__(self, degree: int, shape_parameters: list) -> None:
         super().__init__()
