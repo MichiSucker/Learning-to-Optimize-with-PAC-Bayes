@@ -24,7 +24,7 @@ class PacBayesOptimizationAlgorithm(ParametricOptimizationAlgorithm):
             self, list_of_parameters, list_of_hyperparameters, estimated_convergence_probabilities):
 
         values_of_sufficient_statistics = torch.zeros((len(list_of_parameters), len(list_of_hyperparameters), 2))
-        pbar = tqdm(enumerate(list_of_hyperparameters))
+        pbar = tqdm(enumerate(list_of_hyperparameters), total=len(list_of_hyperparameters))
         pbar.set_description('Compute Sufficient Statistics')
         for j, current_hyperparameters in pbar:
 
