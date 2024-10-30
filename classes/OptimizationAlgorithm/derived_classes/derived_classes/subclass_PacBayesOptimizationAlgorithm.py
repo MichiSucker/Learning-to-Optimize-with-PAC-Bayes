@@ -120,7 +120,7 @@ class PacBayesOptimizationAlgorithm(ParametricOptimizationAlgorithm):
                                   samples_prior,
                                   estimated_convergence_probabilities):
         potentials = []
-        pbar = tqdm(zip(samples_prior, estimated_convergence_probabilities))
+        pbar = tqdm(zip(samples_prior, estimated_convergence_probabilities), total=len(samples_prior))
         pbar.set_description('Computing prior potentials')
         for current_hyperparameter, estimated_probability in pbar:
 
