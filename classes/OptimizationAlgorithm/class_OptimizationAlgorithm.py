@@ -18,6 +18,7 @@ class OptimizationAlgorithm:
         self.current_iterate = self.current_state[-1]
         self.iteration_counter = 0
         self.constraint = constraint
+        self.n_max = None
 
     def get_initial_state(self) -> torch.Tensor:
         return self.initial_state
