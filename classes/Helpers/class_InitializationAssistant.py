@@ -19,7 +19,7 @@ class InitializationAssistant:
 
     def print_final_message(self):
         if self.printing_enabled:
-            print("Finished initialization.")
+            print("Finished initialization.\n\n")
 
     def get_progressbar(self):
         pbar = tqdm(range(self.maximal_number_of_iterations))
