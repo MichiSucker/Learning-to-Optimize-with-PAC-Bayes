@@ -33,7 +33,7 @@ class TrainingAssistant:
 
     def print_final_message(self):
         if self.printing_enabled:
-            print("End Fitting Algorithm.")
+            print("End Fitting Algorithm.\n\n")
 
     def get_progressbar(self):
         pbar = tqdm(range(self.maximal_number_of_iterations))
