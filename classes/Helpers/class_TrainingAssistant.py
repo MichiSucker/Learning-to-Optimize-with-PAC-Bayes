@@ -66,7 +66,7 @@ class TrainingAssistant:
             return False
 
     def print_update(self, iteration: int, constraint_checker: ConstraintChecker):
-        print(f"Iteration: {iteration}; Found point inside constraint: "
+        print(f"\nIteration: {iteration}; Found point inside constraint: "
               f"{constraint_checker.found_point_inside_constraint}")
         vals, bins = np.histogram(self.loss_histogram, bins=self.bins)
         print(f"\tLosses:")
