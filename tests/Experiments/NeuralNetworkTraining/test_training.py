@@ -2,7 +2,7 @@ import unittest
 from typing import Callable
 
 import torch
-
+from main import TESTING_LEVEL
 from algorithms.gradient_descent import GradientDescent
 from classes.Constraint.class_Constraint import Constraint
 from classes.LossFunction.class_LossFunction import LossFunction
@@ -154,14 +154,14 @@ class TestEvaluationNN(unittest.TestCase):
         self.assertIsInstance(algo.sufficient_statistics, Callable)
         self.assertIsInstance(algo.natural_parameters, Callable)
         self.assertIsInstance(algo.n_max, int)
-        self.assertIsInstance(algo.epsilon, float)
+        self.assertIsInstance(algo.epsilon.item(), float)
         self.assertIsInstance(algo.constraint, Constraint)
 
-    def test_get_number_of_datapoints(self):
+    @unittest.skipIf(condition=(TESTING_LEVEL != 'FULL_TEST_WITH_EXPERIMENTS'),
+                     reason='Too expensive to test all the time.')
+    def test_parameters_of_experiment(self):
         number_of_datapoints = get_number_of_datapoints()
         self.assertEqual(number_of_datapoints, {'prior': 250, 'train': 250, 'test': 250, 'validation': 250})
-
-    def test_get_parameters(self):
 
         initialization_parameters = get_initialization_parameters()
         self.assertEqual(initialization_parameters,
@@ -184,6 +184,7 @@ class TestEvaluationNN(unittest.TestCase):
 
         def dummy_statistics(x):
             return x
+
         pac_bayes_parameters = get_pac_bayes_parameters(sufficient_statistics=dummy_statistics)
         self.assertEqual(pac_bayes_parameters,
                          {'sufficient_statistics': dummy_statistics,
@@ -204,7 +205,7 @@ class TestEvaluationNN(unittest.TestCase):
                          {'lr': torch.tensor(1e-6),
                           'length_trajectory': 1,
                           'with_restarting': True,
-                          'restart_probability': 1/maximal_number_of_iterations,
+                          'restart_probability': 1 / maximal_number_of_iterations,
                           'num_samples': 100,
                           'num_iter_burnin': 0}
                          )
@@ -215,5 +216,42 @@ class TestEvaluationNN(unittest.TestCase):
                          {'num_iter_update_constraint': int(maximal_number_of_iterations // 4)}
                          )
 
+
+    @unittest.skipIf(condition=(TESTING_LEVEL == 'FULL_TEST_WITH_EXPERIMENTS'),
+                     reason='Too expensive to test all the time.')
+    def test_get_parameters(self):
+
+        number_of_datapoints = get_number_of_datapoints()
+        self.assertIsInstance(number_of_datapoints, dict)
+
+        initialization_parameters = get_initialization_parameters()
+        self.assertIsInstance(initialization_parameters, dict)
+
+        maximal_number_of_iterations = torch.randint(low=1, high=100, size=(1,)).item()
+        fitting_parameters = get_fitting_parameters(maximal_number_of_iterations=maximal_number_of_iterations)
+        self.assertIsInstance(fitting_parameters, dict)
+
+        estimation_parameters = get_parameters_of_estimation()
+        self.assertIsInstance(estimation_parameters, dict)
+
+        def dummy_statistics(x):
+            return x
+
+        pac_bayes_parameters = get_pac_bayes_parameters(sufficient_statistics=dummy_statistics)
+        self.assertIsInstance(pac_bayes_parameters, dict)
+
+        update_parameters = get_update_parameters()
+        self.assertIsInstance(update_parameters, dict)
+
+        maximal_number_of_iterations = torch.randint(low=1, high=100, size=(1,)).item()
+        sampling_parameters = get_sampling_parameters(maximal_number_of_iterations)
+        self.assertIsInstance(sampling_parameters, dict)
+
+        maximal_number_of_iterations = torch.randint(low=1, high=100, size=(1,)).item()
+        constraint_parameters = get_constraint_parameters(maximal_number_of_iterations)
+        self.assertIsInstance(constraint_parameters, dict)
+
+    @unittest.skipIf(condition=(TESTING_LEVEL != 'FULL_TEST_WITH_EXPERIMENTS'),
+                     reason='Too expensive to test all the time.')
     def test_run_nn_training_experiment(self):
-        set_up_and_train_algorithm()
+        set_up_and_train_algorithm('/home/michael/Desktop/JMLR_New/Experiments')
