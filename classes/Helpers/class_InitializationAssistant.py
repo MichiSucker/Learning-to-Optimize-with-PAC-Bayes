@@ -37,6 +37,6 @@ class InitializationAssistant:
         return (iteration >= 1) and self.printing_enabled and (iteration % self.print_update_every == 0)
 
     def print_update(self, iteration):
-        print(f"Iteration: {iteration}")
+        print(f"\nIteration: {iteration}")
         print("\tAvg. Loss = {:.2f}".format(self.running_loss / self.print_update_every))
         self.running_loss = 0
