@@ -12,6 +12,7 @@ from classes.Constraint.class_ProbabilisticConstraint import ProbabilisticConstr
 from classes.Constraint.class_Constraint import create_list_of_constraints_from_functions
 from sufficient_statistics.sufficient_statistics import evaluate_sufficient_statistics
 from natural_parameters.natural_parameters import evaluate_natural_parameters_at
+from pathlib import Path
 
 
 def get_number_of_datapoints():
@@ -164,7 +165,15 @@ def instantiate_algorithm_for_learning(loss_function_for_algorithm, loss_functio
     return algorithm_for_learning
 
 
-def set_up_and_train_algorithm():
+def create_folder_for_storing_data(path_of_experiment):
+    savings_path = path_of_experiment + "/data_after_training"
+    Path(path_of_experiment).mkdir(parents=True, exist_ok=True)
+    return savings_path
+
+
+def set_up_and_train_algorithm(path_of_experiment):
+
+    savings_path = create_folder_for_storing_data(path_of_experiment)
 
     neural_network_for_std_training, neural_network_for_learning = instantiate_neural_networks()
     loss_function_for_algorithm, loss_function_for_neural_network, parameters = get_data(
