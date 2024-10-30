@@ -66,14 +66,12 @@ class TrainingAssistant:
             return False
 
     def print_update(self, iteration: int, constraint_checker: ConstraintChecker):
-        print("\t\t\t-----------------------------------------------------------------------------------------")
-        print(f"\t\t\tIteration: {iteration}; Found point inside constraint: "
+        print(f"Iteration: {iteration}; Found point inside constraint: "
               f"{constraint_checker.found_point_inside_constraint}")
         vals, bins = np.histogram(self.loss_histogram, bins=self.bins)
-        print(f"\t\t\t\tLosses:")
+        print(f"\tLosses:")
         for j in range(len(vals) - 1, -1, -1):
-            print(f"\t\t\t\t\t[{bins[j + 1]:.0e}, {bins[j]:.0e}] : {vals[j]}/{self.print_update_every}")
-        print("\t\t\t-----------------------------------------------------------------------------------------")
+            print(f"\t\t[{bins[j + 1]:.0e}, {bins[j]:.0e}] : {vals[j]}/{self.print_update_every}")
 
     def reset_running_loss_and_loss_histogram(self):
         self.loss_histogram = []
