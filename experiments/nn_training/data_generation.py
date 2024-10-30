@@ -61,7 +61,8 @@ def check_and_extract_number_of_datapoints(number_of_datapoints_per_dataset):
 def get_loss_of_algorithm(neural_network, loss_of_neural_network):
 
     def loss_function_of_the_algorithm(x: torch.Tensor, parameter: dict) -> torch.Tensor:
-        return loss_of_neural_network(neural_network(x=parameter['xes'], neural_net_parameters=x), parameter['yes'])
+        return loss_of_neural_network(neural_network(x=parameter['x_values'], neural_net_parameters=x),
+                                      parameter['y_values'])
 
     return loss_function_of_the_algorithm
 
