@@ -164,7 +164,7 @@ def instantiate_algorithm_for_learning(loss_function_for_algorithm, loss_functio
     return algorithm_for_learning
 
 
-def run_nn_training_experiment():
+def set_up_and_train_algorithm():
 
     neural_network_for_std_training, neural_network_for_learning = instantiate_neural_networks()
     loss_function_for_algorithm, loss_function_for_neural_network, parameters = get_data(

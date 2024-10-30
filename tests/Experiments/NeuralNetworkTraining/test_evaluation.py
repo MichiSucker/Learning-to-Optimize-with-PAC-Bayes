@@ -28,7 +28,7 @@ from experiments.nn_training.evaluation import (instantiate_neural_networks,
                                                 get_initialization_parameters,
                                                 get_constraint_parameters,
                                                 get_number_of_datapoints,
-                                                run_nn_training_experiment)
+                                                set_up_and_train_algorithm)
 from experiments.nn_training.neural_network import NeuralNetworkForStandardTraining, NeuralNetworkForLearning
 
 
@@ -216,4 +216,4 @@ class TestEvaluationNN(unittest.TestCase):
                          )
 
     def test_run_nn_training_experiment(self):
-        run_nn_training_experiment()
+        set_up_and_train_algorithm()
