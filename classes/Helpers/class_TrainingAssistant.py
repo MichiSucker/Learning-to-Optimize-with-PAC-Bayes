@@ -27,15 +27,12 @@ class TrainingAssistant:
 
     def print_starting_message(self):
         if self.printing_enabled:
-            print("---------------------------------------------------------------------------------------------------")
             print("Fit Algorithm:")
-            print("---------------------------------------------------------------------------------------------------")
             print(f"\t-Optimizing for {self.maximal_number_of_iterations} iterations.")
             print(f"\t-Updating step-size every {self.update_stepsize_every} iterations.")
 
     def print_final_message(self):
         if self.printing_enabled:
-            print("---------------------------------------------------------------------------------------------------")
             print("End Fitting Algorithm.")
 
     def get_progressbar(self):
