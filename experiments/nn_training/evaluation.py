@@ -101,7 +101,7 @@ def time_problem_for_learned_algorithm(learned_algorithm, loss_function, maximal
     counter = 0
     start = time.time()
     while ((counter < maximal_number_of_iterations)
-           and (((current_loss - optimal_loss)/optimal_loss) >= level_of_accuracy)):
+           and ((current_loss - optimal_loss) >= level_of_accuracy)):
 
         learned_algorithm.perform_step()
         current_loss = learned_algorithm.evaluate_loss_function_at_current_iterate()
