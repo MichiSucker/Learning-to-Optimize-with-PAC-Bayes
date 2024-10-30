@@ -30,10 +30,10 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
     def initialize_with_other_algorithm(self,
                                         other_algorithm: OptimizationAlgorithm,
                                         loss_functions: List[LossFunction],
-                                        parameters: dict) -> None:
+                                        parameters_of_initialization: dict) -> None:
 
         optimizer, initialization_assistant, trajectory_randomizer = self.initialize_helpers_for_initialization(
-            parameters=parameters)
+            parameters=parameters_of_initialization)
         initialization_assistant.print_starting_message()
         pbar = initialization_assistant.get_progressbar()
         for i in pbar:

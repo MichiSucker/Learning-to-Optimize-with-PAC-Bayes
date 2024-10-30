@@ -134,9 +134,9 @@ class TestInitParametricOptimizationAlgorithm(unittest.TestCase):
 
         capturedOutput = io.StringIO()
         sys.stdout = capturedOutput
-        self.optimization_algorithm.initialize_with_other_algorithm(
-            other_algorithm=other_algorithm, loss_functions=loss_functions, parameters=parameters_init
-        )
+        self.optimization_algorithm.initialize_with_other_algorithm(other_algorithm=other_algorithm,
+                                                                    loss_functions=loss_functions,
+                                                                    parameters_of_initialization=parameters_init)
         sys.stdout = sys.__stdout__
         self.assertNotEqual(old_hyperparameters, self.optimization_algorithm.implementation.state_dict())
         self.assertTrue(torch.equal(self.optimization_algorithm.current_state,
