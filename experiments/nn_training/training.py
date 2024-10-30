@@ -13,6 +13,8 @@ from classes.Constraint.class_Constraint import create_list_of_constraints_from_
 from sufficient_statistics.sufficient_statistics import evaluate_sufficient_statistics
 from natural_parameters.natural_parameters import evaluate_natural_parameters_at
 from pathlib import Path
+import pickle
+import numpy as np
 
 
 def get_number_of_datapoints():
@@ -166,8 +168,8 @@ def instantiate_algorithm_for_learning(loss_function_for_algorithm, loss_functio
 
 
 def create_folder_for_storing_data(path_of_experiment):
-    savings_path = path_of_experiment + "/data_after_training"
-    Path(path_of_experiment).mkdir(parents=True, exist_ok=True)
+    savings_path = path_of_experiment + "/data_after_training/"
+    Path(savings_path).mkdir(parents=True, exist_ok=True)
     return savings_path
 
 
@@ -188,9 +190,11 @@ def set_up_and_train_algorithm(path_of_experiment):
         initial_state_for_std_algorithm=algorithm_for_learning.initial_state[-1].reshape((1, -1)),
         loss_function=loss_functions['prior'][0]
     )
+
     algorithm_for_learning.initialize_with_other_algorithm(other_algorithm=algorithm_for_initialization,
                                                            loss_functions=loss_functions['prior'],
                                                            parameters_of_initialization=get_initialization_parameters())
+
     fitting_parameters = get_fitting_parameters(maximal_number_of_iterations=algorithm_for_learning.n_max)
     sampling_parameters = get_sampling_parameters(maximal_number_of_iterations=algorithm_for_learning.n_max)
     constraint_parameters = get_constraint_parameters(number_of_training_iterations=fitting_parameters['n_max'])
@@ -204,4 +208,12 @@ def set_up_and_train_algorithm(path_of_experiment):
         update_parameters=update_parameters
     )
 
-    # TODO: Save data to path.
+    np.save(savings_path + 'pac_bound', pac_bound.numpy())
+    np.save(savings_path + 'initialization', algorithm_for_learning.initial_state.clone().numpy())
+    np.save(savings_path + 'number_of_iterations', algorithm_for_learning.n_max)
+    with open(savings_path + 'parameters_problem', 'wb') as file:
+        pickle.dump(parameters, file)
+    with open(savings_path + 'samples', 'wb') as file:
+        pickle.dump(state_dict_samples_prior, file)
+    with open(savings_path + 'best_sample', 'wb') as file:
+        pickle.dump(algorithm_for_learning.implementation.state_dict(), file)
