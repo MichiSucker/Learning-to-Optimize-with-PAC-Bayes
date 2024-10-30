@@ -14,7 +14,7 @@ class InitializationAssistant:
 
     def print_starting_message(self):
         if self.printing_enabled:
-            print("Init. network to mimic algorithm.")
+            print("Initialize algorithm to follow standard algorithm.")
             print(f"Optimizing for {self.maximal_number_of_iterations} iterations.")
 
     def print_final_message(self):
