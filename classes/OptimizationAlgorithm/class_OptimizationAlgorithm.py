@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from typing import Callable
+from classes.LossFunction.class_LossFunction import LossFunction
 
 
 class OptimizationAlgorithm:
@@ -8,7 +9,7 @@ class OptimizationAlgorithm:
     def __init__(self,
                  implementation: nn.Module,
                  initial_state: torch.Tensor,
-                 loss_function: Callable,
+                 loss_function: LossFunction,
                  constraint: Callable = None):
         self.implementation = implementation
         self.loss_function = loss_function
