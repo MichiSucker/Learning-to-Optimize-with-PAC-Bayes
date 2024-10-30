@@ -11,24 +11,24 @@ from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import Optimizati
 from classes.OptimizationAlgorithm.derived_classes.derived_classes.subclass_PacBayesOptimizationAlgorithm import \
     PacBayesOptimizationAlgorithm
 from natural_parameters.natural_parameters import evaluate_natural_parameters_at
-from experiments.nn_training.evaluation import (instantiate_neural_networks,
-                                                create_parametric_loss_functions_from_parameters,
-                                                get_algorithm_for_initialization,
-                                                get_initial_state,
-                                                get_constraint,
-                                                get_sufficient_statistics,
-                                                get_describing_property,
-                                                compute_constants_for_sufficient_statistics,
-                                                instantiate_algorithm_for_learning,
-                                                get_update_parameters,
-                                                get_fitting_parameters,
-                                                get_sampling_parameters,
-                                                get_pac_bayes_parameters,
-                                                get_parameters_of_estimation,
-                                                get_initialization_parameters,
-                                                get_constraint_parameters,
-                                                get_number_of_datapoints,
-                                                set_up_and_train_algorithm)
+from experiments.nn_training.training import (instantiate_neural_networks,
+                                              create_parametric_loss_functions_from_parameters,
+                                              get_algorithm_for_initialization,
+                                              get_initial_state,
+                                              get_constraint,
+                                              get_sufficient_statistics,
+                                              get_describing_property,
+                                              compute_constants_for_sufficient_statistics,
+                                              instantiate_algorithm_for_learning,
+                                              get_update_parameters,
+                                              get_fitting_parameters,
+                                              get_sampling_parameters,
+                                              get_pac_bayes_parameters,
+                                              get_parameters_of_estimation,
+                                              get_initialization_parameters,
+                                              get_constraint_parameters,
+                                              get_number_of_datapoints,
+                                              set_up_and_train_algorithm)
 from experiments.nn_training.neural_network import NeuralNetworkForStandardTraining, NeuralNetworkForLearning
 
 
