@@ -13,6 +13,6 @@ def create_folder_for_experiment(path_to_experiment_folder):
 def run(path_to_experiment_folder):
 
     path_of_experiment = create_folder_for_experiment(path_to_experiment_folder)
-    set_up_and_train_algorithm(path_of_experiment=path_of_experiment)
-    evaluate_algorithm()
+    # set_up_and_train_algorithm(path_of_experiment=path_of_experiment)
+    evaluate_algorithm(path_of_experiment=path_of_experiment, loading_path=path_of_experiment + '/data_after_training/')
     create_evaluation_plots()
