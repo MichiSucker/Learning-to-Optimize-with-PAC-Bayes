@@ -233,11 +233,10 @@ def evaluate_algorithm(loading_path, path_of_experiment):
         neural_network_for_standard_training=neural_network_for_standard_training
     )
 
-    # TODO: Change 'stop_procedure_after_at_most' to 5000
     times_of_learned_algorithm, times_of_adam = compute_times(
         learned_algorithm=learned_algorithm, neural_network_for_standard_training=neural_network_for_standard_training,
         evaluation_assistant=evaluation_assistant, ground_truth_losses=ground_truth_losses,
-        stop_procedure_after_at_most=5)
+        stop_procedure_after_at_most=5000)
 
     savings_path = create_folder_for_storing_data(path_of_experiment)
     with open(savings_path + 'times_of_learned_algorithm', 'wb') as file:
