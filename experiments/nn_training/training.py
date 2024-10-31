@@ -32,9 +32,9 @@ def get_fitting_parameters(maximal_number_of_iterations):
     return {'restart_probability': restart_probability,
             'length_trajectory': length_trajectory,
             # TODO: Rename n_max to number_of_training_iterations
-            'n_max': int(100e3),
+            'n_max': int(200e3),
             'lr': 1e-4,
-            'num_iter_update_stepsize': int(10e3),
+            'num_iter_update_stepsize': int(20e3),
             'factor_stepsize_update': 0.5}
 
 
