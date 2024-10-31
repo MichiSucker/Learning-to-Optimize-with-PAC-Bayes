@@ -18,8 +18,7 @@ import numpy as np
 
 
 def get_number_of_datapoints():
-    # TODO: Change to 250 samples each
-    return {'prior': 25, 'train': 25, 'test': 25, 'validation': 250}
+    return {'prior': 250, 'train': 250, 'test': 250, 'validation': 250}
 
 
 def get_initialization_parameters():
@@ -32,9 +31,8 @@ def get_fitting_parameters(maximal_number_of_iterations):
     restart_probability = length_trajectory / maximal_number_of_iterations
     return {'restart_probability': restart_probability,
             'length_trajectory': length_trajectory,
-            # TODO: Change n_max to 100e3
             # TODO: Rename n_max to number_of_training_iterations
-            'n_max': int(40e3),
+            'n_max': int(100e3),
             'lr': 1e-4,
             'num_iter_update_stepsize': int(10e3),
             'factor_stepsize_update': 0.5}
@@ -47,8 +45,7 @@ def get_sampling_parameters(maximal_number_of_iterations):
             'length_trajectory': length_trajectory,
             'with_restarting': True,
             'restart_probability': restart_probability,
-            # TODO: Change num_samples to 100
-            'num_samples': 5,
+            'num_samples': 100,
             'num_iter_burnin': 0}
 
 
