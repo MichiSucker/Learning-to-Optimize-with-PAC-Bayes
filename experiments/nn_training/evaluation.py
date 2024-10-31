@@ -2,6 +2,9 @@ from pathlib import Path
 import numpy as np
 import pickle
 import time
+
+from sympy.stats.sampling.sample_numpy import numpy
+
 from experiments.nn_training.neural_network import train_model
 from experiments.nn_training.training import instantiate_neural_networks
 from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
@@ -236,12 +239,16 @@ def evaluate_algorithm(loading_path, path_of_experiment):
         neural_network_for_standard_training=neural_network_for_standard_training
     )
 
-    times_pac, times_std = compute_times(learned_algorithm=learned_algorithm,
-                                         neural_network_for_standard_training=neural_network_for_standard_training,
-                                         evaluation_assistant=evaluation_assistant,
-                                         ground_truth_losses=ground_truth_losses,
-                                         stop_procedure_after_at_most=5)
+    times_of_learned_algorithm, times_adam = compute_times(
+        learned_algorithm=learned_algorithm, neural_network_for_standard_training=neural_network_for_standard_training,
+        evaluation_assistant=evaluation_assistant, ground_truth_losses=ground_truth_losses,
+        stop_procedure_after_at_most=5)
 
     savings_path = create_folder_for_storing_data(path_of_experiment)
-    # TODO: Save data again.
+
+    np.save(savings_path + 'times_pac', np.array(times_of_learned_algorithm))
+    np.save(savings_path + 'times_adam', np.array(times_adam))
+    np.save(savings_path + 'losses_of_adam', np.array(losses_of_adam))
+    np.save(savings_path + 'losses_of_learned_algorithm', np.array(losses_of_learned_algorithm))
+    np.save(savings_path + 'empirical_probability', percentage_constrained_satisfied)
 
