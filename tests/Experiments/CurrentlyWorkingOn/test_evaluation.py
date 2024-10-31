@@ -13,7 +13,8 @@ from experiments.nn_training.evaluation import (compute_losses,
                                                 time_problem_for_adam,
                                                 time_problem_for_learned_algorithm,
                                                 compute_times,
-                                                evaluate_algorithm)
+                                                evaluate_algorithm,
+                                                save_data)
 
 
 class TestEvaluation(unittest.TestCase):
@@ -61,6 +62,11 @@ class TestEvaluation(unittest.TestCase):
 
     def test_load_data(self):
         load_data(self.data_path)
+
+    def test_save_data(self):
+        # This is not a real test. I do not want to overwrite the true data.
+        with self.assertRaises(Exception):
+            save_data()
 
     def test_compute_losses(self):
         eval_assist, neural_network = set_up_evaluation_assistant(loading_path=self.data_path)
