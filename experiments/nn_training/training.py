@@ -164,7 +164,7 @@ def instantiate_algorithm_for_learning(loss_function_for_algorithm, loss_functio
         pac_parameters=get_pac_bayes_parameters(sufficient_statistics),
         constraint=constraint
     )
-    return algorithm_for_learning
+    return algorithm_for_learning, parameters_of_estimation
 
 
 def create_folder_for_storing_data(path_of_experiment):
@@ -183,7 +183,7 @@ def set_up_and_train_algorithm(path_of_experiment):
     loss_functions = create_parametric_loss_functions_from_parameters(
         template_loss_function=loss_function_for_algorithm, parameters=parameters)
 
-    algorithm_for_learning = instantiate_algorithm_for_learning(
+    algorithm_for_learning, parameters_of_estimation = instantiate_algorithm_for_learning(
         loss_function_for_algorithm=loss_function_for_algorithm, loss_functions=loss_functions,
         dimension_of_hyperparameters=neural_network_for_std_training.get_dimension_of_hyperparameters())
     algorithm_for_initialization = get_algorithm_for_initialization(
@@ -213,6 +213,8 @@ def set_up_and_train_algorithm(path_of_experiment):
     np.save(savings_path + 'number_of_iterations', algorithm_for_learning.n_max)
     with open(savings_path + 'parameters_problem', 'wb') as file:
         pickle.dump(parameters, file)
+        with open(savings_path + 'parameters_of_estimation', 'wb') as file:
+            pickle.dump(parameters_of_estimation, file)
     with open(savings_path + 'samples', 'wb') as file:
         pickle.dump(state_dict_samples_prior, file)
     with open(savings_path + 'best_sample', 'wb') as file:
