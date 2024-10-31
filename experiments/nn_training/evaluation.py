@@ -53,7 +53,7 @@ def does_satisfy_constraint(convergence_risk_constraint, loss_at_beginning, loss
     return convergence_risk_constraint(loss_at_beginning=loss_at_beginning, loss_at_end=loss_at_end)
 
 
-def compute_losses_of_adam(neural_network, loss_of_neural_network, parameter, number_of_iterations):
+def compute_losses_over_iterations_for_adam(neural_network, loss_of_neural_network, parameter, number_of_iterations):
     lr_adam = 0.008
     neural_network_for_standard_training, losses_over_iterations_of_adam, _ = train_model(
         net=neural_network, data=parameter, criterion=loss_of_neural_network,
@@ -84,9 +84,10 @@ def compute_losses(parameters_to_test, learned_algorithm, neural_network, loss_o
             ground_truth_losses.append(compute_ground_truth_loss(loss_of_neural_network, current_parameter))
             losses_of_learned_algorithm.append(loss_over_iterations)
             neural_network.load_parameters_from_tensor(learned_algorithm.initial_state[-1].clone())
-            losses_of_adam.append(compute_losses_of_adam(
-                neural_network=neural_network, loss_of_neural_network=loss_of_neural_network,
-                parameter=current_parameter, number_of_iterations=n_test))
+            losses_of_adam.append(compute_losses_over_iterations_for_adam(neural_network=neural_network,
+                                                                          loss_of_neural_network=loss_of_neural_network,
+                                                                          parameter=current_parameter,
+                                                                          number_of_iterations=n_test))
 
     return (np.array(losses_of_adam),
             np.array(losses_of_learned_algorithm),

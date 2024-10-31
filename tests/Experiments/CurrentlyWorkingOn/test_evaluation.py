@@ -11,7 +11,7 @@ from experiments.nn_training.evaluation import (compute_losses,
                                                 compute_ground_truth_loss,
                                                 compute_losses_over_iterations_for_learned_algorithm,
                                                 does_satisfy_constraint,
-                                                compute_losses_of_adam)
+                                                compute_losses_over_iterations_for_adam)
 
 
 class TestEvaluation(unittest.TestCase):
@@ -57,8 +57,8 @@ class TestEvaluation(unittest.TestCase):
         criterion = nn.MSELoss()
         neural_network = NeuralNetworkForStandardTraining(degree=5)
         parameter = {'ground_truth': torch.rand((10,1)), 'x_values': torch.rand((10,1)), 'y_values': torch.rand((10,1))}
-        losses_adam = compute_losses_of_adam(neural_network, loss_of_neural_network=criterion, parameter=parameter,
-                                             number_of_iterations=20)
+        losses_adam = compute_losses_over_iterations_for_adam(neural_network, loss_of_neural_network=criterion,
+                                                              parameter=parameter, number_of_iterations=20)
         self.assertEqual(len(losses_adam), 21)
 
     def test_compute_losses(self):
