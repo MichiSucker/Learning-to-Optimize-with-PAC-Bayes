@@ -168,7 +168,7 @@ def instantiate_algorithm_for_learning(loss_function_for_algorithm, loss_functio
 
 
 def create_folder_for_storing_data(path_of_experiment):
-    savings_path = path_of_experiment + "/data_after_training/"
+    savings_path = path_of_experiment + "/data/"
     Path(savings_path).mkdir(parents=True, exist_ok=True)
     return savings_path
 

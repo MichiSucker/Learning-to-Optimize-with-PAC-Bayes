@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 def create_folder_for_experiment(path_to_experiment_folder):
-    path_of_experiment = path_to_experiment_folder + "/neural_network_training"
+    path_of_experiment = path_to_experiment_folder + "/neural_network_training/"
     Path(path_of_experiment).mkdir(parents=True, exist_ok=True)
     return path_of_experiment
 
@@ -13,6 +13,6 @@ def create_folder_for_experiment(path_to_experiment_folder):
 def run(path_to_experiment_folder):
 
     path_of_experiment = create_folder_for_experiment(path_to_experiment_folder)
-    # set_up_and_train_algorithm(path_of_experiment=path_of_experiment)
-    # evaluate_algorithm(path_of_experiment=path_of_experiment, loading_path=path_of_experiment + '/data_after_training/')
-    create_evaluation_plots()
+    set_up_and_train_algorithm(path_of_experiment=path_of_experiment)
+    evaluate_algorithm(path_of_experiment=path_of_experiment, loading_path=path_of_experiment + '/data/')
+    create_evaluation_plots(loading_path=path_of_experiment + 'data/', path_of_experiment=path_of_experiment)

@@ -2,9 +2,6 @@ from pathlib import Path
 import numpy as np
 import pickle
 import time
-
-from sympy.stats.sampling.sample_numpy import numpy
-
 from experiments.nn_training.neural_network import train_model
 from experiments.nn_training.training import instantiate_neural_networks
 from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
@@ -13,9 +10,6 @@ import torch
 from experiments.nn_training.data_generation import get_loss_of_algorithm, get_loss_of_neural_network
 from classes.LossFunction.derived_classes.subclass_ParametricLossFunction import ParametricLossFunction
 from experiments.nn_training.training import get_describing_property
-
-# TODO: Refactor. Functions are way too long and not really readable
-# TODO: Cover with tests.
 
 
 class EvaluationAssistant:
@@ -71,7 +65,7 @@ def load_data(loading_path):
 
 
 def create_folder_for_storing_data(path_of_experiment):  # pragma: no cover
-    savings_path = path_of_experiment + "/data_after_evaluation/"
+    savings_path = path_of_experiment + "/data/"
     Path(savings_path).mkdir(parents=True, exist_ok=True)
     return savings_path
 
@@ -239,16 +233,18 @@ def evaluate_algorithm(loading_path, path_of_experiment):
         neural_network_for_standard_training=neural_network_for_standard_training
     )
 
-    times_of_learned_algorithm, times_adam = compute_times(
+    # TODO: Change 'stop_procedure_after_at_most' to 5000
+    times_of_learned_algorithm, times_of_adam = compute_times(
         learned_algorithm=learned_algorithm, neural_network_for_standard_training=neural_network_for_standard_training,
         evaluation_assistant=evaluation_assistant, ground_truth_losses=ground_truth_losses,
         stop_procedure_after_at_most=5)
 
     savings_path = create_folder_for_storing_data(path_of_experiment)
-
-    np.save(savings_path + 'times_pac', np.array(times_of_learned_algorithm))
-    np.save(savings_path + 'times_adam', np.array(times_adam))
+    with open(savings_path + 'times_of_learned_algorithm', 'wb') as file:
+        pickle.dump(times_of_learned_algorithm, file)
+    with open(savings_path + 'times_of_adam', 'wb') as file:
+        pickle.dump(times_of_adam, file)
     np.save(savings_path + 'losses_of_adam', np.array(losses_of_adam))
     np.save(savings_path + 'losses_of_learned_algorithm', np.array(losses_of_learned_algorithm))
+    np.save(savings_path + 'ground_truth_losses', np.array(ground_truth_losses))
     np.save(savings_path + 'empirical_probability', percentage_constrained_satisfied)
-
