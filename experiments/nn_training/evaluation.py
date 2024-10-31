@@ -38,7 +38,7 @@ def compute_ground_truth_loss(loss_of_neural_network, parameter):
     return loss_of_neural_network(parameter['ground_truth_values'], parameter['y_values'])
 
 
-def compute_losses_of_learned_algorithm(learned_algorithm, loss_of_algorithm, parameter, number_of_iterations):
+def compute_losses_over_iterations_for_learned_algorithm(learned_algorithm, loss_of_algorithm, parameter, number_of_iterations):
     learned_algorithm.reset_state_and_iteration_counter()
     current_loss_function = ParametricLossFunction(function=loss_of_algorithm, parameter=parameter)
     learned_algorithm.set_loss_function(current_loss_function)
@@ -72,9 +72,10 @@ def compute_losses(parameters_to_test, learned_algorithm, neural_network, loss_o
     _, convergence_risk_constraint, _ = get_describing_property()
 
     for current_parameter in parameters_to_test:
-        loss_over_iterations = compute_losses_of_learned_algorithm(
-            learned_algorithm=learned_algorithm, loss_of_algorithm=loss_of_algorithm, parameter=current_parameter,
-            number_of_iterations=n_test)
+        loss_over_iterations = compute_losses_over_iterations_for_learned_algorithm(learned_algorithm=learned_algorithm,
+                                                                                    loss_of_algorithm=loss_of_algorithm,
+                                                                                    parameter=current_parameter,
+                                                                                    number_of_iterations=n_test)
         if does_satisfy_constraint(convergence_risk_constraint=convergence_risk_constraint,
                                    loss_at_beginning=loss_over_iterations[0],
                                    loss_at_end=loss_over_iterations[n_train]):

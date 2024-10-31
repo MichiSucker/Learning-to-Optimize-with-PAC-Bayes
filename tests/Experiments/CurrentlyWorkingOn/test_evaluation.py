@@ -9,7 +9,7 @@ from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import Optimizati
 from classes.LossFunction.derived_classes.subclass_ParametricLossFunction import ParametricLossFunction
 from experiments.nn_training.evaluation import (compute_losses,
                                                 compute_ground_truth_loss,
-                                                compute_losses_of_learned_algorithm,
+                                                compute_losses_over_iterations_for_learned_algorithm,
                                                 does_satisfy_constraint,
                                                 compute_losses_of_adam)
 
@@ -36,10 +36,10 @@ class TestEvaluation(unittest.TestCase):
         number_of_iterations = torch.randint(low=2, high=15, size=(1,)).item()
         parameter = {'scale': 0.5}
         loss_function = ParametricLossFunction(dummy_function, parameter)
-        losses = compute_losses_of_learned_algorithm(
-            learned_algorithm=algorithm, loss_of_algorithm=dummy_function, parameter=parameter,
-            number_of_iterations=number_of_iterations
-        )
+        losses = compute_losses_over_iterations_for_learned_algorithm(learned_algorithm=algorithm,
+                                                                      loss_of_algorithm=dummy_function,
+                                                                      parameter=parameter,
+                                                                      number_of_iterations=number_of_iterations)
         self.assertTrue(len(losses), number_of_iterations+1)
         self.assertEqual(losses[0], loss_function(initial_state[-1]))
 
