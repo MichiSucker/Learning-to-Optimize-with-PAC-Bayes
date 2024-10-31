@@ -239,7 +239,17 @@ def evaluate_algorithm(loading_path, path_of_experiment):
         evaluation_assistant=evaluation_assistant, ground_truth_losses=ground_truth_losses,
         stop_procedure_after_at_most=5000)
 
-    savings_path = create_folder_for_storing_data(path_of_experiment)
+    save_data(savings_path=create_folder_for_storing_data(path_of_experiment),
+              times_of_learned_algorithm=times_of_learned_algorithm,
+              losses_of_learned_algorithm=losses_of_learned_algorithm,
+              times_of_adam=times_of_adam, losses_of_adam=losses_of_adam,
+              ground_truth_losses=ground_truth_losses,
+              percentage_constrained_satisfied=percentage_constrained_satisfied)
+
+
+def save_data(savings_path, times_of_learned_algorithm, losses_of_learned_algorithm, times_of_adam, losses_of_adam,
+              ground_truth_losses, percentage_constrained_satisfied):
+
     with open(savings_path + 'times_of_learned_algorithm', 'wb') as file:
         pickle.dump(times_of_learned_algorithm, file)
     with open(savings_path + 'times_of_adam', 'wb') as file:
