@@ -18,6 +18,9 @@ from experiments.nn_training.evaluation import (compute_losses,
 
 class TestEvaluation(unittest.TestCase):
 
+    def setUp(self):
+        self.data_path = '/home/michael/Desktop/JMLR_New/Experiments/neural_network_training/data/'
+
     def test_compute_ground_truth_loss(self):
         criterion = nn.MSELoss()
         parameter = {'ground_truth_values': torch.rand((10,)), 'y_values': torch.rand((10,))}
@@ -25,9 +28,7 @@ class TestEvaluation(unittest.TestCase):
         self.assertEqual(gt_loss, criterion(parameter['ground_truth_values'], parameter['y_values']))
 
     def test_compute_losses_of_learned_algorithm(self):
-
-        path = '/home/michael/Desktop/JMLR_New/Experiments/neural_network_training/data_after_training/'
-        eval_assist, neural_network = set_up_evaluation_assistant(loading_path=path)
+        eval_assist, neural_network = set_up_evaluation_assistant(loading_path=self.data_path)
         eval_assist.test_set = eval_assist.test_set[0:2]
         learned_algorithm = eval_assist.set_up_learned_algorithm(
             arguments_of_implementation_class=eval_assist.implementation_arguments)
@@ -49,24 +50,20 @@ class TestEvaluation(unittest.TestCase):
                                                  loss_at_beginning=1, loss_at_end=10))
 
     def test_compute_losses_of_adam(self):
-        path = '/home/michael/Desktop/JMLR_New/Experiments/neural_network_training/data_after_training/'
-        eval_assist, neural_network = set_up_evaluation_assistant(loading_path=path)
+        eval_assist, neural_network = set_up_evaluation_assistant(loading_path=self.data_path)
         losses_adam = compute_losses_over_iterations_for_adam(neural_network, evaluation_assistant=eval_assist,
                                                               parameter=eval_assist.test_set[0])
         self.assertEqual(len(losses_adam), eval_assist.number_of_iterations_for_testing + 1)
 
     def test_set_up_evaluation_assistant(self):
-        path = '/home/michael/Desktop/JMLR_New/Experiments/neural_network_training/data_after_training/'
-        eval_assist, _ = set_up_evaluation_assistant(loading_path=path)
+        eval_assist, _ = set_up_evaluation_assistant(loading_path=self.data_path)
         self.assertIsInstance(eval_assist, EvaluationAssistant)
 
     def test_load_data(self):
-        path = '/home/michael/Desktop/JMLR_New/Experiments/neural_network_training/data_after_training/'
-        load_data(path)
+        load_data(self.data_path)
 
     def test_compute_losses(self):
-        path = '/home/michael/Desktop/JMLR_New/Experiments/neural_network_training/data_after_training/'
-        eval_assist, neural_network = set_up_evaluation_assistant(loading_path=path)
+        eval_assist, neural_network = set_up_evaluation_assistant(loading_path=self.data_path)
         eval_assist.test_set = eval_assist.test_set[0:2]
         learned_algorithm = eval_assist.set_up_learned_algorithm(
             arguments_of_implementation_class=eval_assist.implementation_arguments)
@@ -80,8 +77,7 @@ class TestEvaluation(unittest.TestCase):
         self.assertTrue(0 <= percentage <= 1)
 
     def test_time_problem_for_learned_algorithm(self):
-        path = '/home/michael/Desktop/JMLR_New/Experiments/neural_network_training/data_after_training/'
-        eval_assist, neural_network = set_up_evaluation_assistant(loading_path=path)
+        eval_assist, neural_network = set_up_evaluation_assistant(loading_path=self.data_path)
         eval_assist.test_set = eval_assist.test_set[0:2]
         learned_algorithm = eval_assist.set_up_learned_algorithm(
             arguments_of_implementation_class=eval_assist.implementation_arguments)
@@ -93,18 +89,16 @@ class TestEvaluation(unittest.TestCase):
         self.assertIsInstance(time, float)
 
     def test_time_problem_for_adam(self):
-        path = '/home/michael/Desktop/JMLR_New/Experiments/neural_network_training/data_after_training/'
-        eval_assist, neural_network = set_up_evaluation_assistant(loading_path=path)
+        eval_assist, neural_network = set_up_evaluation_assistant(loading_path=self.data_path)
         eval_assist.test_set = eval_assist.test_set[0:2]
         time = time_problem_for_adam(
             neural_network=neural_network, loss_of_neural_network=eval_assist.loss_of_neural_network,
             maximal_number_of_iterations=5, parameter=eval_assist.test_set[0], optimal_loss=torch.tensor(0.),
-            level_of_accuracy=1.)
+            level_of_accuracy=1., lr_adam=0.008)
         self.assertIsInstance(time, float)
 
     def compute_times(self):
-        path = '/home/michael/Desktop/JMLR_New/Experiments/neural_network_training/data_after_training/'
-        eval_assist, neural_network = set_up_evaluation_assistant(loading_path=path)
+        eval_assist, neural_network = set_up_evaluation_assistant(loading_path=self.data_path)
         eval_assist.test_set = eval_assist.test_set[0:2]
         learned_algorithm = eval_assist.set_up_learned_algorithm(
             arguments_of_implementation_class=eval_assist.implementation_arguments)

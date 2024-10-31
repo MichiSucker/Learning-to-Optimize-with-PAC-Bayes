@@ -31,6 +31,7 @@ class EvaluationAssistant:
         self.implementation_class = implementation_class
         self.loss_of_neural_network = None
         self.implementation_arguments = None
+        self.lr_adam = None
 
     def set_up_learned_algorithm(self, arguments_of_implementation_class):
         if arguments_of_implementation_class is None:
@@ -92,10 +93,9 @@ def does_satisfy_constraint(convergence_risk_constraint, loss_at_beginning, loss
 
 
 def compute_losses_over_iterations_for_adam(neural_network, evaluation_assistant: EvaluationAssistant, parameter):
-    lr_adam = 0.008  # Originally, this was found by gridsearch
     neural_network_for_standard_training, losses_over_iterations_of_adam, _ = train_model(
         net=neural_network, data=parameter, criterion=evaluation_assistant.loss_of_neural_network,
-        n_it=evaluation_assistant.number_of_iterations_for_testing, lr=lr_adam
+        n_it=evaluation_assistant.number_of_iterations_for_testing, lr=evaluation_assistant.lr_adam
     )
     return losses_over_iterations_of_adam
 
@@ -155,8 +155,8 @@ def time_problem_for_learned_algorithm(learned_algorithm, loss_function, maximal
 
 
 def time_problem_for_adam(neural_network, loss_of_neural_network, parameter, maximal_number_of_iterations,
-                          optimal_loss, level_of_accuracy):
-    optimizer = torch.optim.Adam(neural_network.parameters())
+                          optimal_loss, level_of_accuracy, lr_adam):
+    optimizer = torch.optim.Adam(neural_network.parameters(), lr=lr_adam)
     current_loss = loss_of_neural_network(neural_network(parameter['x_values']), parameter['y_values'])
     counter = 0
     start = time.time()
@@ -199,7 +199,7 @@ def compute_times(learned_algorithm: OptimizationAlgorithm,
                 neural_network=neural_network_for_standard_training,
                 loss_of_neural_network=evaluation_assistant.loss_of_neural_network, parameter=parameter,
                 maximal_number_of_iterations=stop_procedure_after_at_most, optimal_loss=ground_truth_loss,
-                level_of_accuracy=epsilon))
+                level_of_accuracy=epsilon, lr_adam=evaluation_assistant.lr_adam))
 
     return times_pac, times_std
 
@@ -219,6 +219,7 @@ def set_up_evaluation_assistant(loading_path):
     evaluation_assistant.loss_of_neural_network = loss_of_neural_network
     evaluation_assistant.implementation_arguments = (
         neural_network_for_standard_training.get_dimension_of_hyperparameters())
+    evaluation_assistant.lr_adam = 0.008  # Originally, this was found by gridsearch.
     return evaluation_assistant, neural_network_for_standard_training
 
 
