@@ -2,10 +2,10 @@ import torch
 import torch.nn as nn
 
 
-class HB(nn.Module):
+class HeavyBallWithFriction(nn.Module):
 
     def __init__(self, alpha: torch.tensor, beta: torch.tensor):
-        super(HB, self).__init__()
+        super(HeavyBallWithFriction, self).__init__()
         self.alpha = alpha
         self.beta = beta
 
