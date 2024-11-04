@@ -106,7 +106,7 @@ def set_up_evaluation_assistant(loading_path):
     loss_of_algorithm = get_loss_function_of_algorithm()
 
     evaluation_assistant = EvaluationAssistant(test_set=parameters['test'], loss_of_algorithm=loss_of_algorithm,
-                                               initial_state=torch.tensor(initial_state),
+                                               initial_state=initial_state,
                                                number_of_iterations_during_training=n_train,
                                                optimal_hyperparameters=best_sample, implementation_class=Quadratics)
     evaluation_assistant.implementation_arguments = initial_state.shape[1]
