@@ -3,7 +3,7 @@ from experiments.nn_training.data_generation import get_data, get_powers_of_poly
 from experiments.nn_training.neural_network import NeuralNetworkForStandardTraining, NeuralNetworkForLearning
 from classes.LossFunction.derived_classes.subclass_ParametricLossFunction import ParametricLossFunction
 from algorithms.gradient_descent import GradientDescent
-from experiments.nn_training.nn_optimizer import NnOptimizer
+from experiments.nn_training.algorithm import NnOptimizer
 from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
 from classes.OptimizationAlgorithm.derived_classes.derived_classes.subclass_PacBayesOptimizationAlgorithm import (
     PacBayesOptimizationAlgorithm)
