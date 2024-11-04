@@ -221,6 +221,8 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
     def compute_ratio_of_losses(self, predicted_iterates: List[torch.Tensor]) -> List:
         ratios = [self.loss_function(predicted_iterates[k]) / self.loss_function(predicted_iterates[k - 1])
+                  if self.loss_function(predicted_iterates[k - 1]) > 1e-14
+                  else self.loss_function(predicted_iterates[k]) - self.loss_function(predicted_iterates[k])
                   for k in range(1, len(predicted_iterates))]
         return ratios
 
