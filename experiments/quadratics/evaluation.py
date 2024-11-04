@@ -67,6 +67,7 @@ def evaluate_algorithm(loading_path, path_of_experiment):
     times_of_learned_algorithm, times_of_baseline_algorithm = compute_times(
         learned_algorithm=learned_algorithm, baseline_algorithm=baseline_algorithm,
         evaluation_assistant=evaluation_assistant,
+        # TODO: Change stop_procedure_after_at_most to 10.000
         stop_procedure_after_at_most=5, ground_truth_losses=[0. for _ in range(len(evaluation_assistant.test_set))])
 
     save_data(savings_path=create_folder_for_storing_data(path_of_experiment),
