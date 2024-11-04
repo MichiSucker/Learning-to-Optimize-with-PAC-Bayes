@@ -216,7 +216,6 @@ class TestEvaluationNN(unittest.TestCase):
                          {'num_iter_update_constraint': int(maximal_number_of_iterations // 4)}
                          )
 
-
     @unittest.skipIf(condition=(TESTING_LEVEL == 'FULL_TEST_WITH_EXPERIMENTS'),
                      reason='Too expensive to test all the time.')
     def test_get_parameters(self):
