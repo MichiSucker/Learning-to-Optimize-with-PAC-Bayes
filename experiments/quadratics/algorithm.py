@@ -22,7 +22,7 @@ class Quadratics(nn.Module):
 
         h_size = 8
         self.coefficients = nn.Sequential(
-            nn.Linear(2, h_size, bias=False),
+            nn.Linear(4, h_size, bias=False),
             nn.ReLU(),
             nn.Linear(h_size, h_size, bias=False),
             nn.Linear(h_size, h_size, bias=False),
@@ -50,10 +50,14 @@ class Quadratics(nn.Module):
         if diff_norm > self.eps:
             diff = diff / diff_norm
 
+        loss = opt_algo.loss_function(opt_algo.current_state[1].clone()).reshape((1,))
+        old_loss = opt_algo.loss_function(opt_algo.current_state[1].clone()).reshape((1,))
         step_size = self.coefficients(
             torch.concat(
                 (torch.log(1 + grad_norm.reshape((1,))),
-                 torch.log(1 + diff_norm.reshape((1,)))
+                 torch.log(1 + diff_norm.reshape((1,))),
+                 torch.log(1 + loss),
+                 torch.log(1 + old_loss)
                  ))
         )
         direction = self.update_layer(torch.concat((
