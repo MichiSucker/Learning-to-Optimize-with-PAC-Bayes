@@ -5,7 +5,7 @@ import time
 from experiments.nn_training.neural_network import train_model
 from experiments.nn_training.training import instantiate_neural_networks
 from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
-from algorithms.nn_optimizer import NnOptimizer
+from experiments.nn_training.nn_optimizer import NnOptimizer
 import torch
 from experiments.nn_training.data_generation import get_loss_of_algorithm, get_loss_of_neural_network
 from classes.LossFunction.derived_classes.subclass_ParametricLossFunction import ParametricLossFunction
