@@ -169,6 +169,11 @@ def get_baseline_algorithm(loss_function, smoothness_constant, strong_convexity_
 
 def set_up_and_train_algorithm(path_of_experiment):
 
+    # This is pretty important! Without increased accuracy, the model will struggle to train, because at some point
+    # (about loss of 1e-6) the incurred losses are subject to numerical instabilities, which do not provide meaningful
+    # information for learning.
+    torch.set_default_dtype(torch.double)
+
     parameters, loss_function_of_algorithm, mu_min, L_max, dim = get_data(get_number_of_datapoints())
     loss_functions = create_parametric_loss_functions_from_parameters(
         template_loss_function=loss_function_of_algorithm, parameters=parameters)
@@ -199,7 +204,7 @@ def set_up_and_train_algorithm(path_of_experiment):
               number_of_iterations=algorithm_for_learning.n_max, parameters=parameters,
               samples_prior=state_dict_samples_prior, best_sample=algorithm_for_learning.implementation.state_dict())
 
-        
+
 def save_data(savings_path, strong_convexity_parameter, smoothness_parameter, pac_bound, initialization,
               number_of_iterations, parameters, samples_prior, best_sample):
 
