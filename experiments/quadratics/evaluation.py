@@ -167,6 +167,11 @@ def compute_losses_over_iterations(algorithm, evaluation_assistant: EvaluationAs
     for i in range(evaluation_assistant.number_of_iterations_for_testing):
         algorithm.perform_step()
         loss_over_iterations.append(algorithm.evaluate_loss_function_at_current_iterate().item())
+        if loss_over_iterations[-1] < 1e-16:
+            loss_over_iterations.extend(
+                [loss_over_iterations[-1]] * (evaluation_assistant.number_of_iterations_for_testing - i - 1)
+            )
+            break
     return loss_over_iterations
 
 

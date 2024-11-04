@@ -34,7 +34,7 @@ class Quadratics(nn.Module):
         )
 
         # For stability
-        self.eps = torch.tensor(1e-24).float()
+        self.eps = torch.tensor(1e-16).float()
 
     def forward(self, opt_algo):
 
