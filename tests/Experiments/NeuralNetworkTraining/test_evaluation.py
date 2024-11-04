@@ -103,7 +103,7 @@ class TestEvaluation(unittest.TestCase):
             level_of_accuracy=1., lr_adam=0.008)
         self.assertIsInstance(time, float)
 
-    def compute_times(self):
+    def test_compute_times(self):
         eval_assist, neural_network = set_up_evaluation_assistant(loading_path=self.data_path)
         eval_assist.test_set = eval_assist.test_set[0:2]
         learned_algorithm = eval_assist.set_up_learned_algorithm(
