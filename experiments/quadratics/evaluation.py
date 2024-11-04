@@ -194,7 +194,7 @@ def compute_times(learned_algorithm: OptimizationAlgorithm,
                   ground_truth_losses,
                   stop_procedure_after_at_most):
 
-    levels_of_accuracy = [1e0, 1e-1, 1e-2]
+    levels_of_accuracy = [1e-2, 1e-4, 1e-6]
     times_pac = {epsilon: [0.] for epsilon in levels_of_accuracy}
     times_std = {epsilon: [0.] for epsilon in levels_of_accuracy}
 
