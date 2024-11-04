@@ -17,8 +17,7 @@ import pickle
 
 
 def get_number_of_datapoints():
-    # TODO: Set number of samples back to 250 each
-    return {'prior': 25, 'train': 25, 'test': 25, 'validation': 250}
+    return {'prior': 250, 'train': 250, 'test': 250, 'validation': 250}
 
 
 def create_folder_for_storing_data(path_of_experiment):
@@ -59,8 +58,7 @@ def get_sampling_parameters(maximal_number_of_iterations):
             'length_trajectory': length_trajectory,
             'with_restarting': True,
             'restart_probability': restart_probability,
-            # TODO: Set number of samples to 100
-            'num_samples': 5,
+            'num_samples': 100,
             'num_iter_burnin': 0}
 
 
@@ -168,6 +166,10 @@ def get_baseline_algorithm(loss_function, smoothness_constant, strong_convexity_
 
 
 def set_up_and_train_algorithm(path_of_experiment):
+    # This is pretty important! Without increased accuracy, the model will struggle to train, because at some point
+    # (about loss of 1e-6) the incurred losses are subject to numerical instabilities, which do not provide meaningful
+    # information for learning.
+    torch.set_default_dtype(torch.double)
 
     parameters, loss_function_of_algorithm, mu_min, L_max, dim = get_data(get_number_of_datapoints())
     loss_functions = create_parametric_loss_functions_from_parameters(
