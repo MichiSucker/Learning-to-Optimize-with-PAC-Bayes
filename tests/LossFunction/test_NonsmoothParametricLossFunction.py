@@ -1,7 +1,7 @@
 import unittest
 
-from classes.LossFunction.derived_classes.CompositeParametricLossFunction.subclass_NonsmoothParametricLossFunction import \
-    NonsmoothParametricLossFunction
+from classes.LossFunction.derived_classes.NonsmoothParametricLossFunction.\
+    subclass_NonsmoothParametricLossFunction import NonsmoothParametricLossFunction
 from classes.LossFunction.derived_classes.subclass_ParametricLossFunction import ParametricLossFunction
 import torch
 
