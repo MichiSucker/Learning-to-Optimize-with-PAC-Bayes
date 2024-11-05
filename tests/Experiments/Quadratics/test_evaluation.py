@@ -117,7 +117,7 @@ class TestEvaluation(unittest.TestCase):
         for key in times_learned.keys():
             self.assertEqual(len(times_learned[key]), len(eval_assist.test_set) + 1)
 
-    # @unittest.skipIf(condition=(TESTING_LEVEL != 'FULL_TEST_WITH_EXPERIMENTS'),
-    #                  reason='Too expensive to test all the time.')
+    @unittest.skipIf(condition=(TESTING_LEVEL != 'FULL_TEST_WITH_EXPERIMENTS'),
+                     reason='Too expensive to test all the time.')
     def test_evaluate_algorithm(self):
         evaluate_algorithm(loading_path=self.loading_path, path_of_experiment=self.path_to_experiment)
