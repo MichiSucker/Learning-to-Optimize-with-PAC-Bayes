@@ -3,7 +3,6 @@ import torch
 import pickle
 from pathlib import Path
 import time
-from algorithms.heavy_ball import HeavyBallWithFriction
 from classes.LossFunction.derived_classes.subclass_ParametricLossFunction import ParametricLossFunction
 from experiments.quadratics.algorithm import Quadratics
 from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
@@ -119,8 +118,10 @@ def save_data(savings_path, times_of_learned_algorithm, losses_of_learned_algori
               losses_of_baseline_algorithm, ground_truth_losses, percentage_constrained_satisfied):
 
     with open(savings_path + 'times_of_learned_algorithm', 'wb') as file:
+        # noinspection PyTypeChecker
         pickle.dump(times_of_learned_algorithm, file)
     with open(savings_path + 'times_of_baseline_algorithm', 'wb') as file:
+        # noinspection PyTypeChecker
         pickle.dump(times_of_baseline_algorithm, file)
     np.save(savings_path + 'losses_of_baseline_algorithm', np.array(losses_of_baseline_algorithm))
     np.save(savings_path + 'losses_of_learned_algorithm', np.array(losses_of_learned_algorithm))
@@ -214,7 +215,7 @@ def compute_times(learned_algorithm: OptimizationAlgorithm,
                 level_of_accuracy=epsilon))
 
             times_std[epsilon].append(time_problem(
-                algorithm=baseline_algorithm,loss_function=cur_loss_function,
+                algorithm=baseline_algorithm, loss_function=cur_loss_function,
                 maximal_number_of_iterations=stop_procedure_after_at_most, optimal_loss=ground_truth_loss,
                 level_of_accuracy=epsilon))
 
