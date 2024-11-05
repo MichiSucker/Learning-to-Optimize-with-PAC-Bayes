@@ -19,11 +19,10 @@ class TestEvaluationAssistant(unittest.TestCase):
         self.number_of_iterations_for_testing = 20
         self.initial_state = torch.rand(size=(1, 20))
         self.optimal_hyperparameters = copy.deepcopy(Dummy().state_dict())
-        self.eval_assist = EvaluationAssistant(test_set=self.test_set, loss_of_algorithm=dummy_loss,
-                                               initial_state=self.initial_state,
-                                               number_of_iterations_during_training=self.number_of_iterations_during_training,
-                                               optimal_hyperparameters=self.optimal_hyperparameters,
-                                               implementation_class=Dummy)
+        self.eval_assist = EvaluationAssistant(
+            test_set=self.test_set, loss_of_algorithm=dummy_loss, initial_state=self.initial_state,
+            number_of_iterations_during_training=self.number_of_iterations_during_training,
+            optimal_hyperparameters=self.optimal_hyperparameters, implementation_class=Dummy)
 
     def test_creation(self):
         self.assertIsInstance(self.eval_assist, EvaluationAssistant)
