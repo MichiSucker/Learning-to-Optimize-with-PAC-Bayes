@@ -129,6 +129,10 @@ def save_data(savings_path, times_of_learned_algorithm, losses_of_learned_algori
     np.save(savings_path + 'empirical_probability', percentage_constrained_satisfied)
 
 
+def does_satisfy_constraint(convergence_risk_constraint, loss_at_beginning, loss_at_end):
+    return convergence_risk_constraint(loss_at_beginning=loss_at_beginning, loss_at_end=loss_at_end)
+
+
 def compute_losses(evaluation_assistant: EvaluationAssistant, learned_algorithm, baseline_algorithm):
 
     losses_of_baseline_algorithm = []
@@ -153,10 +157,6 @@ def compute_losses(evaluation_assistant: EvaluationAssistant, learned_algorithm,
     return (np.array(losses_of_baseline_algorithm),
             np.array(losses_of_learned_algorithm),
             number_of_times_constrained_satisfied / len(evaluation_assistant.test_set))
-
-
-def does_satisfy_constraint(convergence_risk_constraint, loss_at_beginning, loss_at_end):
-    return convergence_risk_constraint(loss_at_beginning=loss_at_beginning, loss_at_end=loss_at_end)
 
 
 def compute_losses_over_iterations(algorithm, evaluation_assistant: EvaluationAssistant, parameter):
