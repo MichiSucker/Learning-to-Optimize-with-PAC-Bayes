@@ -211,12 +211,16 @@ def save_data(savings_path, strong_convexity_parameter, smoothness_parameter, pa
     np.save(savings_path + 'initialization', initialization)
     np.save(savings_path + 'number_of_iterations', number_of_iterations)
     with open(savings_path + 'parameters_problem', 'wb') as file:
+        # noinspection PyTypeChecker
         pickle.dump(parameters, file)
 
     parameters_of_estimation = get_parameters_of_estimation()
     with open(savings_path + 'parameters_of_estimation', 'wb') as file:
+        # noinspection PyTypeChecker
         pickle.dump(parameters_of_estimation, file)
     with open(savings_path + 'samples', 'wb') as file:
+        # noinspection PyTypeChecker
         pickle.dump(samples_prior, file)
     with open(savings_path + 'best_sample', 'wb') as file:
+        # noinspection PyTypeChecker
         pickle.dump(best_sample, file)
