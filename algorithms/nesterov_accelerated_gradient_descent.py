@@ -2,10 +2,10 @@ import torch
 import torch.nn as nn
 
 
-class NAG(nn.Module):
+class NesterovAcceleratedGradient(nn.Module):
 
     def __init__(self, alpha: torch.tensor):
-        super(NAG, self).__init__()
+        super(NesterovAcceleratedGradient, self).__init__()
         self.alpha = nn.Parameter(alpha)
 
     def forward(self, opt_algo):
