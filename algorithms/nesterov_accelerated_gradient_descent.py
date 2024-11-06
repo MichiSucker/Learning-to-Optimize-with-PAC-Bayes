@@ -4,7 +4,7 @@ import torch.nn as nn
 
 class NesterovAcceleratedGradient(nn.Module):
 
-    def __init__(self, alpha: torch.tensor):
+    def __init__(self, alpha: torch.Tensor):
         super(NesterovAcceleratedGradient, self).__init__()
         self.alpha = nn.Parameter(alpha)
 
