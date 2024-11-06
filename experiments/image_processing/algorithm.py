@@ -4,14 +4,12 @@ import torch.nn as nn
 
 class ConvNet(nn.Module):
 
-    def __init__(self, img_height: torch.tensor, img_width: torch.tensor, num_channels: torch.tensor,
-                 kernel_size: int):
+    def __init__(self, img_height: torch.tensor, img_width: torch.tensor, kernel_size: int):
         super(ConvNet, self).__init__()
 
-        self.num_channels = num_channels
         self.width = img_width
         self.height = img_height
-        self.shape = (num_channels, 1, img_height, img_width)
+        self.shape = (1, 1, img_height, img_width)
         self.kernel_size = kernel_size
         padding_mode = 'reflect'
 
