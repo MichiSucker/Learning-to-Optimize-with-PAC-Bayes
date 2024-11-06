@@ -27,8 +27,7 @@ class EvaluationAssistant:
         self.loss_of_algorithm = loss_of_algorithm
         self.optimal_hyperparameters = optimal_hyperparameters
         self.implementation_class = implementation_class
-        # TODO: Set number_of_iterations_for_approximation to 1000
-        self.number_of_iterations_for_approximation = 100
+        self.number_of_iterations_for_approximation = 1000
         self.implementation_arguments = None
         self.smoothness_parameter = None
         self.initial_state_baseline_algorithm = None
