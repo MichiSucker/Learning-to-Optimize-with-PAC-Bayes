@@ -247,7 +247,8 @@ def evaluate_algorithm(loading_path, path_of_experiment):
     times_of_learned_algorithm, times_of_baseline_algorithm = compute_times(
         learned_algorithm=learned_algorithm, baseline_algorithm=baseline_algorithm,
         evaluation_assistant=evaluation_assistant,
-        stop_procedure_after_at_most=5000, optimal_losses=optimal_losses)
+        stop_procedure_after_at_most=evaluation_assistant.number_of_iterations_for_approximation,
+        optimal_losses=optimal_losses)
     save_data(savings_path=create_folder_for_storing_data(path_of_experiment),
               times_of_learned_algorithm=times_of_learned_algorithm,
               losses_of_learned_algorithm=losses_of_learned_algorithm,
