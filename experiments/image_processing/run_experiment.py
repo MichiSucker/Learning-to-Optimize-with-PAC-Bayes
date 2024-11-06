@@ -11,7 +11,8 @@ def create_folder_for_experiment(path_to_experiment_folder):
 
 
 def run(path_to_experiment_folder):
+    path_to_images = '/home/michael/Desktop/Experiments/Images/'
     path_of_experiment = create_folder_for_experiment(path_to_experiment_folder)
-    set_up_and_train_algorithm(path_of_experiment=path_of_experiment)
+    set_up_and_train_algorithm(path_of_experiment=path_of_experiment, path_to_images=path_to_images)
     evaluate_algorithm(path_of_experiment=path_of_experiment, loading_path=path_of_experiment + 'data/')
     create_evaluation_plots(loading_path=path_of_experiment + 'data/', path_of_experiment=path_of_experiment)
