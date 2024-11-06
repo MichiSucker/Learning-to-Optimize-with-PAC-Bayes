@@ -47,7 +47,8 @@ def get_finite_difference_kernels():
 
 
 def get_shape_of_images():
-    img_height = 250
+    # TODO: Change img_height to 250
+    img_height = 25
     img_width = int(0.75 * img_height)
     return 1, 1, img_height, img_width  # Note that this automatically returns a tuple
 
