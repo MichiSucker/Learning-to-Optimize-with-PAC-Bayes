@@ -31,8 +31,7 @@ def create_evaluation_plots(loading_path, path_of_experiment):
     pac_bound = np.load(loading_path + 'pac_bound.npy')
     empirical_probability = np.load(loading_path + 'empirical_probability.npy')
     number_of_iterations_for_approximation = np.load(loading_path + 'number_of_iterations_for_approximation.npy')
-    # TODO: Check that number_of_iterations_for_approximation is set to 1000
-    # assert number_of_iterations_for_approximation == 1000
+    assert number_of_iterations_for_approximation == 1000
     approximate_optimal_losses = np.load(loading_path + 'approximate_optimal_losses.npy')
 
     with open(loading_path + 'times_of_learned_algorithm', 'rb') as file:
