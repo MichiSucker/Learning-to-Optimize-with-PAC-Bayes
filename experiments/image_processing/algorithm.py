@@ -44,25 +44,25 @@ class ConvNet(nn.Module):
     def forward(self, opt_algo):
 
         # Compute and normalize gradient
-        grad = opt_algo.loss_function.grad(opt_algo.current_state[1])
-        grad_norm = torch.linalg.norm(grad).reshape((1,))
-        if grad_norm > self.eps:
-            grad = grad/grad_norm
+        gradient = opt_algo.loss_function.compute_gradient(opt_algo.current_state[1])
+        gradient_norm = torch.linalg.norm(gradient).reshape((1,))
+        if gradient_norm > self.eps:
+            gradient = gradient / gradient_norm
 
         # Compute and normalize momentum term
-        diff = opt_algo.current_state[1] - opt_algo.current_state[0]
-        diff_norm = torch.linalg.norm(diff).reshape((1,))
-        if diff_norm > self.eps:
-            diff = diff/diff_norm
+        difference = opt_algo.current_state[1] - opt_algo.current_state[0]
+        difference_norm = torch.linalg.norm(difference).reshape((1,))
+        if difference_norm > self.eps:
+            difference = difference / difference_norm
 
         update_direction = self.update_layer(torch.concat((
-            grad.reshape((1, 1, self.height, self.width)),
-            diff.reshape((1, 1, self.height, self.width)),
-            (grad * diff).reshape((1, 1, self.height, self.width))), dim=1))
+            gradient.reshape((1, 1, self.height, self.width)),
+            difference.reshape((1, 1, self.height, self.width)),
+            (gradient * difference).reshape((1, 1, self.height, self.width))), dim=1))
 
         step_size = self.step_size_layer(torch.concat((
-            torch.log(1 + grad_norm),
-            torch.log(1 + diff_norm))))
+            torch.log(1 + gradient_norm),
+            torch.log(1 + difference_norm))))
 
         return opt_algo.current_state[-1] + step_size * update_direction.flatten()
 
