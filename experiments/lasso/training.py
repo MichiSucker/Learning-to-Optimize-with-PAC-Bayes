@@ -25,7 +25,7 @@ def create_folder_for_storing_data(path_of_experiment):
 
 def get_number_of_datapoints():
     # TODO: Change to 250 each.
-    return {'prior': 250, 'train': 250, 'test': 250, 'validation': 250}
+    return {'prior': 25, 'train': 25, 'test': 25, 'validation': 250}
 
 
 def get_parameters_of_estimation():
