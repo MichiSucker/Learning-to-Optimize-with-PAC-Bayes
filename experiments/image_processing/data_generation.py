@@ -191,7 +191,7 @@ def get_parameters(images, number_of_datapoints_per_dataset, blurring_function):
     return parameters
 
 
-def get_data(path_to_images, number_of_datapoints_per_dataset, device='cpu'):
+def get_data(path_to_images, number_of_datapoints_per_dataset, device):
 
     blurring_kernel = get_blurring_kernel()
     smoothness_parameter = get_smoothness_parameter()

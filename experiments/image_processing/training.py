@@ -193,7 +193,7 @@ def set_up_and_train_algorithm(path_of_experiment, path_to_images):
 
     number_of_datapoints_per_dataset = get_number_of_datapoints()
     parameters, loss_function_of_algorithm, smoothness_parameter = get_data(
-        path_to_images=path_to_images, number_of_datapoints_per_dataset=number_of_datapoints_per_dataset)
+        path_to_images=path_to_images, number_of_datapoints_per_dataset=number_of_datapoints_per_dataset, device='cpu')
     loss_functions = create_parametric_loss_functions_from_parameters(
         template_loss_function=loss_function_of_algorithm, parameters=parameters)
     baseline_algorithm = get_baseline_algorithm(
