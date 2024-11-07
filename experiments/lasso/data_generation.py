@@ -70,10 +70,10 @@ def get_parameters(matrix, number_of_datapoints_per_dataset):
     parameters = {}
     for name, number_of_datapoints in [('prior', n_prior), ('train', n_train), ('test', n_test),
                                        ('validation', n_validation)]:
-        right_hand_side = distribution_right_hand_side.sample((1,))
-        regularization_parameter = distribution_regularization_parameters.sample((1,))
-        parameters[name] = [create_parameter(matrix=matrix, right_hand_side=right_hand_side,
-                                             regularization_parameter=regularization_parameter)
+        parameters[name] = [create_parameter(
+            matrix=matrix,
+            right_hand_side=distribution_right_hand_side.sample((1,)),
+            regularization_parameter=distribution_regularization_parameters.sample((1,)))
                             for _ in range(number_of_datapoints)]
     return parameters
 
