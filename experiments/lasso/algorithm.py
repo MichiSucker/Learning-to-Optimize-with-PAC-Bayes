@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 from algorithms.fista import soft_thresholding
 from typing import Tuple
-
 from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
 
 
