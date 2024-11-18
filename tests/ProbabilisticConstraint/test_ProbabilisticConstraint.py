@@ -3,7 +3,6 @@ from classes.Constraint.class_ProbabilisticConstraint import ProbabilisticConstr
 from classes.Constraint.class_Constraint import Constraint
 from classes.Constraint.class_BayesianProbabilityEstimator import BayesianProbabilityEstimator
 import torch
-from main import TESTING_LEVEL
 
 
 class TestProbabilisticConstraint(unittest.TestCase):
@@ -20,13 +19,13 @@ class TestProbabilisticConstraint(unittest.TestCase):
         self.assertIsInstance(self.probabilistic_constraint.constraint, Constraint)
         self.assertIsInstance(self.probabilistic_constraint.bayesian_estimator, BayesianProbabilityEstimator)
 
-    @unittest.skipIf(condition=(TESTING_LEVEL == 'SKIP_EXPENSIVE_TESTS'),
-                     reason='Too expensive to test all the time.')
-    def test_create_constraint(self):
+    def test_successful_estimation(self):
+
+        # Test case: True probability lies within the specified interval
+
+        # Initialize setting
         constraint = self.probabilistic_constraint.create_constraint()
         self.assertIsInstance(constraint, Constraint)
-
-        # Test case 1: True probability lies within the specified interval
         true_probability = torch.distributions.uniform.Uniform(0.1, 0.9).sample((1,)).item()
         list_of_constraints = [
             Constraint(lambda opt_algo: True)
@@ -37,18 +36,24 @@ class TestProbabilisticConstraint(unittest.TestCase):
         self.probabilistic_constraint = ProbabilisticConstraint(list_of_constraints,
                                                                 self.parameters_estimation)
         constraint = self.probabilistic_constraint.create_constraint()
+
         # Here, since the constraints to not really need an optimization algorithm, we can just call the constraint
-        # in any way we want. Note that this test can fail from time to time.
-        # TODO: Make the test more robust.
+        # in any way we want.
+        # (!) Note that this test can fail from time to time. (!)
         result = constraint(1, also_return_value=False)
         self.assertTrue(result)
 
+        # Check that result is accepted, and the estimated value lies in the specified interval.
         result, estimation = constraint(1, also_return_value=True)
         self.assertTrue(result)
         self.assertTrue(self.parameters_estimation['probabilities'][0]
                         <= estimation <= self.parameters_estimation['probabilities'][1])
 
-        # Test case 2: True probability does not lie within the specified interval
+    def test_unsuccessful_estimation(self):
+
+        # Test case: True probability does not lie within the specified interval
+
+        # Initialize setting
         true_probability = torch.distributions.uniform.Uniform(0.75, 1).sample((1,)).item()
         list_of_constraints = [
             Constraint(lambda opt_algo: True)
@@ -62,6 +67,7 @@ class TestProbabilisticConstraint(unittest.TestCase):
         result = constraint(1, also_return_value=False)
         self.assertFalse(result)
 
+        # Check that result gets rejected, because estimated probability does not lie withing the desired range.
         result, estimation = constraint(1, also_return_value=True)
         self.assertFalse(result)
         self.assertFalse(self.parameters_estimation['probabilities'][0]
