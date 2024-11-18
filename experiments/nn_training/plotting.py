@@ -5,7 +5,7 @@ from experiments.helpers import set_size
 from scipy.stats import beta
 
 
-def create_evaluation_plots(loading_path, path_of_experiment):
+def create_evaluation_plots(loading_path: str, path_of_experiment: str) -> None:
 
     width = 469.75499  # Arxiv
     tex_fonts = {
