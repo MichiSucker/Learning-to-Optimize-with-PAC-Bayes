@@ -1,6 +1,7 @@
-from typing import List
+from typing import List, Tuple
 from classes.Constraint.class_Constraint import Constraint
 from classes.Constraint.class_BayesianProbabilityEstimator import BayesianProbabilityEstimator
+from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
 
 
 class ProbabilisticConstraint:
@@ -16,7 +17,8 @@ class ProbabilisticConstraint:
 
     def create_constraint(self) -> Constraint:
 
-        def posterior_mean_inside_interval(opt_algo, also_return_value=False):
+        def posterior_mean_inside_interval(opt_algo: OptimizationAlgorithm,
+                                           also_return_value=False) -> bool | Tuple[bool, float]:
             posterior_mean, lower_quantile, upper_quantile, number_of_iterates = (
                 self.bayesian_estimator.estimate_probability(input_to_constraint=opt_algo))
             if also_return_value:
