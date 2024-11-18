@@ -2,6 +2,8 @@ import unittest
 import sys
 import io
 import torch
+
+from algorithms.dummy import Dummy, DummyWithMoreTrainableParameters
 from classes.Helpers.class_InitializationAssistant import InitializationAssistant
 from main import TESTING_LEVEL
 
@@ -26,7 +28,7 @@ class TestInitializationAssistant(unittest.TestCase):
         self.assertIsInstance(self.initialization_assistant, InitializationAssistant)
 
     def test_starting_message(self):
-        # This is just a weak test: We only test whether it created an output.
+        # This is just a weak test: We only test whether an output was created.
         capturedOutput = io.StringIO()
         sys.stdout = capturedOutput
         self.initialization_assistant.print_starting_message()
@@ -63,21 +65,12 @@ class TestInitializationAssistant(unittest.TestCase):
         self.assertEqual(list(pbar.iterable), list(range(self.initialization_assistant.maximal_number_of_iterations)))
 
     def test_should_update_stepsize(self):
+        # Step-size should be updated, if random_multiple % update_stepsize_every == 0 and random_multiple >= 1.
         random_multiple = torch.randint(1, 9, size=(1,)).item() * self.update_stepsize_every
         self.assertTrue(self.initialization_assistant.should_update_stepsize_of_optimizer(iteration=random_multiple))
         self.assertFalse(self.initialization_assistant.should_update_stepsize_of_optimizer(iteration=random_multiple-1))
         self.assertFalse(self.initialization_assistant.should_update_stepsize_of_optimizer(iteration=0))
 
-    def test_should_print_update(self):
-        random_multiple = torch.randint(1, 9, size=(1,)).item() * self.print_update_every
-        self.assertTrue(self.initialization_assistant.should_print_update(random_multiple))
-        self.assertFalse(self.initialization_assistant.should_print_update(random_multiple-1))
-        self.assertFalse(self.initialization_assistant.should_print_update(0))
-        self.initialization_assistant.printing_enabled = False
-        self.assertFalse(self.initialization_assistant.should_print_update(random_multiple))
-
-    @unittest.skipIf(condition=(TESTING_LEVEL == 'SKIP_EXPENSIVE_TESTS'),
-                     reason='Too expensive to test all the time.')
     def test_update_stepsize_of_optimizer(self):
         dummy_parameters = [torch.tensor([1., 2.], requires_grad=True)]
         lr = 4e-3
@@ -85,6 +78,16 @@ class TestInitializationAssistant(unittest.TestCase):
         self.initialization_assistant.update_stepsize_of_optimizer(optimizer=optimizer)
         for g in optimizer.param_groups:
             self.assertEqual(g['lr'], self.initialization_assistant.factor_update_stepsize * lr)
+
+    def test_should_print_update(self):
+        # Print update if random_multiple >= 1 and random_multiple % print_update_every == 0.
+        random_multiple = torch.randint(1, 9, size=(1,)).item() * self.print_update_every
+        self.assertTrue(self.initialization_assistant.should_print_update(random_multiple))
+        self.assertFalse(self.initialization_assistant.should_print_update(random_multiple-1))
+        self.assertFalse(self.initialization_assistant.should_print_update(0))
+        # Only print update if printing is enabled.
+        self.initialization_assistant.printing_enabled = False
+        self.assertFalse(self.initialization_assistant.should_print_update(random_multiple))
 
     def test_print_update(self):
         # This is just a weak test: We only test whether it created an output.
