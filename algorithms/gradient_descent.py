@@ -5,14 +5,14 @@ from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import Optimizati
 
 class GradientDescent(nn.Module):
 
-    def __init__(self, alpha: torch.tensor):
+    def __init__(self, alpha: torch.Tensor):
         super(GradientDescent, self).__init__()
         self.alpha = nn.Parameter(alpha)
 
-    def forward(self, algorithm: OptimizationAlgorithm):
+    def forward(self, algorithm: OptimizationAlgorithm) -> torch.Tensor:
         return (algorithm.current_state[0]
                 - self.alpha * algorithm.loss_function.compute_gradient(algorithm.current_iterate))
 
     @staticmethod
-    def update_state(opt_algo):
+    def update_state(opt_algo: OptimizationAlgorithm) -> torch.Tensor:
         opt_algo.current_state = opt_algo.current_iterate.detach().clone().reshape((1, -1))
