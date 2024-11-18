@@ -1,12 +1,11 @@
 from typing import Callable
-
 import torch
 
 
 class LossFunction:
 
     def __init__(self, function: Callable):
-        self.function = function
+        self.function: Callable = function
 
     def __call__(self, x: torch.Tensor, *args, **kwargs) -> torch.Tensor:
         return self.function(x, *args, **kwargs)
