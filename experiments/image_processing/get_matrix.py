@@ -1,14 +1,14 @@
+import torch
 from scipy.sparse import csr_matrix
 import scipy.sparse as sp
 import numpy as np
 from numpy import zeros
-from numpy.typing import NDArray
 
 
 # define a matrix that represents the application of filter to an
 # image of size M x N with M rows and N columns using reflecting
 # boundary conditions.
-def make_filter2d(height: int, width: int, filter_to_apply: NDArray) -> csr_matrix:
+def make_filter2d(height: int, width: int, filter_to_apply: torch.Tensor) -> csr_matrix:
 
     s = np.shape(filter_to_apply)[0]  # filter size: s x s
     k = int((s - 1)/2)     # filter center (k,k)
