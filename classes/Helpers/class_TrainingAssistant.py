@@ -25,13 +25,13 @@ class TrainingAssistant:
         else:
             self.bins = bins
 
-    def print_starting_message(self):
+    def print_starting_message(self) -> None:
         if self.printing_enabled:
             print("Fit Algorithm:")
             print(f"\t-Optimizing for {self.maximal_number_of_iterations} iterations.")
             print(f"\t-Updating step-size every {self.update_stepsize_every} iterations.")
 
-    def print_final_message(self):
+    def print_final_message(self) -> None:
         if self.printing_enabled:
             print("End Fitting Algorithm.\n\n")
 
@@ -46,14 +46,14 @@ class TrainingAssistant:
         else:
             return False
 
-    def update_stepsize_of_optimizer(self, optimizer: torch.optim.Optimizer):
+    def update_stepsize_of_optimizer(self, optimizer: torch.optim.Optimizer) -> None:
         for g in optimizer.param_groups:
             g['lr'] = self.factor_update_stepsize * g['lr']
 
     def get_variable__bins(self) -> list:
         return self.bins
 
-    def set_variable__bins__to(self, new_bins: list):
+    def set_variable__bins__to(self, new_bins: list) -> None:
         self.bins = new_bins
 
     def should_print_update(self, iteration: int) -> bool:
@@ -62,7 +62,7 @@ class TrainingAssistant:
         else:
             return False
 
-    def print_update(self, iteration: int, constraint_checker: ConstraintChecker):
+    def print_update(self, iteration: int, constraint_checker: ConstraintChecker) -> None:
         print(f"\nIteration: {iteration}; Found point inside constraint: "
               f"{constraint_checker.found_point_inside_constraint}")
         vals, bins = np.histogram(self.loss_histogram, bins=self.bins)
@@ -70,6 +70,6 @@ class TrainingAssistant:
         for j in range(len(vals) - 1, -1, -1):
             print(f"\t\t[{bins[j + 1]:.0e}, {bins[j]:.0e}] : {vals[j]}/{self.print_update_every}")
 
-    def reset_running_loss_and_loss_histogram(self):
+    def reset_running_loss_and_loss_histogram(self) -> None:
         self.loss_histogram = []
         self.running_loss = 0
