@@ -1,25 +1,19 @@
 import torch
 import torch.nn as nn
+from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
 
 
-def soft_thresholding(x, tau):
+def soft_thresholding(x: torch.Tensor, tau: torch.Tensor) -> torch.Tensor:
     return torch.maximum(torch.zeros_like(x), torch.abs(x) - tau) * torch.sign(x)
-
-
-def split_zero_nonzero(v, zeros, non_zeros):
-    v_zeros, v_non_zeros = torch.zeros(len(v)), torch.zeros(len(v))
-    v_zeros[zeros] = v[zeros]
-    v_non_zeros[non_zeros] = v[non_zeros]
-    return v_zeros, v_non_zeros
 
 
 class FISTA(nn.Module):
 
-    def __init__(self, alpha: torch.tensor):
+    def __init__(self, alpha: torch.Tensor):
         super(FISTA, self).__init__()
-        self.alpha = nn.Parameter(alpha)
+        self.alpha: torch.Tensor = nn.Parameter(alpha)
 
-    def forward(self, opt_algo):
+    def forward(self, opt_algo: OptimizationAlgorithm) -> torch.Tensor:
 
         mu = opt_algo.loss_function.get_parameter()['mu']
         t_new = 0.5 * (1.0 + torch.sqrt(1.0 + 4 * opt_algo.current_state[0][-1].clone() ** 2))
@@ -31,7 +25,7 @@ class FISTA(nn.Module):
         return result
 
     @staticmethod
-    def update_state(opt_algo):
+    def update_state(opt_algo: OptimizationAlgorithm) -> None:
         opt_algo.current_state[0][-1] = 0.5 * (1.0 + torch.sqrt(1.0 + 4 * opt_algo.current_state[0][-1].clone() ** 2))
         opt_algo.current_state[1] = opt_algo.current_state[2].detach().clone()
         opt_algo.current_state[2] = opt_algo.current_iterate.detach().clone()
