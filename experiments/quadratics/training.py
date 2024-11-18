@@ -1,5 +1,5 @@
 import torch
-from typing import List, Callable
+from typing import List, Callable, Tuple
 from pathlib import Path
 
 from classes.LossFunction.class_LossFunction import LossFunction
@@ -83,7 +83,7 @@ def get_initialization_parameters() -> dict:
             'with_print': True}
 
 
-def get_describing_property() -> Callable:
+def get_describing_property() -> Tuple[Callable, Callable, Callable]:
     return instantiate_reduction_property_with(factor=1.0, exponent=0.5)
 
 
