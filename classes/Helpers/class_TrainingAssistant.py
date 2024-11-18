@@ -20,7 +20,7 @@ class TrainingAssistant:
         self.factor_update_stepsize = factor_update_stepsize
         self.running_loss = 0
         self.loss_histogram = []
-        if not bins:
+        if bins is None:
             self.bins = [1e0, 1e-4, 1e-8, 1e-12, 1e-16, 1e-20, 1e-24, 1e-28][::-1]
         else:
             self.bins = bins
