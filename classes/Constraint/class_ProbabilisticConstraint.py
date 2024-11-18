@@ -1,17 +1,20 @@
+from typing import List
 from classes.Constraint.class_Constraint import Constraint
 from classes.Constraint.class_BayesianProbabilityEstimator import BayesianProbabilityEstimator
 
 
 class ProbabilisticConstraint:
 
-    def __init__(self, list_of_constraints, parameters_of_estimation):
+    def __init__(self,
+                 list_of_constraints: List[Constraint],
+                 parameters_of_estimation: dict):
         self.list_of_constraints = list_of_constraints
         self.parameters_of_estimation = parameters_of_estimation
         self.bayesian_estimator = BayesianProbabilityEstimator(list_of_constraints=self.list_of_constraints,
                                                                parameters_of_estimation=parameters_of_estimation)
         self.constraint = self.create_constraint()
 
-    def create_constraint(self):
+    def create_constraint(self) -> Constraint:
 
         def posterior_mean_inside_interval(opt_algo, also_return_value=False):
             posterior_mean, lower_quantile, upper_quantile, number_of_iterates = (
