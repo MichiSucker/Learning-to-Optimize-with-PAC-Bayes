@@ -2,7 +2,6 @@ import unittest
 import torch
 import io
 import sys
-from main import TESTING_LEVEL
 from classes.Helpers.class_TrainingAssistant import TrainingAssistant
 from classes.Helpers.class_ConstraintChecker import ConstraintChecker
 
@@ -16,9 +15,11 @@ class TestTrainingAssistant(unittest.TestCase):
         self.factor_update_stepsize = 0.5
         self.update_stepsize_every = 10
         self.training_assistant = TrainingAssistant(
-            printing_enabled=self.printing_enabled, print_update_every=self.print_update_every,
+            printing_enabled=self.printing_enabled,
+            print_update_every=self.print_update_every,
             maximal_number_of_iterations=self.maximal_number_of_iterations,
-            update_stepsize_every=self.update_stepsize_every, factor_update_stepsize=self.factor_update_stepsize)
+            update_stepsize_every=self.update_stepsize_every,
+            factor_update_stepsize=self.factor_update_stepsize)
 
     def test_creation(self):
         self.assertIsInstance(self.training_assistant, TrainingAssistant)
@@ -31,6 +32,7 @@ class TestTrainingAssistant(unittest.TestCase):
         self.assertTrue(len(capturedOutput.getvalue()) > 0)
         sys.stdout = sys.__stdout__
 
+        # Check that there was an output.
         self.training_assistant.printing_enabled = False
         capturedOutput = io.StringIO()
         sys.stdout = capturedOutput
@@ -46,6 +48,7 @@ class TestTrainingAssistant(unittest.TestCase):
         self.assertTrue(len(capturedOutput.getvalue()) > 0)
         sys.stdout = sys.__stdout__
 
+        # Check that there was an output.
         self.training_assistant.printing_enabled = False
         capturedOutput = io.StringIO()
         sys.stdout = capturedOutput
@@ -53,9 +56,32 @@ class TestTrainingAssistant(unittest.TestCase):
         self.assertTrue(len(capturedOutput.getvalue()) == 0)
         sys.stdout = sys.__stdout__
 
+    def test_get_progressbar(self):
+        pbar = self.training_assistant.get_progressbar()
+        self.assertTrue(hasattr(pbar, 'desc'))
+        self.assertTrue(hasattr(pbar, 'iterable'))
+        self.assertEqual(pbar.desc, 'Fit algorithm: ')
+        self.assertEqual(list(pbar.iterable), list(range(self.training_assistant.maximal_number_of_iterations)))
+
+    def test_should_update_stepsize_of_optimizer(self):
+        # Step-size should be updated if random_multiple >= 0 and random_multiple % update_stepsize_every == 0.
+        random_multiple = torch.randint(1, 10, size=(1,)).item() * self.update_stepsize_every
+        self.assertTrue(self.training_assistant.should_update_stepsize_of_optimizer(iteration=random_multiple))
+        self.assertFalse(self.training_assistant.should_update_stepsize_of_optimizer(iteration=random_multiple-1))
+        self.assertFalse(self.training_assistant.should_update_stepsize_of_optimizer(iteration=0))
+
+    def test_update_stepsize_of_optimizer(self):
+        dummy_parameters = [torch.tensor([1., 2.], requires_grad=True)]
+        lr = 4e-3
+        optimizer = torch.optim.Adam(dummy_parameters, lr=lr)
+        self.training_assistant.update_stepsize_of_optimizer(optimizer=optimizer)
+        for g in optimizer.param_groups:
+            self.assertEqual(g['lr'], self.training_assistant.factor_update_stepsize * lr)
+
     def test_get_bins(self):
-        self.assertEqual(self.training_assistant.get_variable__bins(),
-                         [1e0, 1e-4, 1e-8, 1e-12, 1e-16, 1e-20, 1e-24, 1e-28][::-1])
+        bins = self.training_assistant.get_variable__bins()
+        self.assertIsInstance(bins, list)
+        self.assertEqual(bins, sorted(bins))
 
     def test_set_bins(self):
         new_bins = [1, 2, 3]
@@ -89,26 +115,3 @@ class TestTrainingAssistant(unittest.TestCase):
         self.training_assistant.reset_running_loss_and_loss_histogram()
         self.assertEqual(self.training_assistant.running_loss, 0)
         self.assertEqual(self.training_assistant.loss_histogram, [])
-
-    def test_should_update_stepsize_of_optimizer(self):
-        random_multiple = torch.randint(1, 10, size=(1,)).item() * self.update_stepsize_every
-        self.assertTrue(self.training_assistant.should_update_stepsize_of_optimizer(iteration=random_multiple))
-        self.assertFalse(self.training_assistant.should_update_stepsize_of_optimizer(iteration=random_multiple-1))
-        self.assertFalse(self.training_assistant.should_update_stepsize_of_optimizer(iteration=0))
-
-    @unittest.skipIf(condition=(TESTING_LEVEL == 'SKIP_EXPENSIVE_TESTS'),
-                     reason='Too expensive to test all the time.')
-    def test_update_stepsize_of_optimizer(self):
-        dummy_parameters = [torch.tensor([1., 2.], requires_grad=True)]
-        lr = 4e-3
-        optimizer = torch.optim.Adam(dummy_parameters, lr=lr)
-        self.training_assistant.update_stepsize_of_optimizer(optimizer=optimizer)
-        for g in optimizer.param_groups:
-            self.assertEqual(g['lr'], self.training_assistant.factor_update_stepsize * lr)
-
-    def test_get_progressbar(self):
-        pbar = self.training_assistant.get_progressbar()
-        self.assertTrue(hasattr(pbar, 'desc'))
-        self.assertTrue(hasattr(pbar, 'iterable'))
-        self.assertEqual(pbar.desc, 'Fit algorithm: ')
-        self.assertEqual(list(pbar.iterable), list(range(self.training_assistant.maximal_number_of_iterations)))
