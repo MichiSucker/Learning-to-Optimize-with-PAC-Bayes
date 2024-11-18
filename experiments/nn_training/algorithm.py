@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
+
 
 class NnOptimizer(nn.Module):
 
@@ -34,7 +36,7 @@ class NnOptimizer(nn.Module):
         # For stability
         self.eps = torch.tensor(1e-10).float()
 
-    def forward(self, algorithm):
+    def forward(self, algorithm: OptimizationAlgorithm) -> torch.Tensor:
 
         # Normalize gradient
         grad = algorithm.loss_function.compute_gradient(algorithm.current_state[1])
@@ -69,6 +71,6 @@ class NnOptimizer(nn.Module):
         return algorithm.current_state[-1] + direction
 
     @staticmethod
-    def update_state(opt_algo):
+    def update_state(opt_algo: OptimizationAlgorithm) -> None:
         opt_algo.current_state[0] = opt_algo.current_state[1].detach().clone()
         opt_algo.current_state[1] = opt_algo.current_iterate.detach().clone()
