@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
+
 
 class ConvNet(nn.Module):
 
@@ -41,7 +43,7 @@ class ConvNet(nn.Module):
         # For stability
         self.eps = torch.tensor(1e-10).float()
 
-    def forward(self, opt_algo):
+    def forward(self, opt_algo: OptimizationAlgorithm) -> torch.Tensor:
 
         # Compute and normalize gradient
         gradient = opt_algo.loss_function.compute_gradient(opt_algo.current_state[1])
@@ -67,6 +69,6 @@ class ConvNet(nn.Module):
         return opt_algo.current_state[-1] + step_size * update_direction.flatten()
 
     @staticmethod
-    def update_state(opt_algo):
+    def update_state(opt_algo: OptimizationAlgorithm) -> None:
         opt_algo.current_state[0] = opt_algo.current_state[1].detach().clone()
         opt_algo.current_state[1] = opt_algo.current_iterate.detach().clone()
