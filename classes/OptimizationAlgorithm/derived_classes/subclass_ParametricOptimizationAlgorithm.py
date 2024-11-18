@@ -245,6 +245,8 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
             if self.constraint is not None:
                 self.accept_or_reject_based_on_constraint(sampling_assistant=sampling_assistant, iteration=t)
+            else:
+                self.update_point(sampling_assistant=sampling_assistant, iteration=t, estimated_probability=1.)
 
             t += 1
 
@@ -300,12 +302,16 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         #  Like this, its not obvious from the code that self.constraint has to be create from a ProbabilisticConstraint
         satisfies_constraint, estimated_prob = self.constraint(self, also_return_value=True)
         if satisfies_constraint:
-            sampling_assistant.set_point_that_satisfies_constraint(state_dict=self.implementation.state_dict())
-            if sampling_assistant.should_store_sample(iteration=iteration):
-                sampling_assistant.store_sample(implementation=self.implementation,
-                                                estimated_probability=estimated_prob)
+            self.update_point(sampling_assistant=sampling_assistant, iteration=iteration,
+                              estimated_probability=estimated_prob)
         else:
             sampling_assistant.reject_sample(self)
+
+    def update_point(self, sampling_assistant: SamplingAssistant, iteration: int, estimated_probability: float):
+        sampling_assistant.set_point_that_satisfies_constraint(state_dict=self.implementation.state_dict())
+        if sampling_assistant.should_store_sample(iteration=iteration):
+            sampling_assistant.store_sample(implementation=self.implementation,
+                                            estimated_probability=estimated_probability)
 
     def set_up_noise_distributions(self) -> Dict:
         noise_distributions = {}
@@ -333,7 +339,7 @@ def add_noise_to_every_parameter_that_requires_grad(
         for name, parameter in opt_algo.implementation.named_parameters():
             if parameter.requires_grad:
                 noise = (sampling_assistant.current_learning_rate ** 2
-                         * sampling_assistant.noise_distributions[parameter].sample())
+                         * sampling_assistant.noise_distributions[name].sample())
                 parameter.add_(noise.reshape(parameter.shape))
 
 
