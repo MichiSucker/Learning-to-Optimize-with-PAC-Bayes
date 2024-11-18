@@ -1,3 +1,4 @@
+from typing import Tuple, Callable, List
 import torch
 from torch.nn import functional
 import torchvision.transforms as transforms
@@ -9,7 +10,7 @@ from random import shuffle
 from scipy.sparse import linalg
 
 
-def check_and_extract_number_of_datapoints(number_of_datapoints_per_dataset):
+def check_and_extract_number_of_datapoints(number_of_datapoints_per_dataset: dict) -> Tuple[int, int, int, int]:
     if (('prior' not in number_of_datapoints_per_dataset)
             or ('train' not in number_of_datapoints_per_dataset)
             or ('test' not in number_of_datapoints_per_dataset)
@@ -22,11 +23,11 @@ def check_and_extract_number_of_datapoints(number_of_datapoints_per_dataset):
                 number_of_datapoints_per_dataset['validation'])
 
 
-def pil_to_tensor(img, device):
+def pil_to_tensor(img: Image, device: str) -> torch.Tensor:
     return transforms.ToTensor()(img).to(device)
 
 
-def get_blurring_kernel():
+def get_blurring_kernel() -> torch.Tensor:
     kernel = torch.tensor([[1, 4, 7, 4, 1],
                            [4, 16, 26, 16, 4],
                            [7, 26, 41, 26, 7],
@@ -36,7 +37,7 @@ def get_blurring_kernel():
     return kernel
 
 
-def get_finite_difference_kernels():
+def get_finite_difference_kernels() -> Tuple[torch.Tensor, torch.Tensor]:
     diff_kernel_height = torch.tensor([[0, 0, 0],
                                        [0, -1., 0],
                                        [0, 1, 0]]).reshape((1, 1, 3, 3))
@@ -46,48 +47,48 @@ def get_finite_difference_kernels():
     return diff_kernel_width, diff_kernel_height
 
 
-def get_shape_of_images():
+def get_shape_of_images() -> Tuple[int, int, int, int]:
     img_height = 250
     img_width = int(0.75 * img_height)
     return 1, 1, img_height, img_width  # Note that this automatically returns a tuple
 
 
-def get_image_height_and_width():
+def get_image_height_and_width() -> Tuple[int, int]:
     shape = get_shape_of_images()
     return shape[2], shape[3]
 
 
-def get_epsilon():
+def get_epsilon() -> float:
     return 0.01
 
 
-def get_distribution_of_regularization_parameter():
+def get_distribution_of_regularization_parameter() -> torch.distributions.uniform.Uniform:
     return torch.distributions.uniform.Uniform(low=5e-2, high=5e-1)
 
 
-def get_largest_possible_regularization_parameter():
+def get_largest_possible_regularization_parameter() -> float:
     dist = get_distribution_of_regularization_parameter()
     return dist.high.item()
 
 
-def get_loss_function_of_algorithm(blurring_kernel):
+def get_loss_function_of_algorithm(blurring_kernel: torch.Tensor) -> Tuple[Callable, Callable]:
 
     shape_of_image = get_shape_of_images()
     diff_kernel_width, diff_kernel_height = get_finite_difference_kernels()
 
-    def blur_tensor(x, kernel):
+    def blur_tensor(x: torch.Tensor, kernel: torch.Tensor) -> torch.Tensor:
         return functional.conv2d(input=torch.nn.ReflectionPad2d(kernel.shape[-1] // 2)(x), weight=kernel)
 
-    def img_derivative(x):
+    def img_derivatives(x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         return blur_tensor(x=x, kernel=diff_kernel_height), blur_tensor(x=x, kernel=diff_kernel_width)
 
-    def quadratic(x, blurred_img):
+    def quadratic(x: torch.Tensor, blurred_img: torch.Tensor) -> torch.Tensor:
         cur_blurred_img = blur_tensor(x=x.reshape(shape_of_image), kernel=blurring_kernel)
         return 0.5 * torch.linalg.norm(cur_blurred_img - blurred_img) ** 2
 
-    def regularizer(x, mu):
+    def regularizer(x: torch.Tensor, mu: torch.Tensor) -> torch.Tensor:
         epsilon = get_epsilon()
-        d_h, d_w = img_derivative(x=x.reshape(shape_of_image))
+        d_h, d_w = img_derivatives(x=x.reshape(shape_of_image))
         return mu * torch.sum(torch.sqrt(d_h ** 2 + d_w ** 2 + epsilon ** 2))
 
     # Define loss function as:
@@ -98,7 +99,7 @@ def get_loss_function_of_algorithm(blurring_kernel):
     return loss_function, blur_tensor
 
 
-def get_smoothness_parameter():
+def get_smoothness_parameter() -> float:
 
     img_height, img_width = get_image_height_and_width()
     blurring_kernel = get_blurring_kernel().reshape((5, 5))
@@ -115,14 +116,14 @@ def get_smoothness_parameter():
     return smoothness_parameter.item()
 
 
-def load_and_transform_image(path, device):
+def load_and_transform_image(path: str, device: str) -> torch.Tensor:
     img_height, img_width = get_image_height_and_width()
     to_grayscale = transforms.Grayscale()
     resizing = transforms.Resize((img_height, img_width))
     return pil_to_tensor(resizing(to_grayscale(Image.open(path))), device)
 
 
-def load_images(path_to_images, device):
+def load_images(path_to_images: str, device: str) -> List[torch.Tensor]:
 
     # (!) Naming convention: images start with 'img'
     all_images_in_folder = [x for x in listdir(path_to_images) if x[0:3] == 'img']
@@ -131,7 +132,7 @@ def load_images(path_to_images, device):
     return imgs
 
 
-def split_images_into_separate_sets(imgs):
+def split_images_into_separate_sets(imgs: List[torch.Tensor]):
     if len(imgs) <= 4:
         raise Exception("Too few images provided for splitting.")
 
@@ -143,15 +144,16 @@ def split_images_into_separate_sets(imgs):
             imgs[indices[3]:indices[4]])
 
 
-def get_noise_distribution():
+def get_noise_distribution() -> torch.distributions.Distribution:
     return torch.distributions.normal.Normal(loc=0, scale=25/256)
 
 
-def clip_to_interval_zero_one(image):
+def clip_to_interval_zero_one(image: torch.Tensor) -> torch.Tensor:
     return torch.maximum(torch.tensor(0.0), torch.minimum(torch.tensor(1.0), image))
 
 
-def add_noise_and_blurr(images, blurring_function):
+def add_noise_and_blurr(images: List[torch.Tensor],
+                        blurring_function: Callable) -> List[torch.Tensor]:
     blurring_kernel = get_blurring_kernel()
     noise_distribution = get_noise_distribution()
     shape_of_image = get_shape_of_images()
@@ -160,7 +162,9 @@ def add_noise_and_blurr(images, blurring_function):
             for x in images]
 
 
-def get_blurred_images(images, blurring_function):
+def get_blurred_images(images: List[torch.Tensor],
+                       blurring_function: Callable
+                       ) -> Tuple[List[torch.Tensor], List[torch.Tensor], List[torch.Tensor], List[torch.Tensor]]:
 
     images_prior, images_train, images_test, images_validation = split_images_into_separate_sets(images)
 
@@ -171,7 +175,9 @@ def get_blurred_images(images, blurring_function):
     return blurred_images_prior, blurred_images_train, blurred_images_test, blurred_images_validation
 
 
-def get_parameters(images, number_of_datapoints_per_dataset, blurring_function):
+def get_parameters(images: List[torch.Tensor],
+                   number_of_datapoints_per_dataset: dict,
+                   blurring_function: Callable) -> dict:
 
     n_prior, n_train, n_test, n_validation = check_and_extract_number_of_datapoints(number_of_datapoints_per_dataset)
     distribution_regularization_parameters = get_distribution_of_regularization_parameter()
@@ -191,7 +197,9 @@ def get_parameters(images, number_of_datapoints_per_dataset, blurring_function):
     return parameters
 
 
-def get_data(path_to_images, number_of_datapoints_per_dataset, device):
+def get_data(path_to_images: str,
+             number_of_datapoints_per_dataset: dict,
+             device: str) -> Tuple[dict, Callable, float]:
 
     blurring_kernel = get_blurring_kernel()
     smoothness_parameter = get_smoothness_parameter()
