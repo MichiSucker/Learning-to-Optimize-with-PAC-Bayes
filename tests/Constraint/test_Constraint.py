@@ -7,20 +7,21 @@ from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizati
     ParametricOptimizationAlgorithm)
 
 
-def dummy_constraint(optimization_algorithm):
-    if torch.all(optimization_algorithm.current_state > 0):
-        return True
-    else:
-        return False
-
-
-def dummy_function(x):
-    return 0.5 * torch.linalg.norm(x) ** 2
-
-
 class TestConstraint(unittest.TestCase):
 
     def setUp(self):
+
+        def dummy_constraint(optimization_algorithm):
+            if torch.all(optimization_algorithm.current_state > 0):
+                return True
+            else:
+                return False
+
+        def dummy_function(x):
+            return 0.5 * torch.linalg.norm(x) ** 2
+
+        self.dummy_constraint = dummy_constraint
+        self.dummy_function = dummy_function
         self.constraint = Constraint(dummy_constraint)
 
     def test_creation(self):
@@ -30,7 +31,7 @@ class TestConstraint(unittest.TestCase):
         dim = torch.randint(low=1, high=1000, size=(1,)).item()
         length_state = 1
         initial_state = torch.randn(size=(length_state, dim))
-        loss_function = LossFunction(function=dummy_function)
+        loss_function = LossFunction(function=self.dummy_function)
         optimization_algorithm = ParametricOptimizationAlgorithm(implementation=Dummy(),
                                                                  initial_state=initial_state,
                                                                  loss_function=loss_function)
@@ -39,6 +40,15 @@ class TestConstraint(unittest.TestCase):
         self.assertTrue(self.constraint(optimization_algorithm))
         optimization_algorithm.set_current_state(torch.zeros(initial_state.shape))
         self.assertFalse(self.constraint(optimization_algorithm))
+
+
+class TestHelper(unittest.TestCase):
+
+    def setUp(self):
+
+        def dummy_function(x):
+            return 0.5 * torch.linalg.norm(x) ** 2
+        self.dummy_function = dummy_function
 
     def test_create_list_of_constraints_from_functions(self):
 
@@ -56,7 +66,7 @@ class TestConstraint(unittest.TestCase):
         self.length_state = 1
         self.initial_state = torch.randn(size=(self.length_state, self.dim))
         self.current_state = self.initial_state.clone()
-        self.loss_function = LossFunction(function=dummy_function)
+        self.loss_function = LossFunction(function=self.dummy_function)
         parametric_optimization_algorithm = ParametricOptimizationAlgorithm(implementation=Dummy(),
                                                                             initial_state=self.initial_state,
                                                                             loss_function=self.loss_function)
