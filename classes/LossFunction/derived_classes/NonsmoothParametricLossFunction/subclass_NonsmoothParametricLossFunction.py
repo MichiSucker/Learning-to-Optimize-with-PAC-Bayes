@@ -1,7 +1,5 @@
 from typing import Callable
-
 import torch
-
 from classes.LossFunction.derived_classes.subclass_ParametricLossFunction import ParametricLossFunction
 
 
