@@ -1,10 +1,11 @@
 import torch
 import torch.nn as nn
+from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
 
 
 class Quadratics(nn.Module):
 
-    def __init__(self, dim: int):
+    def __init__(self):
         super(Quadratics, self).__init__()
 
         size = 16
@@ -36,7 +37,7 @@ class Quadratics(nn.Module):
         # For stability
         self.eps = torch.tensor(1e-16).float()
 
-    def forward(self, opt_algo):
+    def forward(self, opt_algo: OptimizationAlgorithm) -> torch.Tensor:
 
         # Normalize gradient
         grad = opt_algo.loss_function.compute_gradient(opt_algo.current_state[1])
@@ -69,6 +70,6 @@ class Quadratics(nn.Module):
         return opt_algo.current_state[-1] + step_size * direction.flatten()
 
     @staticmethod
-    def update_state(opt_algo):
+    def update_state(opt_algo: OptimizationAlgorithm) -> None:
         opt_algo.current_state[0] = opt_algo.current_state[1].detach().clone()
         opt_algo.current_state[1] = opt_algo.current_iterate.detach().clone()
