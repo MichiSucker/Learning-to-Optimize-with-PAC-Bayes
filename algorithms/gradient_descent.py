@@ -14,5 +14,5 @@ class GradientDescent(nn.Module):
                 - self.alpha * algorithm.loss_function.compute_gradient(algorithm.current_iterate))
 
     @staticmethod
-    def update_state(opt_algo: OptimizationAlgorithm) -> torch.Tensor:
+    def update_state(opt_algo: OptimizationAlgorithm) -> None:
         opt_algo.current_state = opt_algo.current_iterate.detach().clone().reshape((1, -1))
