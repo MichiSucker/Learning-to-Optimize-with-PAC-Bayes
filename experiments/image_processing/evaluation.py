@@ -1,8 +1,12 @@
 from pathlib import Path
 import numpy as np
+from numpy.typing import NDArray
+from typing import List, Tuple, Callable
 import torch
 import pickle
 import time
+
+from classes.LossFunction.class_LossFunction import LossFunction
 from classes.LossFunction.derived_classes.subclass_ParametricLossFunction import ParametricLossFunction
 from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
 from experiments.image_processing.algorithm import ConvNet
@@ -14,12 +18,12 @@ from experiments.image_processing.training import get_describing_property, get_b
 class EvaluationAssistant:
 
     def __init__(self,
-                 test_set,
-                 loss_of_algorithm,
-                 initial_state_learned_algorithm,
-                 number_of_iterations_during_training,
-                 optimal_hyperparameters,
-                 implementation_class):
+                 test_set: List,
+                 loss_of_algorithm: Callable,
+                 initial_state_learned_algorithm: torch.Tensor,
+                 number_of_iterations_during_training: int,
+                 optimal_hyperparameters: dict,
+                 implementation_class: Callable):
         self.test_set = test_set
         self.initial_state_learned_algorithm = initial_state_learned_algorithm
         self.number_of_iterations_during_training = number_of_iterations_during_training
@@ -32,7 +36,7 @@ class EvaluationAssistant:
         self.smoothness_parameter = None
         self.initial_state_baseline_algorithm = None
 
-    def set_up_learned_algorithm(self, arguments_of_implementation_class):
+    def set_up_learned_algorithm(self, arguments_of_implementation_class: dict | None) -> OptimizationAlgorithm:
         if arguments_of_implementation_class is None:
             learned_algorithm = OptimizationAlgorithm(
                 implementation=self.implementation_class(),
@@ -51,7 +55,7 @@ class EvaluationAssistant:
         return learned_algorithm
 
 
-def load_data(loading_path):
+def load_data(loading_path: str) -> Tuple:
     pac_bound = np.load(loading_path + 'pac_bound.npy')
     initial_state_learned_algorithm = torch.tensor(np.load(loading_path + 'initialization_learned_algorithm.npy'))
     initialization_baseline_algorithm = torch.tensor(np.load(loading_path + 'initialization_baseline_algorithm.npy'))
@@ -67,17 +71,19 @@ def load_data(loading_path):
             best_sample, smoothness_parameter)
 
 
-def create_folder_for_storing_data(path_of_experiment):
+def create_folder_for_storing_data(path_of_experiment: str) -> str:
     savings_path = path_of_experiment + "/data/"
     Path(savings_path).mkdir(parents=True, exist_ok=True)
     return savings_path
 
 
-def does_satisfy_constraint(convergence_risk_constraint, loss_at_beginning, loss_at_end):
+def does_satisfy_constraint(convergence_risk_constraint: Callable,
+                            loss_at_beginning: float,
+                            loss_at_end: float) -> bool:
     return convergence_risk_constraint(loss_at_beginning=loss_at_beginning, loss_at_end=loss_at_end)
 
 
-def set_up_evaluation_assistant(loading_path):
+def set_up_evaluation_assistant(loading_path: str) -> EvaluationAssistant:
     (pac_bound, initial_state_learned_algorithm, initialization_baseline_algorithm, n_train, parameters, samples,
      best_sample, smoothness_parameter) = load_data(loading_path)
     loss_of_algorithm, _ = get_loss_function_of_algorithm(blurring_kernel=get_blurring_kernel())
@@ -94,7 +100,9 @@ def set_up_evaluation_assistant(loading_path):
     return evaluation_assistant
 
 
-def compute_losses_over_iterations(algorithm, evaluation_assistant: EvaluationAssistant, parameter):
+def compute_losses_over_iterations(algorithm: OptimizationAlgorithm,
+                                   evaluation_assistant: EvaluationAssistant,
+                                   parameter: dict) -> List[float]:
     algorithm.reset_state_and_iteration_counter()
     current_loss_function = ParametricLossFunction(function=evaluation_assistant.loss_of_algorithm, parameter=parameter)
     algorithm.set_loss_function(current_loss_function)
@@ -105,7 +113,9 @@ def compute_losses_over_iterations(algorithm, evaluation_assistant: EvaluationAs
     return loss_over_iterations
 
 
-def compute_losses(evaluation_assistant: EvaluationAssistant, learned_algorithm, baseline_algorithm):
+def compute_losses(evaluation_assistant: EvaluationAssistant,
+                   learned_algorithm: OptimizationAlgorithm,
+                   baseline_algorithm: OptimizationAlgorithm) -> Tuple[NDArray, NDArray, float]:
 
     losses_of_baseline_algorithm = []
     losses_of_learned_algorithm = []
@@ -131,7 +141,8 @@ def compute_losses(evaluation_assistant: EvaluationAssistant, learned_algorithm,
             number_of_times_constrained_satisfied / len(evaluation_assistant.test_set))
 
 
-def approximate_optimal_loss(baseline_algorithm: OptimizationAlgorithm, evaluation_assistant: EvaluationAssistant):
+def approximate_optimal_loss(baseline_algorithm: OptimizationAlgorithm,
+                             evaluation_assistant: EvaluationAssistant) -> NDArray:
     optimal_losses = []
     for parameter in evaluation_assistant.test_set:
 
@@ -149,7 +160,11 @@ def approximate_optimal_loss(baseline_algorithm: OptimizationAlgorithm, evaluati
     return np.array(optimal_losses)
 
 
-def time_problem(algorithm, loss_function, maximal_number_of_iterations, optimal_loss, level_of_accuracy):
+def time_problem(algorithm: OptimizationAlgorithm,
+                 loss_function: LossFunction,
+                 maximal_number_of_iterations: int,
+                 optimal_loss: torch.Tensor,
+                 level_of_accuracy: float) -> float:
 
     algorithm.reset_state_and_iteration_counter()
     algorithm.set_loss_function(loss_function)
@@ -171,8 +186,8 @@ def time_problem(algorithm, loss_function, maximal_number_of_iterations, optimal
 def compute_times(learned_algorithm: OptimizationAlgorithm,
                   baseline_algorithm: OptimizationAlgorithm,
                   evaluation_assistant: EvaluationAssistant,
-                  optimal_losses,
-                  stop_procedure_after_at_most):
+                  optimal_losses: NDArray,
+                  stop_procedure_after_at_most: int) -> Tuple[dict, dict]:
 
     levels_of_accuracy = [1e1, 5e0, 1e0]
     times_pac = {epsilon: [0.] for epsilon in levels_of_accuracy}
@@ -198,7 +213,7 @@ def compute_times(learned_algorithm: OptimizationAlgorithm,
     return times_pac, times_std
 
 
-def set_up_algorithms(evaluation_assistant):
+def set_up_algorithms(evaluation_assistant: EvaluationAssistant) -> Tuple[OptimizationAlgorithm, OptimizationAlgorithm]:
     learned_algorithm = evaluation_assistant.set_up_learned_algorithm(
         arguments_of_implementation_class=evaluation_assistant.implementation_arguments)
     baseline_algorithm = get_baseline_algorithm(
@@ -207,9 +222,14 @@ def set_up_algorithms(evaluation_assistant):
     return learned_algorithm, baseline_algorithm
 
 
-def save_data(savings_path, times_of_learned_algorithm, losses_of_learned_algorithm, times_of_baseline_algorithm,
-              losses_of_baseline_algorithm, percentage_constrained_satisfied, number_of_iterations_for_approximation,
-              approximate_optimal_losses):
+def save_data(savings_path: str,
+              times_of_learned_algorithm: dict,
+              losses_of_learned_algorithm: NDArray,
+              times_of_baseline_algorithm: dict,
+              losses_of_baseline_algorithm: NDArray,
+              percentage_constrained_satisfied: float,
+              number_of_iterations_for_approximation: int,
+              approximate_optimal_losses: NDArray) -> None:
 
     with open(savings_path + 'times_of_learned_algorithm', 'wb') as file:
         # noinspection PyTypeChecker
@@ -217,14 +237,14 @@ def save_data(savings_path, times_of_learned_algorithm, losses_of_learned_algori
     with open(savings_path + 'times_of_baseline_algorithm', 'wb') as file:
         # noinspection PyTypeChecker
         pickle.dump(times_of_baseline_algorithm, file)
-    np.save(savings_path + 'losses_of_baseline_algorithm', np.array(losses_of_baseline_algorithm))
-    np.save(savings_path + 'losses_of_learned_algorithm', np.array(losses_of_learned_algorithm))
+    np.save(savings_path + 'losses_of_baseline_algorithm', losses_of_baseline_algorithm)
+    np.save(savings_path + 'losses_of_learned_algorithm', losses_of_learned_algorithm)
     np.save(savings_path + 'empirical_probability', percentage_constrained_satisfied)
     np.save(savings_path + 'approximate_optimal_losses', approximate_optimal_losses)
     np.save(savings_path + 'number_of_iterations_for_approximation', number_of_iterations_for_approximation)
 
 
-def evaluate_algorithm(loading_path, path_of_experiment):
+def evaluate_algorithm(loading_path: str, path_of_experiment: str) -> None:
 
     evaluation_assistant = set_up_evaluation_assistant(loading_path)
     learned_algorithm, baseline_algorithm = set_up_algorithms(evaluation_assistant)
