@@ -15,10 +15,11 @@ class TestTrajectoryRandomizer(unittest.TestCase):
     def test_creation(self):
         self.assertIsInstance(self.trajectory_randomizer, TrajectoryRandomizer)
 
-    def test_get_should_restart(self):
+    def test_get_variable__should_restart(self):
         self.assertFalse(self.trajectory_randomizer.get_variable__should_restart())
 
-    def test_set_should_restart(self):
+    def test_set_variable__should_restart(self):
+        # Check that it only can be set to boolean.
         with self.assertRaises(TypeError):
             self.trajectory_randomizer.set_variable__should_restart__to(1)
         with self.assertRaises(TypeError):
