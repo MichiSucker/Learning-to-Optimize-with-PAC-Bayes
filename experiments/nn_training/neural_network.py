@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as f
-from typing import Callable, Tuple
+from typing import Callable, Tuple, List
 
 
 def polynomial_features(x: torch.Tensor, degree: int) -> torch.Tensor:
@@ -17,13 +17,13 @@ class NeuralNetworkForStandardTraining(nn.Module):
         self.fc1 = nn.Linear(self.degree, 10 * self.degree)
         self.fc2 = nn.Linear(10 * self.degree, 1)
 
-    def get_shape_parameters(self):
+    def get_shape_parameters(self) -> List:
         return [p.size() for p in self.parameters() if p.requires_grad]
 
-    def get_dimension_of_hyperparameters(self):
+    def get_dimension_of_hyperparameters(self) -> int:
         return sum([torch.prod(torch.tensor(s)).item() for s in self.get_shape_parameters()])
 
-    def load_parameters_from_tensor(self, tensor: torch.Tensor):
+    def load_parameters_from_tensor(self, tensor: torch.Tensor) -> None:
         counter = 0
         # If the parameter is updated by the (learned) optimization algorithm, then they have corresponding entries in
         # the tensor, which should be loaded into the template.
@@ -34,7 +34,7 @@ class NeuralNetworkForStandardTraining(nn.Module):
                 param.data = tensor[counter:counter + cur_size].reshape(cur_shape)
                 counter += cur_size
 
-    def transform_parameters_to_tensor(self):
+    def transform_parameters_to_tensor(self) -> torch.Tensor:
         all_params = []
         for name, param in self.named_parameters():
             if param.requires_grad:
