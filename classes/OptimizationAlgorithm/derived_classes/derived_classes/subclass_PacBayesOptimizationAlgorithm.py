@@ -1,13 +1,25 @@
+from classes.LossFunction.class_LossFunction import LossFunction
+from classes.LossFunction.derived_classes.NonsmoothParametricLossFunction.\
+    subclass_NonsmoothParametricLossFunction import NonsmoothParametricLossFunction
+from classes.LossFunction.derived_classes.subclass_ParametricLossFunction import ParametricLossFunction
+from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
 from classes.OptimizationAlgorithm.derived_classes.subclass_ParametricOptimizationAlgorithm import (
     ParametricOptimizationAlgorithm)
 import torch
+import torch.nn as nn
 from tqdm import tqdm
-from classes.Constraint.class_Constraint import create_list_of_constraints_from_functions
+from classes.Constraint.class_Constraint import create_list_of_constraints_from_functions, Constraint
+from typing import List, Callable, Tuple
 
 
 class PacBayesOptimizationAlgorithm(ParametricOptimizationAlgorithm):
 
-    def __init__(self, initial_state, implementation, loss_function, pac_parameters, constraint=None):
+    def __init__(self,
+                 initial_state: torch.Tensor,
+                 implementation: nn.Module,
+                 loss_function: LossFunction | ParametricLossFunction | NonsmoothParametricLossFunction,
+                 pac_parameters: dict,
+                 constraint: Callable = None):
         super().__init__(initial_state=initial_state,
                          implementation=implementation,
                          loss_function=loss_function,
@@ -21,30 +33,33 @@ class PacBayesOptimizationAlgorithm(ParametricOptimizationAlgorithm):
         self.optimal_lambda = None
 
     def evaluate_sufficient_statistics_on_all_parameters_and_hyperparameters(
-            self, list_of_parameters, list_of_hyperparameters, estimated_convergence_probabilities):
+            self,
+            list_of_loss_functions: List[LossFunction],
+            list_of_hyperparameters: List[dict],
+            estimated_convergence_probabilities: List[torch.Tensor]) -> torch.Tensor:
 
-        values_of_sufficient_statistics = torch.zeros((len(list_of_parameters), len(list_of_hyperparameters), 2))
+        values_of_sufficient_statistics = torch.zeros((len(list_of_loss_functions), len(list_of_hyperparameters), 2))
         pbar = tqdm(enumerate(list_of_hyperparameters), total=len(list_of_hyperparameters))
         pbar.set_description('Compute Sufficient Statistics')
         for j, current_hyperparameters in pbar:
 
             self.set_hyperparameters_to(current_hyperparameters)
-            for i, current_parameters in enumerate(list_of_parameters):
+            for i, current_loss_function in enumerate(list_of_loss_functions):
                 values_of_sufficient_statistics[i, j, :] = self.sufficient_statistics(
-                    self, parameter=current_parameters, probability=estimated_convergence_probabilities[j])
+                    self, loss_function=current_loss_function, probability=estimated_convergence_probabilities[j])
 
         # Note that we have to take the mean over parameters here, as the Pac-Bound holds for the empirical mean and
         # one cannot exchange exp and summation.
         return torch.mean(values_of_sufficient_statistics, dim=0)
 
     def compute_posterior_potentials_and_pac_bound(self,
-                                                   samples_prior,
-                                                   potentials_prior,
-                                                   estimated_convergence_probabilities,
-                                                   list_of_parameters_train):
+                                                   samples_prior: List,
+                                                   potentials_prior: torch.Tensor,
+                                                   estimated_convergence_probabilities: List[torch.Tensor],
+                                                   list_of_loss_functions_train: List[LossFunction]) -> torch.Tensor:
 
         potentials_posterior = self.get_posterior_potentials_as_function_of_lambda(
-            list_of_parameters_train=list_of_parameters_train,
+            list_of_loss_functions_train=list_of_loss_functions_train,
             samples_prior=samples_prior,
             estimated_convergence_probabilities=estimated_convergence_probabilities,
             potentials_prior=potentials_prior
@@ -56,25 +71,25 @@ class PacBayesOptimizationAlgorithm(ParametricOptimizationAlgorithm):
         return potentials_posterior(best_lambda)
 
     def get_posterior_potentials_as_function_of_lambda(self,
-                                                       list_of_parameters_train,
-                                                       samples_prior,
-                                                       estimated_convergence_probabilities,
-                                                       potentials_prior):
+                                                       list_of_loss_functions_train: List[LossFunction],
+                                                       samples_prior: List[dict],
+                                                       estimated_convergence_probabilities: List[torch.Tensor],
+                                                       potentials_prior: torch.Tensor) -> Callable:
 
         values_sufficient_statistics = self.evaluate_sufficient_statistics_on_all_parameters_and_hyperparameters(
-            list_of_parameters=list_of_parameters_train,
+            list_of_loss_functions=list_of_loss_functions_train,
             list_of_hyperparameters=samples_prior,
             estimated_convergence_probabilities=estimated_convergence_probabilities
         )
 
         return lambda x: torch.matmul(values_sufficient_statistics, self.natural_parameters(x)) + potentials_prior
 
-    def get_upper_bound_as_function_of_lambda(self, potentials):
+    def get_upper_bound_as_function_of_lambda(self, potentials: Callable) -> Callable:
         return lambda lamb: -(torch.logsumexp(potentials(lamb), dim=0)
                               + torch.log(self.epsilon)
                               - torch.log(self.covering_number)) / (self.natural_parameters(lamb)[0])
 
-    def minimize_upper_bound_in_lambda(self, upper_bound):
+    def minimize_upper_bound_in_lambda(self, upper_bound: Callable) -> Tuple[torch.Tensor, torch.Tensor]:
         capital_lambda = torch.linspace(start=1e-8, end=1e2, steps=int(self.covering_number))
         values_upper_bound = torch.stack([upper_bound(lamb) for lamb in capital_lambda])
         best_lambda = capital_lambda[torch.argmin(values_upper_bound)]
@@ -85,19 +100,22 @@ class PacBayesOptimizationAlgorithm(ParametricOptimizationAlgorithm):
         best_value = torch.min(values_upper_bound)
         return best_value, best_lambda
 
-    def set_variable__pac_bound__to(self, pac_bound):
+    def set_variable__pac_bound__to(self, pac_bound: torch.Tensor) -> None:
         if self.pac_bound is None:
             self.pac_bound = pac_bound
         else:
             raise Exception("PAC-bound already set.")
 
-    def set_variable__optimal_lambda__to(self, optimal_lambda):
+    def set_variable__optimal_lambda__to(self, optimal_lambda: torch.Tensor) -> None:
         if self.optimal_lambda is None:
             self.optimal_lambda = optimal_lambda
         else:
             raise Exception("Optimal lambda already set.")
 
-    def evaluate_convergence_risk(self, loss_functions, constraint_functions, estimated_convergence_probability):
+    def evaluate_convergence_risk(self,
+                                  loss_functions: List[LossFunction],
+                                  constraint_functions: List[Constraint],
+                                  estimated_convergence_probability: torch.Tensor) -> torch.Tensor:
         losses = []
         for loss_func, constraint_func in zip(loss_functions, constraint_functions):
 
@@ -115,10 +133,10 @@ class PacBayesOptimizationAlgorithm(ParametricOptimizationAlgorithm):
         return torch.mean(torch.tensor(losses)) / estimated_convergence_probability
 
     def evaluate_prior_potentials(self,
-                                  loss_functions_prior,
-                                  constraint_functions_prior,
-                                  samples_prior,
-                                  estimated_convergence_probabilities):
+                                  loss_functions_prior: List[LossFunction],
+                                  constraint_functions_prior: List[Constraint],
+                                  samples_prior: List[dict],
+                                  estimated_convergence_probabilities: List[torch.Tensor]) -> torch.Tensor:
         potentials = []
         pbar = tqdm(zip(samples_prior, estimated_convergence_probabilities), total=len(samples_prior))
         pbar.set_description('Computing prior potentials')
@@ -132,12 +150,12 @@ class PacBayesOptimizationAlgorithm(ParametricOptimizationAlgorithm):
         return torch.tensor(potentials)
 
     def pac_bayes_fit(self,
-                      loss_functions_prior,
-                      loss_functions_train,
-                      fitting_parameters,
-                      sampling_parameters,
-                      constraint_parameters,
-                      update_parameters):
+                      loss_functions_prior: List[LossFunction],
+                      loss_functions_train: List[LossFunction],
+                      fitting_parameters: dict,
+                      sampling_parameters: dict,
+                      constraint_parameters: dict,
+                      update_parameters: dict) -> Tuple[torch.Tensor, List[dict]]:
 
         self.fit(loss_functions=loss_functions_prior,
                  fitting_parameters=fitting_parameters,
@@ -161,7 +179,7 @@ class PacBayesOptimizationAlgorithm(ParametricOptimizationAlgorithm):
             samples_prior=state_dict_samples_prior,
             potentials_prior=potentials_prior,
             estimated_convergence_probabilities=estimated_convergence_probabilities,
-            list_of_parameters_train=[loss.get_parameter() for loss in loss_functions_train],
+            list_of_loss_functions_train=loss_functions_train,
             )
 
         posterior_probabilities = torch.softmax(optimal_posterior_potentials, dim=0)
@@ -171,7 +189,7 @@ class PacBayesOptimizationAlgorithm(ParametricOptimizationAlgorithm):
         return self.pac_bound, state_dict_samples_prior
 
 
-def compute_loss_at_end(optimization_algorithm):
+def compute_loss_at_end(optimization_algorithm: OptimizationAlgorithm) -> float:
     _ = [optimization_algorithm.perform_step() for _ in range(optimization_algorithm.n_max)]
     loss_at_end = optimization_algorithm.evaluate_loss_function_at_current_iterate().item()
     return loss_at_end
