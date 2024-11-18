@@ -1,8 +1,12 @@
 from pathlib import Path
+from typing import List, Tuple, Callable
+from numpy.typing import NDArray
 import numpy as np
 import pickle
 import time
-from experiments.nn_training.neural_network import train_model
+
+from classes.LossFunction.class_LossFunction import LossFunction
+from experiments.nn_training.neural_network import train_model, NeuralNetworkForStandardTraining
 from experiments.nn_training.training import instantiate_neural_networks
 from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
 from experiments.nn_training.algorithm import NnOptimizer
@@ -15,13 +19,13 @@ from experiments.nn_training.training import get_describing_property
 class EvaluationAssistant:
 
     def __init__(self,
-                 test_set,
-                 number_of_iterations_during_training,
-                 number_of_iterations_for_testing,
-                 loss_of_algorithm,
-                 initial_state,
-                 optimal_hyperparameters,
-                 implementation_class):
+                 test_set: List,
+                 number_of_iterations_during_training: int,
+                 number_of_iterations_for_testing: int,
+                 loss_of_algorithm: Callable,
+                 initial_state: torch.Tensor,
+                 optimal_hyperparameters: dict,
+                 implementation_class: Callable):
         self.test_set = test_set
         self.number_of_iterations_during_training = number_of_iterations_during_training
         self.number_of_iterations_for_testing = number_of_iterations_for_testing
@@ -33,7 +37,7 @@ class EvaluationAssistant:
         self.implementation_arguments = None
         self.lr_adam = None
 
-    def set_up_learned_algorithm(self, arguments_of_implementation_class):
+    def set_up_learned_algorithm(self, arguments_of_implementation_class: dict) -> OptimizationAlgorithm:
         if arguments_of_implementation_class is None:
             learned_algorithm = OptimizationAlgorithm(
                 implementation=self.implementation_class(),
@@ -52,7 +56,7 @@ class EvaluationAssistant:
         return learned_algorithm
 
 
-def load_data(loading_path):
+def load_data(loading_path: str) -> Tuple:
     pac_bound = np.load(loading_path + 'pac_bound.npy')
     initial_state = np.load(loading_path + 'initialization.npy')
     n_train = np.load(loading_path + 'number_of_iterations.npy')
@@ -65,19 +69,20 @@ def load_data(loading_path):
     return pac_bound, initial_state, n_train, parameters, samples, best_sample
 
 
-def create_folder_for_storing_data(path_of_experiment):  # pragma: no cover
+def create_folder_for_storing_data(path_of_experiment: str) -> str:  # pragma: no cover
     savings_path = path_of_experiment + "/data/"
     Path(savings_path).mkdir(parents=True, exist_ok=True)
     return savings_path
 
 
-def compute_ground_truth_loss(loss_of_neural_network, parameter):
+def compute_ground_truth_loss(loss_of_neural_network: NeuralNetworkForStandardTraining,
+                              parameter: dict) -> torch.Tensor:
     return loss_of_neural_network(parameter['ground_truth_values'], parameter['y_values'])
 
 
-def compute_losses_over_iterations_for_learned_algorithm(learned_algorithm,
+def compute_losses_over_iterations_for_learned_algorithm(learned_algorithm: OptimizationAlgorithm,
                                                          evaluation_assistant: EvaluationAssistant,
-                                                         parameter):
+                                                         parameter: dict) -> List[float]:
     learned_algorithm.reset_state_and_iteration_counter()
     current_loss_function = ParametricLossFunction(function=evaluation_assistant.loss_of_algorithm, parameter=parameter)
     learned_algorithm.set_loss_function(current_loss_function)
@@ -88,11 +93,15 @@ def compute_losses_over_iterations_for_learned_algorithm(learned_algorithm,
     return loss_over_iterations
 
 
-def does_satisfy_constraint(convergence_risk_constraint, loss_at_beginning, loss_at_end):
+def does_satisfy_constraint(convergence_risk_constraint: Callable,
+                            loss_at_beginning: float,
+                            loss_at_end: float) -> bool:
     return convergence_risk_constraint(loss_at_beginning=loss_at_beginning, loss_at_end=loss_at_end)
 
 
-def compute_losses_over_iterations_for_adam(neural_network, evaluation_assistant: EvaluationAssistant, parameter):
+def compute_losses_over_iterations_for_adam(neural_network: NeuralNetworkForStandardTraining,
+                                            evaluation_assistant: EvaluationAssistant,
+                                            parameter: dict) -> List[float]:
     neural_network_for_standard_training, losses_over_iterations_of_adam, _ = train_model(
         net=neural_network, data=parameter, criterion=evaluation_assistant.loss_of_neural_network,
         n_it=evaluation_assistant.number_of_iterations_for_testing, lr=evaluation_assistant.lr_adam
@@ -101,8 +110,9 @@ def compute_losses_over_iterations_for_adam(neural_network, evaluation_assistant
 
 
 def compute_losses(evaluation_assistant: EvaluationAssistant,
-                   learned_algorithm,
-                   neural_network_for_standard_training):
+                   learned_algorithm: OptimizationAlgorithm,
+                   neural_network_for_standard_training: NeuralNetworkForStandardTraining
+                   ) -> Tuple[NDArray, NDArray, NDArray, float]:
 
     ground_truth_losses = []
     losses_of_adam = []
@@ -135,8 +145,11 @@ def compute_losses(evaluation_assistant: EvaluationAssistant,
             number_of_times_constrained_satisfied / len(evaluation_assistant.test_set))
 
 
-def time_problem_for_learned_algorithm(learned_algorithm, loss_function, maximal_number_of_iterations,
-                                       optimal_loss, level_of_accuracy):
+def time_problem_for_learned_algorithm(learned_algorithm: OptimizationAlgorithm,
+                                       loss_function: LossFunction,
+                                       maximal_number_of_iterations: int,
+                                       optimal_loss: torch.Tensor,
+                                       level_of_accuracy: float) -> float:
     learned_algorithm.reset_state_and_iteration_counter()
     learned_algorithm.set_loss_function(loss_function)
     current_loss = learned_algorithm.evaluate_loss_function_at_current_iterate()
@@ -154,8 +167,13 @@ def time_problem_for_learned_algorithm(learned_algorithm, loss_function, maximal
     return end - start
 
 
-def time_problem_for_adam(neural_network, loss_of_neural_network, parameter, maximal_number_of_iterations,
-                          optimal_loss, level_of_accuracy, lr_adam):
+def time_problem_for_adam(neural_network: NeuralNetworkForStandardTraining,
+                          loss_of_neural_network: Callable,
+                          parameter: dict,
+                          maximal_number_of_iterations: int,
+                          optimal_loss: torch.Tensor,
+                          level_of_accuracy: float,
+                          lr_adam: torch.Tensor) -> float:
     optimizer = torch.optim.Adam(neural_network.parameters(), lr=lr_adam)
     current_loss = loss_of_neural_network(neural_network(parameter['x_values']), parameter['y_values'])
     counter = 0
@@ -174,10 +192,10 @@ def time_problem_for_adam(neural_network, loss_of_neural_network, parameter, max
 
 
 def compute_times(learned_algorithm: OptimizationAlgorithm,
-                  neural_network_for_standard_training,
+                  neural_network_for_standard_training: NeuralNetworkForStandardTraining,
                   evaluation_assistant: EvaluationAssistant,
-                  ground_truth_losses,
-                  stop_procedure_after_at_most):
+                  ground_truth_losses: NDArray,
+                  stop_procedure_after_at_most: int) -> Tuple[dict, dict]:
 
     levels_of_accuracy = [1e0, 1e-1, 1e-2]
     times_pac = {epsilon: [0.] for epsilon in levels_of_accuracy}
@@ -204,7 +222,7 @@ def compute_times(learned_algorithm: OptimizationAlgorithm,
     return times_pac, times_std
 
 
-def set_up_evaluation_assistant(loading_path):
+def set_up_evaluation_assistant(loading_path: str) -> Tuple[EvaluationAssistant, NeuralNetworkForStandardTraining]:
     pac_bound, initial_state, n_train, parameters, samples, best_sample = load_data(loading_path)
     neural_network_for_standard_training, neural_network_for_learning = instantiate_neural_networks()
     loss_of_neural_network = get_loss_of_neural_network()
@@ -223,7 +241,7 @@ def set_up_evaluation_assistant(loading_path):
     return evaluation_assistant, neural_network_for_standard_training
 
 
-def evaluate_algorithm(loading_path, path_of_experiment):
+def evaluate_algorithm(loading_path: str, path_of_experiment: str) -> None:
 
     evaluation_assistant, neural_network_for_standard_training = set_up_evaluation_assistant(loading_path)
     learned_algorithm = evaluation_assistant.set_up_learned_algorithm(
@@ -247,14 +265,21 @@ def evaluate_algorithm(loading_path, path_of_experiment):
               percentage_constrained_satisfied=percentage_constrained_satisfied)
 
 
-def save_data(savings_path, times_of_learned_algorithm, losses_of_learned_algorithm, times_of_adam, losses_of_adam,
-              ground_truth_losses, percentage_constrained_satisfied):
+def save_data(savings_path: str,
+              times_of_learned_algorithm: dict,
+              losses_of_learned_algorithm: NDArray,
+              times_of_adam: dict,
+              losses_of_adam: NDArray,
+              ground_truth_losses: NDArray,
+              percentage_constrained_satisfied: float):
 
     with open(savings_path + 'times_of_learned_algorithm', 'wb') as file:
+        # noinspection PyTypeChecker
         pickle.dump(times_of_learned_algorithm, file)
     with open(savings_path + 'times_of_adam', 'wb') as file:
+        # noinspection PyTypeChecker
         pickle.dump(times_of_adam, file)
-    np.save(savings_path + 'losses_of_adam', np.array(losses_of_adam))
-    np.save(savings_path + 'losses_of_learned_algorithm', np.array(losses_of_learned_algorithm))
-    np.save(savings_path + 'ground_truth_losses', np.array(ground_truth_losses))
+    np.save(savings_path + 'losses_of_adam', losses_of_adam)
+    np.save(savings_path + 'losses_of_learned_algorithm', losses_of_learned_algorithm)
+    np.save(savings_path + 'ground_truth_losses', ground_truth_losses)
     np.save(savings_path + 'empirical_probability', percentage_constrained_satisfied)
