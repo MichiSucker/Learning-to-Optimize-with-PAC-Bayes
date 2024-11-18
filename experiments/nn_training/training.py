@@ -114,7 +114,7 @@ def get_initial_state(dim: int) -> torch.Tensor:
     return torch.randn(2 * dim).reshape((2, -1))
 
 
-def get_describing_property() -> Callable:
+def get_describing_property() -> Tuple[Callable, Callable, Callable]:
     return instantiate_reduction_property_with(factor=0.25, exponent=0.5)
 
 
