@@ -1,17 +1,16 @@
 import unittest
-
 from classes.LossFunction.class_LossFunction import LossFunction
 from classes.LossFunction.derived_classes.subclass_ParametricLossFunction import ParametricLossFunction
 import torch
 
 
-def dummy_function(x, parameter):
-    return 0.5 * parameter['p'] * torch.linalg.norm(x) ** 2
-
-
 class TestParametricLossFunction(unittest.TestCase):
 
     def setUp(self):
+
+        def dummy_function(x, parameter):
+            return 0.5 * parameter['p'] * torch.linalg.norm(x) ** 2
+
         self.parameter = {'p': 2.}
         self.loss_function = ParametricLossFunction(dummy_function, parameter=self.parameter)
 
