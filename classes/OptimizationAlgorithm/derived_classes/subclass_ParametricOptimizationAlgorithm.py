@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from typing import Tuple, List
+from typing import Tuple, List, Dict
 from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
 from classes.Constraint.class_Constraint import Constraint
 from classes.LossFunction.class_LossFunction import LossFunction
@@ -24,7 +24,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         super().__init__(initial_state=initial_state, implementation=implementation, loss_function=loss_function,
                          constraint=constraint)
 
-    def set_hyperparameters_to(self, new_hyperparameters):
+    def set_hyperparameters_to(self, new_hyperparameters: dict) -> None:
         self.implementation.load_state_dict(new_hyperparameters)
 
     def initialize_with_other_algorithm(self,
@@ -54,7 +54,8 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         other_algorithm.reset_state_and_iteration_counter()
         initialization_assistant.print_final_message()
 
-    def initialize_helpers_for_initialization(self, parameters):
+    def initialize_helpers_for_initialization(
+            self, parameters: dict) -> Tuple[torch.optim.Optimizer, InitializationAssistant, TrajectoryRandomizer]:
 
         initialization_assistant = InitializationAssistant(
             printing_enabled=parameters['with_print'],
@@ -75,11 +76,11 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
     def update_initialization_of_hyperparameters(
             self,
-            optimizer,
-            other_algorithm,
-            trajectory_randomizer,
-            loss_functions,
-            initialization_assistant):
+            optimizer: torch.optim.Optimizer,
+            other_algorithm: OptimizationAlgorithm,
+            trajectory_randomizer: TrajectoryRandomizer,
+            loss_functions: List[LossFunction],
+            initialization_assistant: InitializationAssistant) -> None:
 
         optimizer.zero_grad()
         self.determine_next_starting_point_for_both_algorithms(
@@ -100,7 +101,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
     def determine_next_starting_point_for_both_algorithms(self,
                                                           trajectory_randomizer: TrajectoryRandomizer,
                                                           other_algorithm: OptimizationAlgorithm,
-                                                          loss_functions: List[LossFunction]):
+                                                          loss_functions: List[LossFunction]) -> None:
         if trajectory_randomizer.should_restart:
             self.restart_with_new_loss(loss_functions=loss_functions)
             other_algorithm.reset_state_and_iteration_counter()
@@ -181,7 +182,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                                optimizer: torch.optim.Optimizer,
                                trajectory_randomizer: TrajectoryRandomizer,
                                loss_functions: List[LossFunction],
-                               training_assistant: TrainingAssistant):
+                               training_assistant: TrainingAssistant) -> None:
 
         optimizer.zero_grad()
         self.determine_next_starting_point(
@@ -202,7 +203,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
 
     def determine_next_starting_point(self,
                                       trajectory_randomizer: TrajectoryRandomizer,
-                                      loss_functions: List[LossFunction]):
+                                      loss_functions: List[LossFunction]) -> None:
         if trajectory_randomizer.should_restart:
             self.restart_with_new_loss(loss_functions=loss_functions)
             trajectory_randomizer.set_variable__should_restart__to(False)
@@ -211,15 +212,15 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
             trajectory_randomizer.set_variable__should_restart__to(
                 (torch.rand(1) <= trajectory_randomizer.restart_probability).item())
 
-    def restart_with_new_loss(self, loss_functions: List[LossFunction]):
+    def restart_with_new_loss(self, loss_functions: List[LossFunction]) -> None:
         self.reset_state_and_iteration_counter()
         self.set_loss_function(np.random.choice(loss_functions))
 
-    def detach_current_state_from_computational_graph(self):
+    def detach_current_state_from_computational_graph(self) -> None:
         x_0 = self.current_state.detach().clone()
         self.set_current_state(x_0)
 
-    def compute_ratio_of_losses(self, predicted_iterates: List[torch.Tensor]) -> List:
+    def compute_ratio_of_losses(self, predicted_iterates: List[torch.Tensor]) -> List[torch.Tensor]:
         ratios = [self.loss_function(predicted_iterates[k]) / self.loss_function(predicted_iterates[k - 1])
                   if self.loss_function(predicted_iterates[k - 1]) > 1e-12
                   else self.loss_function(predicted_iterates[k]) - self.loss_function(predicted_iterates[k])
@@ -227,7 +228,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         return ratios
 
     def sample_with_sgld(self,
-                         loss_functions: list,
+                         loss_functions: List[LossFunction],
                          parameters: dict
                          ) -> Tuple[list, list, list]:
 
@@ -250,7 +251,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         self.reset_state_and_iteration_counter()
         return sampling_assistant.prepare_output()
 
-    def initialize_helpers_for_sampling(self, parameters):
+    def initialize_helpers_for_sampling(self, parameters: dict) -> Tuple[SamplingAssistant, TrajectoryRandomizer]:
 
         trajectory_randomizer = TrajectoryRandomizer(
             should_restart=True,
@@ -271,7 +272,10 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         sampling_assistant.set_point_that_satisfies_constraint(state_dict=self.implementation.state_dict())
         return sampling_assistant, trajectory_randomizer
 
-    def compute_next_possible_sample(self, loss_functions, trajectory_randomizer, sampling_assistant):
+    def compute_next_possible_sample(self,
+                                     loss_functions: List[LossFunction],
+                                     trajectory_randomizer: TrajectoryRandomizer,
+                                     sampling_assistant: SamplingAssistant) -> None:
         # Note that this initialization refers to the optimization space: This is different from the
         # hyperparameter-space, which is the one for sampling!
         # Further: This restarting procedure is only a heuristic from our training-procedure.
@@ -291,7 +295,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         sum_losses.backward()
         self.perform_noisy_gradient_step_on_hyperparameters(sampling_assistant)
 
-    def accept_or_reject_based_on_constraint(self, sampling_assistant, iteration):
+    def accept_or_reject_based_on_constraint(self, sampling_assistant: SamplingAssistant, iteration: int) -> None:
         # TODO: For more readability, adjust that to probabilistic constraint.
         #  Like this, its not obvious from the code that self.constraint has to be create from a ProbabilisticConstraint
         satisfies_constraint, estimated_prob = self.constraint(self, also_return_value=True)
@@ -303,7 +307,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
         else:
             sampling_assistant.reject_sample(self)
 
-    def set_up_noise_distributions(self):
+    def set_up_noise_distributions(self) -> Dict:
         noise_distributions = {}
         for name, parameter in self.implementation.named_parameters():
             if parameter.requires_grad:
@@ -311,7 +315,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                 noise_distributions[name] = MultivariateNormal(torch.zeros(dim), torch.eye(dim))
         return noise_distributions
 
-    def perform_noisy_gradient_step_on_hyperparameters(self, sampling_assistant):
+    def perform_noisy_gradient_step_on_hyperparameters(self, sampling_assistant: SamplingAssistant) -> None:
         for name, parameter in self.implementation.named_parameters():
             if parameter.requires_grad:
                 noise = (sampling_assistant.current_learning_rate ** 2
@@ -339,7 +343,8 @@ def losses_are_invalid(losses: List) -> bool:
     return False
 
 
-def compute_initialization_loss(iterates_learned_algorithm, iterates_standard_algorithm):
+def compute_initialization_loss(iterates_learned_algorithm: List[torch.Tensor],
+                                iterates_standard_algorithm: List[torch.Tensor]) -> torch.Tensor:
     if len(iterates_standard_algorithm) != len(iterates_learned_algorithm):
         raise ValueError("Number of iterates does not match.")
     criterion = torch.nn.MSELoss()
