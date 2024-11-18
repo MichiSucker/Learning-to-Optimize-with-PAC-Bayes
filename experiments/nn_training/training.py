@@ -1,4 +1,7 @@
+from typing import Callable, Tuple, List
+from numpy.typing import NDArray
 import torch
+from classes.LossFunction.class_LossFunction import LossFunction
 from experiments.nn_training.data_generation import get_data, get_powers_of_polynomials
 from experiments.nn_training.neural_network import NeuralNetworkForStandardTraining, NeuralNetworkForLearning
 from classes.LossFunction.derived_classes.subclass_ParametricLossFunction import ParametricLossFunction
@@ -9,7 +12,7 @@ from classes.OptimizationAlgorithm.derived_classes.derived_classes.subclass_PacB
     PacBayesOptimizationAlgorithm)
 from describing_property.reduction_property import instantiate_reduction_property_with
 from classes.Constraint.class_ProbabilisticConstraint import ProbabilisticConstraint
-from classes.Constraint.class_Constraint import create_list_of_constraints_from_functions
+from classes.Constraint.class_Constraint import create_list_of_constraints_from_functions, Constraint
 from sufficient_statistics.sufficient_statistics import evaluate_sufficient_statistics
 from natural_parameters.natural_parameters import evaluate_natural_parameters_at
 from pathlib import Path
@@ -17,16 +20,16 @@ import pickle
 import numpy as np
 
 
-def get_number_of_datapoints():
+def get_number_of_datapoints() -> dict:
     return {'prior': 250, 'train': 250, 'test': 250, 'validation': 250}
 
 
-def get_initialization_parameters():
+def get_initialization_parameters() -> dict:
     return {'lr': 1e-3, 'num_iter_max': 1000, 'num_iter_print_update': 200, 'num_iter_update_stepsize': 200,
             'with_print': True}
 
 
-def get_fitting_parameters(maximal_number_of_iterations):
+def get_fitting_parameters(maximal_number_of_iterations: int) -> dict:
     length_trajectory = 1
     restart_probability = length_trajectory / maximal_number_of_iterations
     return {'restart_probability': restart_probability,
@@ -38,7 +41,7 @@ def get_fitting_parameters(maximal_number_of_iterations):
             'factor_stepsize_update': 0.5}
 
 
-def get_sampling_parameters(maximal_number_of_iterations):
+def get_sampling_parameters(maximal_number_of_iterations: int) -> dict:
     length_trajectory = 1
     restart_probability = length_trajectory / maximal_number_of_iterations
     return {'lr': torch.tensor(1e-6),
@@ -49,23 +52,23 @@ def get_sampling_parameters(maximal_number_of_iterations):
             'num_iter_burnin': 0}
 
 
-def get_update_parameters():
+def get_update_parameters() -> dict:
     return {'num_iter_print_update': 1000,
             'with_print': True,
             'bins': [1e5, 1e4, 1e3, 1e2, 1e1, 1e0, 1e-1, 1e-2][::-1]}
 
 
-def get_parameters_of_estimation():
+def get_parameters_of_estimation() -> dict:
     return {'quantile_distance': 0.075, 'quantiles': (0.01, 0.99), 'probabilities': (0.95, 1.0)}
 
 
-def get_constraint_parameters(number_of_training_iterations):
+def get_constraint_parameters(number_of_training_iterations: int) -> dict:
     describing_property, _, _ = get_describing_property()
     return {'describing_property': describing_property,
             'num_iter_update_constraint': int(number_of_training_iterations // 4)}
 
 
-def get_pac_bayes_parameters(sufficient_statistics):
+def get_pac_bayes_parameters(sufficient_statistics: Callable) -> dict:
     return {'sufficient_statistics': sufficient_statistics,
             'natural_parameters': evaluate_natural_parameters_at,
             'covering_number': torch.tensor(75000),
@@ -74,7 +77,7 @@ def get_pac_bayes_parameters(sufficient_statistics):
             'n_max': 100}
 
 
-def instantiate_neural_networks():
+def instantiate_neural_networks() -> Tuple[NeuralNetworkForStandardTraining, NeuralNetworkForLearning]:
     degree = torch.max(get_powers_of_polynomials()).item()
     neural_network_for_std_training = NeuralNetworkForStandardTraining(degree=degree)
     neural_network_for_learning = NeuralNetworkForLearning(
@@ -82,7 +85,7 @@ def instantiate_neural_networks():
     return neural_network_for_std_training, neural_network_for_learning
 
 
-def create_parametric_loss_functions_from_parameters(template_loss_function, parameters):
+def create_parametric_loss_functions_from_parameters(template_loss_function: Callable, parameters: dict) -> dict:
     loss_functions = {
         'prior': [ParametricLossFunction(function=template_loss_function,
                                          parameter=p) for p in parameters['prior']],
@@ -96,23 +99,27 @@ def create_parametric_loss_functions_from_parameters(template_loss_function, par
     return loss_functions
 
 
-def get_algorithm_for_initialization(initial_state_for_std_algorithm, loss_function):
+def get_algorithm_for_initialization(initial_state_for_std_algorithm: torch.Tensor,
+                                     loss_function: LossFunction) -> OptimizationAlgorithm:
     alpha = torch.tensor(1e-5)
     return OptimizationAlgorithm(initial_state=initial_state_for_std_algorithm,
                                  implementation=GradientDescent(alpha=alpha),
                                  loss_function=loss_function)
 
 
-def get_initial_state(dim):
+def get_initial_state(dim: int) -> torch.Tensor:
+    # Note that it is important to keep the same initial point: Here, the algorithm only gets on a single starting
+    # point, so it depends on this concrete initialization.
     torch.manual_seed(0)
     return torch.randn(2 * dim).reshape((2, -1))
 
 
-def get_describing_property():
+def get_describing_property() -> Callable:
     return instantiate_reduction_property_with(factor=0.25, exponent=0.5)
 
 
-def get_constraint(parameters_of_estimation, loss_functions_for_constraint):
+def get_constraint(parameters_of_estimation: dict,
+                   loss_functions_for_constraint: List[LossFunction]) -> Constraint:
     describing_property, _, _ = get_describing_property()
     list_of_constraints = create_list_of_constraints_from_functions(describing_property=describing_property,
                                                                     list_of_functions=loss_functions_for_constraint)
@@ -121,20 +128,20 @@ def get_constraint(parameters_of_estimation, loss_functions_for_constraint):
     return probabilistic_constraint.create_constraint()
 
 
-def compute_constants_for_sufficient_statistics(loss_functions_for_training, initial_state):
+def compute_constants_for_sufficient_statistics(loss_functions_for_training: List[LossFunction],
+                                                initial_state: torch.Tensor) -> torch.Tensor:
     _, _, empirical_second_moment = get_describing_property()
     return empirical_second_moment(list_of_loss_functions=loss_functions_for_training,
                                    point=initial_state[-1].flatten()) / len(loss_functions_for_training)
 
 
-def get_sufficient_statistics(template_for_loss_function, constants):
+def get_sufficient_statistics(constants: torch.Tensor) -> Callable:
 
     _, convergence_risk_constraint, _ = get_describing_property()
 
-    def sufficient_statistics(optimization_algorithm, parameter, probability):
+    def sufficient_statistics(optimization_algorithm, loss_function, probability):
         return evaluate_sufficient_statistics(optimization_algorithm=optimization_algorithm,
-                                              parameter_of_loss_function=parameter,
-                                              template_for_loss_function=template_for_loss_function,
+                                              loss_function=loss_function,
                                               constants=constants,
                                               convergence_risk_constraint=convergence_risk_constraint,
                                               convergence_probability=probability)
@@ -142,7 +149,8 @@ def get_sufficient_statistics(template_for_loss_function, constants):
     return sufficient_statistics
 
 
-def instantiate_algorithm_for_learning(loss_function_for_algorithm, loss_functions, dimension_of_hyperparameters):
+def instantiate_algorithm_for_learning(loss_functions: dict,
+                                       dimension_of_hyperparameters: int) -> PacBayesOptimizationAlgorithm:
 
     initial_state = get_initial_state(dim=dimension_of_hyperparameters)
     parameters_of_estimation = get_parameters_of_estimation()
@@ -152,8 +160,7 @@ def instantiate_algorithm_for_learning(loss_function_for_algorithm, loss_functio
     )
     constants = compute_constants_for_sufficient_statistics(loss_functions_for_training=loss_functions['train'],
                                                             initial_state=initial_state)
-    sufficient_statistics = get_sufficient_statistics(template_for_loss_function=loss_function_for_algorithm,
-                                                      constants=constants)
+    sufficient_statistics = get_sufficient_statistics(constants=constants)
     algorithm_for_learning = PacBayesOptimizationAlgorithm(
         initial_state=initial_state,
         implementation=NnOptimizer(dim=dimension_of_hyperparameters),
@@ -164,13 +171,13 @@ def instantiate_algorithm_for_learning(loss_function_for_algorithm, loss_functio
     return algorithm_for_learning
 
 
-def create_folder_for_storing_data(path_of_experiment):
+def create_folder_for_storing_data(path_of_experiment: str) -> str:
     savings_path = path_of_experiment + "/data/"
     Path(savings_path).mkdir(parents=True, exist_ok=True)
     return savings_path
 
 
-def set_up_and_train_algorithm(path_of_experiment):
+def set_up_and_train_algorithm(path_of_experiment: str) -> None:
 
     savings_path = create_folder_for_storing_data(path_of_experiment)
 
@@ -181,7 +188,7 @@ def set_up_and_train_algorithm(path_of_experiment):
         template_loss_function=loss_function_for_algorithm, parameters=parameters)
 
     algorithm_for_learning = instantiate_algorithm_for_learning(
-        loss_function_for_algorithm=loss_function_for_algorithm, loss_functions=loss_functions,
+        loss_functions=loss_functions,
         dimension_of_hyperparameters=neural_network_for_std_training.get_dimension_of_hyperparameters())
     algorithm_for_initialization = get_algorithm_for_initialization(
         initial_state_for_std_algorithm=algorithm_for_learning.initial_state[-1].reshape((1, -1)),
@@ -205,16 +212,36 @@ def set_up_and_train_algorithm(path_of_experiment):
         update_parameters=update_parameters
     )
 
-    np.save(savings_path + 'pac_bound', pac_bound.numpy())
-    np.save(savings_path + 'initialization', algorithm_for_learning.initial_state.clone().numpy())
-    np.save(savings_path + 'number_of_iterations', algorithm_for_learning.n_max)
+    save_data(savings_path=savings_path,
+              pac_bound=pac_bound.numpy(),
+              initial_state=algorithm_for_learning.initial_state.clone().numpy(),
+              number_of_iterations=algorithm_for_learning.n_max,
+              parameters=parameters,
+              samples_prior=state_dict_samples_prior,
+              best_sample=algorithm_for_learning.implementation.state_dict())
+
+
+def save_data(savings_path,
+              pac_bound: NDArray,
+              initial_state: NDArray,
+              number_of_iterations: int,
+              parameters: dict,
+              samples_prior: List[dict],
+              best_sample: dict):
+    np.save(savings_path + 'pac_bound', pac_bound)
+    np.save(savings_path + 'initialization', initial_state)
+    np.save(savings_path + 'number_of_iterations', number_of_iterations)
     with open(savings_path + 'parameters_problem', 'wb') as file:
+        # noinspection PyTypeChecker
         pickle.dump(parameters, file)
 
     parameters_of_estimation = get_parameters_of_estimation()
     with open(savings_path + 'parameters_of_estimation', 'wb') as file:
+        # noinspection PyTypeChecker
         pickle.dump(parameters_of_estimation, file)
     with open(savings_path + 'samples', 'wb') as file:
-        pickle.dump(state_dict_samples_prior, file)
+        # noinspection PyTypeChecker
+        pickle.dump(samples_prior, file)
     with open(savings_path + 'best_sample', 'wb') as file:
-        pickle.dump(algorithm_for_learning.implementation.state_dict(), file)
+        # noinspection PyTypeChecker
+        pickle.dump(best_sample, file)
