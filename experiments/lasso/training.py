@@ -1,7 +1,12 @@
+from typing import Callable, Tuple
+
 import torch
 import pickle
 import numpy as np
+from numpy.typing import NDArray
 from pathlib import Path
+
+from classes.LossFunction.class_LossFunction import LossFunction
 from experiments.lasso.data_generation import get_data, get_dimensions
 from classes.LossFunction.derived_classes.NonsmoothParametricLossFunction.\
     subclass_NonsmoothParametricLossFunction import NonsmoothParametricLossFunction
@@ -9,7 +14,7 @@ from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import Optimizati
 from classes.OptimizationAlgorithm.derived_classes.derived_classes.subclass_PacBayesOptimizationAlgorithm import (
     PacBayesOptimizationAlgorithm)
 from classes.Constraint.class_ProbabilisticConstraint import ProbabilisticConstraint
-from classes.Constraint.class_Constraint import create_list_of_constraints_from_functions
+from classes.Constraint.class_Constraint import create_list_of_constraints_from_functions, Constraint
 from experiments.lasso.algorithm import SparsityNet
 from algorithms.fista import FISTA
 from describing_property.reduction_property import instantiate_reduction_property_with
@@ -17,27 +22,27 @@ from natural_parameters.natural_parameters import evaluate_natural_parameters_at
 from sufficient_statistics.sufficient_statistics import evaluate_sufficient_statistics
 
 
-def create_folder_for_storing_data(path_of_experiment):
+def create_folder_for_storing_data(path_of_experiment: str) -> str:
     savings_path = path_of_experiment + "/data/"
     Path(savings_path).mkdir(parents=True, exist_ok=True)
     return savings_path
 
 
-def get_number_of_datapoints():
+def get_number_of_datapoints() -> dict:
     return {'prior': 250, 'train': 250, 'test': 250, 'validation': 250}
 
 
-def get_parameters_of_estimation():
+def get_parameters_of_estimation() -> dict:
     return {'quantile_distance': 0.075, 'quantiles': (0.01, 0.99), 'probabilities': (0.95, 1.0)}
 
 
-def get_update_parameters():
+def get_update_parameters() -> dict:
     return {'num_iter_print_update': 1000,
             'with_print': True,
             'bins': [1e5, 5e4, 1e4, 5e3, 1e3, 5e2, 1e2, 5e1, 1e1][::-1]}
 
 
-def get_sampling_parameters(maximal_number_of_iterations):
+def get_sampling_parameters(maximal_number_of_iterations: int) -> dict:
     length_trajectory = 1
     restart_probability = length_trajectory / maximal_number_of_iterations
     return {'lr': torch.tensor(1e-6),
@@ -48,7 +53,7 @@ def get_sampling_parameters(maximal_number_of_iterations):
             'num_iter_burnin': 0}
 
 
-def get_fitting_parameters(maximal_number_of_iterations):
+def get_fitting_parameters(maximal_number_of_iterations: int) -> dict:
     length_trajectory = 1
     restart_probability = length_trajectory / maximal_number_of_iterations
     return {'restart_probability': restart_probability,
@@ -60,22 +65,22 @@ def get_fitting_parameters(maximal_number_of_iterations):
             'factor_stepsize_update': 0.5}
 
 
-def get_initialization_parameters():
+def get_initialization_parameters() -> dict:
     return {'lr': 1e-3, 'num_iter_max': 1000, 'num_iter_print_update': 200, 'num_iter_update_stepsize': 200,
             'with_print': True}
 
 
-def get_describing_property():
-    return instantiate_reduction_property_with(factor=1.25, exponent=0.5)
+def get_describing_property() -> Callable:
+    return instantiate_reduction_property_with(factor=1, exponent=0.6)
 
 
-def get_constraint_parameters(number_of_training_iterations):
+def get_constraint_parameters(number_of_training_iterations: int) -> dict:
     describing_property, _, _ = get_describing_property()
     return {'describing_property': describing_property,
             'num_iter_update_constraint': int(number_of_training_iterations // 4)}
 
 
-def get_pac_bayes_parameters(sufficient_statistics):
+def get_pac_bayes_parameters(sufficient_statistics: Callable) -> dict:
     return {'sufficient_statistics': sufficient_statistics,
             'natural_parameters': evaluate_natural_parameters_at,
             'covering_number': torch.tensor(75000),
@@ -84,7 +89,7 @@ def get_pac_bayes_parameters(sufficient_statistics):
             'n_max': 350}
 
 
-def get_constraint(parameters_of_estimation, loss_functions_for_constraint):
+def get_constraint(parameters_of_estimation: dict, loss_functions_for_constraint: list) -> Constraint:
     describing_property, _, _ = get_describing_property()
     list_of_constraints = create_list_of_constraints_from_functions(describing_property=describing_property,
                                                                     list_of_functions=loss_functions_for_constraint)
@@ -93,20 +98,20 @@ def get_constraint(parameters_of_estimation, loss_functions_for_constraint):
     return probabilistic_constraint.create_constraint()
 
 
-def compute_constants_for_sufficient_statistics(loss_functions_for_training, initial_state):
+def compute_constants_for_sufficient_statistics(loss_functions_for_training: list,
+                                                initial_state: torch.Tensor) -> torch.Tensor:
     _, _, empirical_second_moment = get_describing_property()
     return empirical_second_moment(list_of_loss_functions=loss_functions_for_training,
                                    point=initial_state[-1].flatten()) / len(loss_functions_for_training)
 
 
-def get_sufficient_statistics(template_for_loss_function, constants):
+def get_sufficient_statistics(constants: torch.Tensor) -> Callable:
 
     _, convergence_risk_constraint, _ = get_describing_property()
 
-    def sufficient_statistics(optimization_algorithm, parameter, probability):
+    def sufficient_statistics(optimization_algorithm, loss_function, probability):
         return evaluate_sufficient_statistics(optimization_algorithm=optimization_algorithm,
-                                              parameter_of_loss_function=parameter,
-                                              template_for_loss_function=template_for_loss_function,
+                                              loss_function=loss_function,
                                               constants=constants,
                                               convergence_risk_constraint=convergence_risk_constraint,
                                               convergence_probability=probability)
@@ -114,14 +119,15 @@ def get_sufficient_statistics(template_for_loss_function, constants):
     return sufficient_statistics
 
 
-def get_initial_states():
+def get_initial_states() -> Tuple[torch.Tensor, torch.Tensor]:
     _, dimension_optimization_variable = get_dimensions()
-    init_distribution = torch.distributions.Normal(0, 1)
+    init_distribution = torch.distributions.Uniform(-100, 100)
     initial_state_fista = init_distribution.sample((3, dimension_optimization_variable))
     return initial_state_fista, initial_state_fista[1:, :].clone()
 
 
-def get_algorithm_for_learning(loss_function_for_algorithm, loss_functions):
+def get_algorithm_for_learning(loss_functions: dict,
+                               smoothness_parameter: torch.Tensor) -> PacBayesOptimizationAlgorithm:
 
     _, initial_state_learned_algorithm = get_initial_states()
     parameters_of_estimation = get_parameters_of_estimation()
@@ -131,11 +137,10 @@ def get_algorithm_for_learning(loss_function_for_algorithm, loss_functions):
     )
     constants = compute_constants_for_sufficient_statistics(
         loss_functions_for_training=loss_functions['train'], initial_state=initial_state_learned_algorithm)
-    sufficient_statistics = get_sufficient_statistics(
-        template_for_loss_function=loss_function_for_algorithm, constants=constants)
+    sufficient_statistics = get_sufficient_statistics(constants=constants)
     algorithm_for_learning = PacBayesOptimizationAlgorithm(
         initial_state=initial_state_learned_algorithm,
-        implementation=SparsityNet(dim=initial_state_learned_algorithm.shape[1]),
+        implementation=SparsityNet(dim=initial_state_learned_algorithm.shape[1], smoothness=smoothness_parameter),
         loss_function=loss_functions['prior'][0],
         pac_parameters=get_pac_bayes_parameters(sufficient_statistics),
         constraint=constraint
@@ -143,7 +148,10 @@ def get_algorithm_for_learning(loss_function_for_algorithm, loss_functions):
     return algorithm_for_learning
 
 
-def create_parametric_loss_functions_from_parameters(template_loss_function, smooth_part, nonsmooth_part, parameters):
+def create_parametric_loss_functions_from_parameters(template_loss_function: Callable,
+                                                     smooth_part: Callable,
+                                                     nonsmooth_part: Callable,
+                                                     parameters: dict) -> dict:
 
     loss_functions = {
         name: [NonsmoothParametricLossFunction(function=template_loss_function, smooth_part=smooth_part,
@@ -153,7 +161,9 @@ def create_parametric_loss_functions_from_parameters(template_loss_function, smo
     return loss_functions
 
 
-def get_baseline_algorithm(smoothness_parameter, initial_state, loss_function):
+def get_baseline_algorithm(smoothness_parameter: torch.Tensor,
+                           initial_state: torch.Tensor,
+                           loss_function: LossFunction) -> OptimizationAlgorithm:
 
     alpha = 1 / smoothness_parameter
     std_algo = OptimizationAlgorithm(
@@ -164,8 +174,9 @@ def get_baseline_algorithm(smoothness_parameter, initial_state, loss_function):
     return std_algo
 
 
-def set_up_and_train_algorithm(path_of_experiment):
-
+def set_up_and_train_algorithm(path_of_experiment: str) -> None:
+    # This is pretty important again. Also, it makes sure that all tensor types do match.
+    torch.set_default_dtype(torch.float64)
     number_of_datapoints_per_dataset = get_number_of_datapoints()
     parameters, loss_function_of_algorithm, smooth_part, nonsmooth_part, smoothness_parameter = get_data(
         number_of_datapoints_per_dataset)
@@ -177,7 +188,8 @@ def set_up_and_train_algorithm(path_of_experiment):
         smoothness_parameter=smoothness_parameter, initial_state=initial_state_fista,
         loss_function=loss_functions['prior'][0])
     algorithm_for_learning = get_algorithm_for_learning(
-        loss_function_for_algorithm=loss_function_of_algorithm, loss_functions=loss_functions)
+        loss_functions=loss_functions, smoothness_parameter=smoothness_parameter
+    )
 
     algorithm_for_learning.initialize_with_other_algorithm(other_algorithm=baseline_algorithm,
                                                            loss_functions=loss_functions['prior'],
@@ -205,8 +217,15 @@ def set_up_and_train_algorithm(path_of_experiment):
               samples_prior=state_dict_samples_prior, best_sample=algorithm_for_learning.implementation.state_dict())
 
 
-def save_data(savings_path, smoothness_parameter, pac_bound, initialization_learned_algorithm,
-              initialization_baseline_algorithm, number_of_iterations, parameters, samples_prior, best_sample):
+def save_data(savings_path: str,
+              smoothness_parameter: NDArray,
+              pac_bound: NDArray,
+              initialization_learned_algorithm: NDArray,
+              initialization_baseline_algorithm: NDArray,
+              number_of_iterations: int,
+              parameters: dict,
+              samples_prior: list,
+              best_sample: dict):
 
     np.save(savings_path + 'smoothness_parameter', smoothness_parameter)
     np.save(savings_path + 'pac_bound', pac_bound)
