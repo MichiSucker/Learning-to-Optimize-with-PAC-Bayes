@@ -20,13 +20,13 @@ class ConstraintChecker:
         else:
             return False
 
-    def set_variable__there_is_a_constraint__to(self, new_bool: bool):
+    def set_variable__there_is_a_constraint__to(self, new_bool: bool) -> None:
         self.there_is_a_constraint = new_bool
 
-    def set_variable__check_constraint_every__to(self, new_number: int):
+    def set_variable__check_constraint_every__to(self, new_number: int) -> None:
         self.check_constraint_every = new_number
 
-    def update_point_inside_constraint_or_reject(self, optimization_algorithm: OptimizationAlgorithm):
+    def update_point_inside_constraint_or_reject(self, optimization_algorithm: OptimizationAlgorithm) -> None:
         satisfies_constraint = optimization_algorithm.evaluate_constraint()
 
         if satisfies_constraint:
@@ -36,7 +36,7 @@ class ConstraintChecker:
         elif self.found_point_inside_constraint and (not satisfies_constraint):
             optimization_algorithm.implementation.load_state_dict(self.point_inside_constraint)
 
-    def final_check(self, optimization_algorithm: OptimizationAlgorithm):
+    def final_check(self, optimization_algorithm: OptimizationAlgorithm) -> None:
         satisfies_constraint = optimization_algorithm.evaluate_constraint()
         if satisfies_constraint:
             return
