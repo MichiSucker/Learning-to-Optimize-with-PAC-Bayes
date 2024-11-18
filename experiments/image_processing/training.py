@@ -81,7 +81,7 @@ def get_pac_bayes_parameters(sufficient_statistics: Callable) -> dict:
             'n_max': 25}
 
 
-def get_describing_property() -> Callable:
+def get_describing_property() -> Tuple[Callable, Callable, Callable]:
     return instantiate_reduction_property_with(factor=0.2, exponent=1.)
 
 
