@@ -149,6 +149,11 @@ class PacBayesOptimizationAlgorithm(ParametricOptimizationAlgorithm):
             potentials.append(-convergence_risk)
         return torch.tensor(potentials)
 
+    def set_hyperparameters_to_maximum_likelihood(self, state_dict_samples, posterior_potentials):
+        posterior_probabilities = torch.softmax(posterior_potentials, dim=0)
+        alpha_opt = state_dict_samples[torch.argmax(posterior_probabilities)]
+        self.set_hyperparameters_to(alpha_opt)
+
     def pac_bayes_fit(self,
                       loss_functions_prior: List[LossFunction],
                       loss_functions_train: List[LossFunction],
@@ -182,9 +187,8 @@ class PacBayesOptimizationAlgorithm(ParametricOptimizationAlgorithm):
             list_of_loss_functions_train=loss_functions_train,
             )
 
-        posterior_probabilities = torch.softmax(optimal_posterior_potentials, dim=0)
-        alpha_opt = state_dict_samples_prior[torch.argmax(posterior_probabilities)]
-        self.set_hyperparameters_to(alpha_opt)
+        self.set_hyperparameters_to_maximum_likelihood(state_dict_samples=state_dict_samples_prior,
+                                                       posterior_potentials=optimal_posterior_potentials)
 
         return self.pac_bound, state_dict_samples_prior
 
