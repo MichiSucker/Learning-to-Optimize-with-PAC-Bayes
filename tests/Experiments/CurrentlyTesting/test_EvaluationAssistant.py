@@ -30,7 +30,14 @@ class TestEvaluationAssistant(unittest.TestCase):
 
     def test_set_up_learned_algorithm(self):
         self.eval_assist.implementation_class = Dummy
+        # Normal setup.
         learned_algo = self.eval_assist.set_up_learned_algorithm(arguments_of_implementation_class=None)
         self.assertIsInstance(learned_algo, OptimizationAlgorithm)
+
+        # Raise error if we provide too much
         with self.assertRaises(Exception):
-            self.eval_assist.set_up_learned_algorithm(arguments_of_implementation_class=1)
+            self.eval_assist.set_up_learned_algorithm(arguments_of_implementation_class={})
+
+        # Setup if we would 'need' arguments.
+        self.eval_assist.implementation_arguments = {}
+        learned_algo = self.eval_assist.set_up_learned_algorithm(arguments_of_implementation_class={})
