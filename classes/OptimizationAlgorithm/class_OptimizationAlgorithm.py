@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from typing import Callable, List
 from classes.LossFunction.class_LossFunction import LossFunction
-from classes.LossFunction.derived_classes.NonsmoothParametricLossFunction.\
+from classes.LossFunction.derived_classes.derived_classes.\
     subclass_NonsmoothParametricLossFunction import NonsmoothParametricLossFunction
 from classes.LossFunction.derived_classes.subclass_ParametricLossFunction import ParametricLossFunction
 

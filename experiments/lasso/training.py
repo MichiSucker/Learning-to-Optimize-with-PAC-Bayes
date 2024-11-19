@@ -8,7 +8,7 @@ from pathlib import Path
 
 from classes.LossFunction.class_LossFunction import LossFunction
 from experiments.lasso.data_generation import get_data, get_dimensions
-from classes.LossFunction.derived_classes.NonsmoothParametricLossFunction.\
+from classes.LossFunction.derived_classes.derived_classes.\
     subclass_NonsmoothParametricLossFunction import NonsmoothParametricLossFunction
 from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
 from classes.OptimizationAlgorithm.derived_classes.derived_classes.subclass_PacBayesOptimizationAlgorithm import (

@@ -1,5 +1,5 @@
 from classes.LossFunction.class_LossFunction import LossFunction
-from classes.LossFunction.derived_classes.NonsmoothParametricLossFunction.\
+from classes.LossFunction.derived_classes.derived_classes.\
     subclass_NonsmoothParametricLossFunction import NonsmoothParametricLossFunction
 from classes.LossFunction.derived_classes.subclass_ParametricLossFunction import ParametricLossFunction
 from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm

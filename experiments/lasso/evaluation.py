@@ -1,7 +1,7 @@
 from typing import Tuple, List, Callable
 from numpy.typing import NDArray
 from classes.LossFunction.class_LossFunction import LossFunction
-from classes.LossFunction.derived_classes.NonsmoothParametricLossFunction.\
+from classes.LossFunction.derived_classes.derived_classes.\
     subclass_NonsmoothParametricLossFunction import NonsmoothParametricLossFunction
 from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
 from classes.LossFunction.derived_classes.subclass_ParametricLossFunction import ParametricLossFunction
