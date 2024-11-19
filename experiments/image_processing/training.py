@@ -12,10 +12,10 @@ from classes.OptimizationAlgorithm.derived_classes.derived_classes.subclass_PacB
     PacBayesOptimizationAlgorithm
 from experiments.image_processing.algorithm import ConvNet
 from experiments.image_processing.data_generation import get_image_height_and_width, get_data
-from describing_property.reduction_property import instantiate_reduction_property_with
+from exponential_family.describing_property.reduction_property import instantiate_reduction_property_with
 from pathlib import Path
-from natural_parameters.natural_parameters import evaluate_natural_parameters_at
-from sufficient_statistics.sufficient_statistics import evaluate_sufficient_statistics
+from exponential_family.natural_parameters.natural_parameters import evaluate_natural_parameters_at
+from exponential_family.sufficient_statistics.sufficient_statistics import evaluate_sufficient_statistics
 
 
 def create_folder_for_storing_data(path_of_experiment: str) -> str:

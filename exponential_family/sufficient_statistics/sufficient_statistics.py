@@ -3,7 +3,7 @@ import torch
 from classes.LossFunction.class_LossFunction import LossFunction
 from classes.OptimizationAlgorithm.derived_classes.derived_classes.subclass_PacBayesOptimizationAlgorithm import \
     PacBayesOptimizationAlgorithm
-from describing_property.reduction_property import compute_loss_at_beginning_and_end
+from exponential_family.describing_property.reduction_property import compute_loss_at_beginning_and_end
 
 
 def evaluate_sufficient_statistics(optimization_algorithm: PacBayesOptimizationAlgorithm,

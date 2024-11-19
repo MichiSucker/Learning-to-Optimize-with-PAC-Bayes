@@ -4,10 +4,10 @@ import torch
 from classes.OptimizationAlgorithm.derived_classes.derived_classes.subclass_PacBayesOptimizationAlgorithm import \
     PacBayesOptimizationAlgorithm
 from classes.LossFunction.class_LossFunction import LossFunction
-from describing_property.reduction_property import (instantiate_reduction_property_with,
-                                                    compute_loss_at_beginning_and_end,
-                                                    store_current_loss_function_state_and_iteration_counter,
-                                                    reset_loss_function_state_and_iteration_counter)
+from exponential_family.describing_property.reduction_property import (instantiate_reduction_property_with,
+                                                                       compute_loss_at_beginning_and_end,
+                                                                       store_current_loss_function_state_and_iteration_counter,
+                                                                       reset_loss_function_state_and_iteration_counter)
 from algorithms.dummy import Dummy
 
 

@@ -10,7 +10,7 @@ from classes.LossFunction.derived_classes.subclass_ParametricLossFunction import
 from classes.OptimizationAlgorithm.class_OptimizationAlgorithm import OptimizationAlgorithm
 from classes.OptimizationAlgorithm.derived_classes.derived_classes.subclass_PacBayesOptimizationAlgorithm import \
     PacBayesOptimizationAlgorithm
-from natural_parameters.natural_parameters import evaluate_natural_parameters_at
+from exponential_family.natural_parameters.natural_parameters import evaluate_natural_parameters_at
 from experiments.nn_training.training import (instantiate_neural_networks,
                                               create_parametric_loss_functions_from_parameters,
                                               get_algorithm_for_initialization,

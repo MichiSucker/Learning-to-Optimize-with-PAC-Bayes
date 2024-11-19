@@ -1,6 +1,6 @@
 import unittest
 import torch
-from natural_parameters.natural_parameters import evaluate_natural_parameters_at
+from exponential_family.natural_parameters.natural_parameters import evaluate_natural_parameters_at
 
 
 class TestNaturalParameters(unittest.TestCase):

@@ -17,9 +17,9 @@ from classes.Constraint.class_ProbabilisticConstraint import ProbabilisticConstr
 from classes.Constraint.class_Constraint import create_list_of_constraints_from_functions, Constraint
 from experiments.lasso.algorithm import SparsityNet
 from algorithms.fista import FISTA
-from describing_property.reduction_property import instantiate_reduction_property_with
-from natural_parameters.natural_parameters import evaluate_natural_parameters_at
-from sufficient_statistics.sufficient_statistics import evaluate_sufficient_statistics
+from exponential_family.describing_property.reduction_property import instantiate_reduction_property_with
+from exponential_family.natural_parameters.natural_parameters import evaluate_natural_parameters_at
+from exponential_family.sufficient_statistics.sufficient_statistics import evaluate_sufficient_statistics
 
 
 def create_folder_for_storing_data(path_of_experiment: str) -> str:

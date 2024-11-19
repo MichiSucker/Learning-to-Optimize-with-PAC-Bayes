@@ -9,7 +9,7 @@ from typing import Callable
 from classes.LossFunction.class_LossFunction import LossFunction
 from classes.Constraint.class_ProbabilisticConstraint import Constraint, ProbabilisticConstraint
 from algorithms.dummy import Dummy
-from describing_property.reduction_property import instantiate_reduction_property_with
+from exponential_family.describing_property.reduction_property import instantiate_reduction_property_with
 from experiments.quadratics.training import get_sufficient_statistics
 import copy
 import io

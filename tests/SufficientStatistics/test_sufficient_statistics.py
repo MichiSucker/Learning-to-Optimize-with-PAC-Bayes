@@ -1,6 +1,6 @@
 import unittest
 import torch
-from sufficient_statistics.sufficient_statistics import evaluate_sufficient_statistics
+from exponential_family.sufficient_statistics.sufficient_statistics import evaluate_sufficient_statistics
 from classes.LossFunction.derived_classes.subclass_ParametricLossFunction import ParametricLossFunction
 from classes.OptimizationAlgorithm.derived_classes.derived_classes.subclass_PacBayesOptimizationAlgorithm import (
     PacBayesOptimizationAlgorithm)
