@@ -112,7 +112,7 @@ def compute_losses_over_iterations_for_adam(neural_network: NeuralNetworkForStan
 def compute_losses(evaluation_assistant: EvaluationAssistant,
                    learned_algorithm: OptimizationAlgorithm,
                    neural_network_for_standard_training: NeuralNetworkForStandardTraining
-                   ) -> Tuple[NDArray, NDArray, NDArray, float]:
+                   ) -> Tuple[NDArray, NDArray, torch.Tensor, float]:
 
     ground_truth_losses = []
     losses_of_adam = []
@@ -141,7 +141,7 @@ def compute_losses(evaluation_assistant: EvaluationAssistant,
 
     return (np.array(losses_of_adam),
             np.array(losses_of_learned_algorithm),
-            np.array(ground_truth_losses),
+            torch.tensor(ground_truth_losses),
             number_of_times_constrained_satisfied / len(evaluation_assistant.test_set))
 
 
@@ -194,7 +194,7 @@ def time_problem_for_adam(neural_network: NeuralNetworkForStandardTraining,
 def compute_times(learned_algorithm: OptimizationAlgorithm,
                   neural_network_for_standard_training: NeuralNetworkForStandardTraining,
                   evaluation_assistant: EvaluationAssistant,
-                  ground_truth_losses: NDArray,
+                  ground_truth_losses: torch.Tensor,
                   stop_procedure_after_at_most: int) -> Tuple[dict, dict]:
 
     levels_of_accuracy = [1e0, 1e-1, 1e-2]
@@ -261,7 +261,7 @@ def evaluate_algorithm(loading_path: str, path_of_experiment: str) -> None:
               times_of_learned_algorithm=times_of_learned_algorithm,
               losses_of_learned_algorithm=losses_of_learned_algorithm,
               times_of_adam=times_of_adam, losses_of_adam=losses_of_adam,
-              ground_truth_losses=ground_truth_losses,
+              ground_truth_losses=ground_truth_losses.numpy(),
               percentage_constrained_satisfied=percentage_constrained_satisfied)
 
 
