@@ -75,7 +75,7 @@ def create_folder_for_storing_data(path_of_experiment: str) -> str:  # pragma: n
     return savings_path
 
 
-def compute_ground_truth_loss(loss_of_neural_network: NeuralNetworkForStandardTraining,
+def compute_ground_truth_loss(loss_of_neural_network: Callable,
                               parameter: dict) -> torch.Tensor:
     return loss_of_neural_network(parameter['ground_truth_values'], parameter['y_values'])
 
