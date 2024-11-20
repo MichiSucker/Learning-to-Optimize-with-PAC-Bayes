@@ -95,14 +95,14 @@ def create_evaluation_plots(loading_path: str, path_of_experiment: str) -> None:
     ####################################################################################################################
 
     # Note that the loss, for which the PAC-bound holds, is stored in the (n+1)th-column.
-    bins_pac = np.logspace(np.log10(np.min(losses_of_learned_algorithm[:, n_train + 1])),
-                           np.log10(np.max(losses_of_learned_algorithm[:, n_train + 1])), 25)
+    bins = np.logspace(np.log10(np.minimum(np.min(losses_of_learned_algorithm[:, n_train + 1]),
+                                           np.min(losses_of_adam[:, n_train + 1]))),
+                       np.log10(np.maximum(np.max(losses_of_learned_algorithm[:, n_train + 1]),
+                                           np.max(losses_of_adam[:, n_train + 1]))), 50)
     ax[1, 0].hist(losses_of_learned_algorithm[:, n_train + 1], color=colors['pac'], label=names['pac'],
-                  alpha=0.5, bins=bins_pac, edgecolor='black')
-    bins_std = np.logspace(np.log10(np.min(losses_of_adam[:, n_train + 1])),
-                           np.log10(np.max(losses_of_adam[:, n_train + 1])), 25)
+                  alpha=0.5, bins=bins, edgecolor='black')
     ax[1, 0].hist(losses_of_adam[:, n_train + 1], color=colors['std'], label=names['std'],
-                  alpha=0.5, bins=bins_std, edgecolor='black')
+                  alpha=0.5, bins=bins, edgecolor='black')
 
     ax[1, 0].axvline(np.mean(losses_of_learned_algorithm[:, n_train + 1]), color=colors['pac'], linestyle='dashed',
                      alpha=0.5)
