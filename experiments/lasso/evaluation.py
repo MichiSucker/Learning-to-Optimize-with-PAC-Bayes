@@ -60,12 +60,12 @@ class EvaluationAssistant:
         return learned_algorithm
 
 
-def load_data(loading_path: str) -> Tuple[float, torch.Tensor, torch.Tensor, int, dict, list, dict, NDArray]:
+def load_data(loading_path: str) -> Tuple[float, torch.Tensor, torch.Tensor, int, dict, list, dict, torch.Tensor]:
     pac_bound = np.load(loading_path + 'pac_bound.npy')
     initial_state_learned_algorithm = torch.tensor(np.load(loading_path + 'initialization_learned_algorithm.npy'))
     initialization_baseline_algorithm = torch.tensor(np.load(loading_path + 'initialization_baseline_algorithm.npy'))
     n_train = np.load(loading_path + 'number_of_iterations.npy')
-    smoothness_parameter = np.load(loading_path + 'smoothness_parameter.npy')
+    smoothness_parameter = torch.tensor(np.load(loading_path + 'smoothness_parameter.npy'))
     with open(loading_path + 'parameters_problem', 'rb') as file:
         parameters = pickle.load(file)
     with open(loading_path + 'samples', 'rb') as file:
@@ -114,8 +114,8 @@ def set_up_evaluation_assistant(loading_path: str) -> EvaluationAssistant:
         initial_state_learned_algorithm=initial_state_learned_algorithm, number_of_iterations_during_training=n_train,
         optimal_hyperparameters=best_sample, implementation_class=SparsityNet)
     evaluation_assistant.implementation_arguments = {'dim': initial_state_learned_algorithm.shape[1],
-                                                     'smoothness': torch.tensor(smoothness_parameter)}
-    evaluation_assistant.smoothness_parameter = torch.tensor(smoothness_parameter)
+                                                     'smoothness': smoothness_parameter}
+    evaluation_assistant.smoothness_parameter = smoothness_parameter
     evaluation_assistant.initial_state_baseline_algorithm = initialization_baseline_algorithm
     return evaluation_assistant
 
