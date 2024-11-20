@@ -171,7 +171,7 @@ def compute_losses(evaluation_assistant: EvaluationAssistant,
 
 
 def approximate_optimal_loss(baseline_algorithm: OptimizationAlgorithm,
-                             evaluation_assistant: EvaluationAssistant) -> NDArray:
+                             evaluation_assistant: EvaluationAssistant) -> torch.Tensor:
     optimal_losses = []
     for parameter in evaluation_assistant.test_set:
 
@@ -187,13 +187,13 @@ def approximate_optimal_loss(baseline_algorithm: OptimizationAlgorithm,
 
         optimal_losses.append(baseline_algorithm.evaluate_loss_function_at_current_iterate().item())
 
-    return np.array(optimal_losses)
+    return torch.tensor(optimal_losses)
 
 
 def time_problem(algorithm: OptimizationAlgorithm,
                  loss_function: LossFunction,
                  maximal_number_of_iterations: int,
-                 optimal_loss: NDArray,
+                 optimal_loss: torch.Tensor,
                  level_of_accuracy: float) -> float:
 
     algorithm.reset_state_and_iteration_counter()
@@ -216,7 +216,7 @@ def time_problem(algorithm: OptimizationAlgorithm,
 def compute_times(learned_algorithm: OptimizationAlgorithm,
                   baseline_algorithm: OptimizationAlgorithm,
                   evaluation_assistant: EvaluationAssistant,
-                  optimal_losses: NDArray,
+                  optimal_losses: torch.Tensor,
                   stop_procedure_after_at_most: int) -> Tuple[dict, dict]:
 
     levels_of_accuracy = [1e1, 5e0, 1e0]
@@ -274,6 +274,6 @@ def evaluate_algorithm(loading_path: str, path_of_experiment: str) -> None:
               losses_of_learned_algorithm=losses_of_learned_algorithm,
               times_of_baseline_algorithm=times_of_baseline_algorithm,
               losses_of_baseline_algorithm=losses_of_baseline,
-              approximate_optimal_losses=optimal_losses,
+              approximate_optimal_losses=optimal_losses.numpy(),
               number_of_iterations_for_approximation=evaluation_assistant.number_of_iterations_for_approximation,
               percentage_constrained_satisfied=percentage_constrained_satisfied)
