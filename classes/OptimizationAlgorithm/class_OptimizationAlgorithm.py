@@ -82,4 +82,5 @@ class OptimizationAlgorithm:
         return self.loss_function(self.current_iterate)
 
     def evaluate_constraint(self) -> bool:
-        return self.constraint(self)
+        if self.constraint is not None:
+            return self.constraint(self)
