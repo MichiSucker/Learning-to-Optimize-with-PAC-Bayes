@@ -35,7 +35,7 @@ class EvaluationAssistant:
         self.strong_convexity_parameter = None
         self.smoothness_parameter = None
 
-    def set_up_learned_algorithm(self, arguments_of_implementation_class: dict) -> OptimizationAlgorithm:
+    def set_up_learned_algorithm(self, arguments_of_implementation_class: dict | None) -> OptimizationAlgorithm:
         if arguments_of_implementation_class is None:
             learned_algorithm = OptimizationAlgorithm(
                 implementation=self.implementation_class(),
