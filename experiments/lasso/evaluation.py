@@ -114,7 +114,7 @@ def set_up_evaluation_assistant(loading_path: str) -> EvaluationAssistant:
         initial_state_learned_algorithm=initial_state_learned_algorithm, number_of_iterations_during_training=n_train,
         optimal_hyperparameters=best_sample, implementation_class=SparsityNet)
     evaluation_assistant.implementation_arguments = {'dim': initial_state_learned_algorithm.shape[1],
-                                                     'smoothness': smoothness_parameter}
+                                                     'smoothness': torch.tensor(smoothness_parameter)}
     evaluation_assistant.smoothness_parameter = torch.tensor(smoothness_parameter)
     evaluation_assistant.initial_state_baseline_algorithm = initialization_baseline_algorithm
     return evaluation_assistant
