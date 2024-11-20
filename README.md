@@ -7,3 +7,4 @@ Theoretical Considerations and Practical Implementation"](https://arxiv.org/pdf/
   - Explain architecture
   - Explain how to reproduce experiments
   - Include figures
+  - Include a note to clarify why some code is duplicated in the experiments.
