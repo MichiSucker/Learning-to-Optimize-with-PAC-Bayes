@@ -36,7 +36,7 @@ class TestTraining(unittest.TestCase):
 
     def setUp(self):
         self.path = '/home/michael/Desktop/JMLR_New/Experiments/quadratics'
-        self.dummy_savings_path = '/home/michael/Desktop/JMLR_New/Experiments/quadratics/dummy_data'
+        self.dummy_savings_path = '/home/michael/Desktop/JMLR_New/Experiments/quadratics/dummy_data/'
 
     def test_get_number_of_datapoints(self):
         # Check that we did specify each data set, and only those.
