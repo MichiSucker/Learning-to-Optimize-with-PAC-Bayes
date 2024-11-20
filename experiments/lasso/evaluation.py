@@ -76,7 +76,7 @@ def load_data(loading_path: str) -> Tuple[float, torch.Tensor, torch.Tensor, int
             best_sample, smoothness_parameter)
 
 
-def create_folder_for_storing_data(path_of_experiment: str) -> str:  # pragma: no cover
+def create_folder_for_storing_data(path_of_experiment: str) -> str:
     savings_path = path_of_experiment + "/data/"
     Path(savings_path).mkdir(parents=True, exist_ok=True)
     return savings_path
