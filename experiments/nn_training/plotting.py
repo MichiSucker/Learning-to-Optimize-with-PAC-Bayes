@@ -186,3 +186,4 @@ def create_evaluation_plots(loading_path: str, path_of_experiment: str) -> None:
 
     plt.tight_layout()
     fig.savefig(path_of_experiment + 'evaluation_plot.pdf', dpi=300, bbox_inches='tight')
+    fig.savefig(path_of_experiment + 'evaluation_plot.png', dpi=300, bbox_inches='tight')
