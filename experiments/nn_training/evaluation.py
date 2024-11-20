@@ -46,7 +46,7 @@ class EvaluationAssistant:
                                                      parameter=self.test_set[0]))
         elif (arguments_of_implementation_class is not None) and (self.implementation_arguments is not None):
             learned_algorithm = OptimizationAlgorithm(
-                implementation=self.implementation_class(self.implementation_arguments),
+                implementation=self.implementation_class(**self.implementation_arguments),
                 initial_state=self.initial_state,
                 loss_function=ParametricLossFunction(function=self.loss_of_algorithm,
                                                      parameter=self.test_set[0]))
