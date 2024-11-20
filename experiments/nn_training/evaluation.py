@@ -69,7 +69,7 @@ def load_data(loading_path: str) -> Tuple:
     return pac_bound, initial_state, n_train, parameters, samples, best_sample
 
 
-def create_folder_for_storing_data(path_of_experiment: str) -> str:  # pragma: no cover
+def create_folder_for_storing_data(path_of_experiment: str) -> str:
     savings_path = path_of_experiment + "/data/"
     Path(savings_path).mkdir(parents=True, exist_ok=True)
     return savings_path
