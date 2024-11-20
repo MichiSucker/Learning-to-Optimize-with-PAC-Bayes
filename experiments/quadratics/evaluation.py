@@ -54,34 +54,6 @@ class EvaluationAssistant:
         return learned_algorithm
 
 
-def evaluate_algorithm(loading_path: str, path_of_experiment: str) -> None:
-    evaluation_assistant = set_up_evaluation_assistant(loading_path)
-    learned_algorithm = evaluation_assistant.set_up_learned_algorithm(
-        arguments_of_implementation_class=evaluation_assistant.implementation_arguments)
-    baseline_algorithm = get_baseline_algorithm(
-        loss_function=learned_algorithm.loss_function, smoothness_constant=evaluation_assistant.smoothness_parameter,
-        strong_convexity_constant=evaluation_assistant.smoothness_parameter, dim=evaluation_assistant.dim)
-
-    losses_of_baseline, losses_of_learned_algorithm, percentage_constrained_satisfied = compute_losses(
-        evaluation_assistant=evaluation_assistant, learned_algorithm=learned_algorithm,
-        baseline_algorithm=baseline_algorithm
-    )
-
-    times_of_learned_algorithm, times_of_baseline_algorithm = compute_times(
-        learned_algorithm=learned_algorithm, baseline_algorithm=baseline_algorithm,
-        evaluation_assistant=evaluation_assistant,
-        stop_procedure_after_at_most=int(1e4),
-        ground_truth_losses=[0. for _ in range(len(evaluation_assistant.test_set))])
-
-    save_data(savings_path=create_folder_for_storing_data(path_of_experiment),
-              times_of_learned_algorithm=times_of_learned_algorithm,
-              losses_of_learned_algorithm=losses_of_learned_algorithm,
-              times_of_baseline_algorithm=times_of_baseline_algorithm,
-              losses_of_baseline_algorithm=losses_of_baseline,
-              ground_truth_losses=[0. for _ in range(len(evaluation_assistant.test_set))],
-              percentage_constrained_satisfied=percentage_constrained_satisfied)
-
-
 def load_data(loading_path: str) -> Tuple:
     pac_bound = np.load(loading_path + 'pac_bound.npy')
     initial_state = torch.tensor(np.load(loading_path + 'initialization.npy'))
@@ -98,25 +70,10 @@ def load_data(loading_path: str) -> Tuple:
             strong_convexity_parameter, smoothness_parameter)
 
 
-def create_folder_for_storing_data(path_of_experiment: str) -> str:  # pragma: no cover
+def create_folder_for_storing_data(path_of_experiment: str) -> str:
     savings_path = path_of_experiment + "/data/"
     Path(savings_path).mkdir(parents=True, exist_ok=True)
     return savings_path
-
-
-def set_up_evaluation_assistant(loading_path: str) -> EvaluationAssistant:
-    (pac_bound, initial_state, n_train, parameters, samples, best_sample, strong_convexity_parameter,
-     smoothness_parameter) = load_data(loading_path)
-    loss_of_algorithm = get_loss_function_of_algorithm()
-
-    evaluation_assistant = EvaluationAssistant(test_set=parameters['test'], loss_of_algorithm=loss_of_algorithm,
-                                               initial_state=initial_state,
-                                               number_of_iterations_during_training=n_train,
-                                               optimal_hyperparameters=best_sample, implementation_class=Quadratics)
-    evaluation_assistant.implementation_arguments = initial_state.shape[1]
-    evaluation_assistant.smoothness_parameter = torch.tensor(smoothness_parameter)
-    evaluation_assistant.strong_convexity_parameter = torch.tensor(strong_convexity_parameter)
-    return evaluation_assistant
 
 
 def save_data(savings_path: str,
@@ -125,7 +82,7 @@ def save_data(savings_path: str,
               times_of_baseline_algorithm: dict,
               losses_of_baseline_algorithm: NDArray,
               ground_truth_losses: List,
-              percentage_constrained_satisfied: torch.Tensor) -> None:
+              percentage_constrained_satisfied: float) -> None:
 
     with open(savings_path + 'times_of_learned_algorithm', 'wb') as file:
         # noinspection PyTypeChecker
@@ -139,6 +96,20 @@ def save_data(savings_path: str,
     np.save(savings_path + 'empirical_probability', percentage_constrained_satisfied)
 
 
+def set_up_evaluation_assistant(loading_path: str) -> EvaluationAssistant:
+    (pac_bound, initial_state, n_train, parameters, samples, best_sample, strong_convexity_parameter,
+     smoothness_parameter) = load_data(loading_path)
+    loss_of_algorithm = get_loss_function_of_algorithm()
+
+    evaluation_assistant = EvaluationAssistant(test_set=parameters['test'], loss_of_algorithm=loss_of_algorithm,
+                                               initial_state=initial_state,
+                                               number_of_iterations_during_training=n_train,
+                                               optimal_hyperparameters=best_sample, implementation_class=Quadratics)
+    evaluation_assistant.smoothness_parameter = torch.tensor(smoothness_parameter)
+    evaluation_assistant.strong_convexity_parameter = torch.tensor(strong_convexity_parameter)
+    return evaluation_assistant
+
+
 def does_satisfy_constraint(convergence_risk_constraint: Callable,
                             loss_at_beginning: float,
                             loss_at_end: float) -> bool:
@@ -147,7 +118,7 @@ def does_satisfy_constraint(convergence_risk_constraint: Callable,
 
 def compute_losses(evaluation_assistant: EvaluationAssistant,
                    learned_algorithm: OptimizationAlgorithm,
-                   baseline_algorithm: OptimizationAlgorithm) -> Tuple[NDArray, NDArray, torch.Tensor]:
+                   baseline_algorithm: OptimizationAlgorithm) -> Tuple[NDArray, NDArray, float]:
 
     losses_of_baseline_algorithm = []
     losses_of_learned_algorithm = []
@@ -240,3 +211,31 @@ def compute_times(learned_algorithm: OptimizationAlgorithm,
                 level_of_accuracy=epsilon))
 
     return times_pac, times_std
+
+
+def evaluate_algorithm(loading_path: str, path_of_experiment: str) -> None:
+    evaluation_assistant = set_up_evaluation_assistant(loading_path)
+    learned_algorithm = evaluation_assistant.set_up_learned_algorithm(
+        arguments_of_implementation_class=evaluation_assistant.implementation_arguments)
+    baseline_algorithm = get_baseline_algorithm(
+        loss_function=learned_algorithm.loss_function, smoothness_constant=evaluation_assistant.smoothness_parameter,
+        strong_convexity_constant=evaluation_assistant.smoothness_parameter, dim=evaluation_assistant.dim)
+
+    losses_of_baseline, losses_of_learned_algorithm, percentage_constrained_satisfied = compute_losses(
+        evaluation_assistant=evaluation_assistant, learned_algorithm=learned_algorithm,
+        baseline_algorithm=baseline_algorithm
+    )
+
+    times_of_learned_algorithm, times_of_baseline_algorithm = compute_times(
+        learned_algorithm=learned_algorithm, baseline_algorithm=baseline_algorithm,
+        evaluation_assistant=evaluation_assistant,
+        stop_procedure_after_at_most=int(1e4),
+        ground_truth_losses=[0. for _ in range(len(evaluation_assistant.test_set))])
+
+    save_data(savings_path=create_folder_for_storing_data(path_of_experiment),
+              times_of_learned_algorithm=times_of_learned_algorithm,
+              losses_of_learned_algorithm=losses_of_learned_algorithm,
+              times_of_baseline_algorithm=times_of_baseline_algorithm,
+              losses_of_baseline_algorithm=losses_of_baseline,
+              ground_truth_losses=[0. for _ in range(len(evaluation_assistant.test_set))],
+              percentage_constrained_satisfied=percentage_constrained_satisfied)
