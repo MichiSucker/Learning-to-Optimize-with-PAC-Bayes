@@ -37,10 +37,11 @@ class ConstraintChecker:
             optimization_algorithm.implementation.load_state_dict(self.point_inside_constraint)
 
     def final_check(self, optimization_algorithm: OptimizationAlgorithm) -> None:
-        satisfies_constraint = optimization_algorithm.evaluate_constraint()
-        if satisfies_constraint:
-            return
-        elif self.found_point_inside_constraint and (not satisfies_constraint):
-            optimization_algorithm.implementation.load_state_dict(self.point_inside_constraint)
-        else:
-            raise Exception("Did not find a point that lies within the constraint!")
+        if optimization_algorithm.constraint is not None:
+            satisfies_constraint = optimization_algorithm.evaluate_constraint()
+            if satisfies_constraint:
+                return
+            elif self.found_point_inside_constraint and (not satisfies_constraint):
+                optimization_algorithm.implementation.load_state_dict(self.point_inside_constraint)
+            else:
+                raise Exception("Did not find a point that lies within the constraint!")
