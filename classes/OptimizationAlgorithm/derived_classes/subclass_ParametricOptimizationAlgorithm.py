@@ -227,6 +227,69 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
                   for k in range(1, len(predicted_iterates))]
         return ratios
 
+    def fit_with_function_values(self,
+                                 loss_functions: list,
+                                 fitting_parameters: dict,
+                                 constraint_parameters: dict,
+                                 update_parameters: dict) -> None:
+
+        # (!) Note: This function is solely used for the additional_experiments to show that it is not good to train
+        # on function values (!)
+
+        optimizer, training_assistant, trajectory_randomizer, constraint_checker = self.initialize_helpers_for_training(
+            fitting_parameters=fitting_parameters,
+            constraint_parameters=constraint_parameters,
+            update_parameters=update_parameters
+        )
+
+        training_assistant.print_starting_message()
+        pbar = training_assistant.get_progressbar()
+        for i in pbar:
+            if training_assistant.should_update_stepsize_of_optimizer(iteration=i):
+                training_assistant.update_stepsize_of_optimizer(optimizer)
+
+            self.update_hyperparameters_based_on_function_values(optimizer=optimizer,
+                                                                 trajectory_randomizer=trajectory_randomizer,
+                                                                 loss_functions=loss_functions,
+                                                                 training_assistant=training_assistant)
+
+            if training_assistant.should_print_update(i):
+                training_assistant.print_update(iteration=i, constraint_checker=constraint_checker)
+                training_assistant.reset_running_loss_and_loss_histogram()
+
+            if constraint_checker.should_check_constraint(i):
+                constraint_checker.update_point_inside_constraint_or_reject(self)
+
+        constraint_checker.final_check(self)
+        self.reset_state_and_iteration_counter()
+        training_assistant.print_final_message()
+
+    def update_hyperparameters_based_on_function_values(self,
+                                                        optimizer: torch.optim.Optimizer,
+                                                        trajectory_randomizer: TrajectoryRandomizer,
+                                                        loss_functions: List[LossFunction],
+                                                        training_assistant: TrainingAssistant) -> None:
+
+        # (!) Note: This function is solely used for the additional_experiments to show that it is not good to train
+        # on function values (!)
+
+        optimizer.zero_grad()
+        self.determine_next_starting_point(
+            trajectory_randomizer=trajectory_randomizer, loss_functions=loss_functions)
+        predicted_iterates = self.compute_partial_trajectory(
+            number_of_steps=trajectory_randomizer.length_partial_trajectory)
+        losses = [self.loss_function(predicted_iterates[k]) for k in range(1, len(predicted_iterates))]
+        if losses_are_invalid(losses):
+            print('Invalid losses.')
+            return
+        sum_losses = torch.sum(torch.stack(losses))
+        sum_losses.backward()
+        optimizer.step()
+
+        with torch.no_grad():
+            training_assistant.loss_histogram.append(self.loss_function(predicted_iterates[-1]).item())
+            training_assistant.running_loss += sum_losses.item()
+
     def sample_with_sgld(self,
                          loss_functions: List[LossFunction],
                          parameters: dict
