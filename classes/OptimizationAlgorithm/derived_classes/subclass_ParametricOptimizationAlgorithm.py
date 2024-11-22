@@ -387,7 +387,7 @@ class ParametricOptimizationAlgorithm(OptimizationAlgorithm):
     def perform_noisy_gradient_step_on_hyperparameters(self, sampling_assistant: SamplingAssistant) -> None:
         for name, parameter in self.implementation.named_parameters():
             if parameter.requires_grad:
-                noise = (sampling_assistant.current_learning_rate ** 2
+                noise = (sampling_assistant.current_learning_rate ** 0.5
                          * sampling_assistant.noise_distributions[name].sample())
                 with torch.no_grad():
                     parameter.add_(
@@ -401,7 +401,7 @@ def add_noise_to_every_parameter_that_requires_grad(
     with torch.no_grad():
         for name, parameter in opt_algo.implementation.named_parameters():
             if parameter.requires_grad:
-                noise = (sampling_assistant.current_learning_rate ** 2
+                noise = (sampling_assistant.current_learning_rate ** 0.5
                          * sampling_assistant.noise_distributions[name].sample())
                 parameter.add_(noise.reshape(parameter.shape))
 
