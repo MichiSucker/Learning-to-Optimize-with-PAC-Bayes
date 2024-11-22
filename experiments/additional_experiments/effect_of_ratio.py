@@ -167,7 +167,7 @@ def plot_results(loading_path):
     plt.rcParams.update(tex_fonts)
 
     names = {'with': 'with', 'without': 'without', 'other': 'other'}
-    colors = {'with': '#57cc99', 'without': '#7209b7', 'other': '#f72585'}
+    colors = {'with': '#FDC500', 'without': '#007DFF', 'other': '#f72585'}
 
     number_of_iterations_training = np.load(loading_path + 'number_of_iterations_training.npy')
     number_of_iterations_testing = np.load(loading_path + 'number_of_iterations_testing.npy')
