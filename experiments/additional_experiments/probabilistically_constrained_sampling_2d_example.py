@@ -3,6 +3,8 @@ import matplotlib
 import numpy as np
 import matplotlib.gridspec as gridspec
 import torch
+from sympy import false
+
 from experiments.helpers import set_size
 from pathlib import Path
 from classes.LossFunction.class_LossFunction import LossFunction
@@ -104,7 +106,6 @@ def load_samples(path: str):
 
 def create_plot(path):
 
-    eps = np.spacing(0.0)
     width = 469.75499  # Arxiv
     tex_fonts = {
         # Use LaTeX to write all text
@@ -157,17 +158,18 @@ def create_plot(path):
         create_samples(path)
         samples, rejected = load_samples(savings_path)
 
-    my_cmap = matplotlib.colors.ListedColormap(['black'])
-    # axes_3.scatter(samples[:, 0], samples[:, 1], marker='x', s=1, color='black')
-    axes_3.hist2d(samples[:, 0], samples[:, 1], cmap=my_cmap, bins=[150, 150], cmin=1,
-                  range=[[np.min(xx), np.max(xx)], [np.min(yy), np.max(yy)]])
-    # axes_3.scatter(rejected[:, 0], rejected[:, 1], marker='x', s=1, color='red')
-    my_cmap = matplotlib.colors.ListedColormap(['red'])
-    axes_3.hist2d(rejected[:, 0], rejected[:, 1], cmap=my_cmap, bins=[150, 150], cmin=1,
-                  range=[[np.min(xx), np.max(xx)], [np.min(yy), np.max(yy)]])
+    false_positive = samples[true_probability_array(samples[:, 0], samples[:, 1]) < 0.6]
+    false_negative = rejected[true_probability_array(rejected[:, 0], rejected[:, 1]) >= 0.6]
+
+    axes_3.scatter(samples[:, 0], samples[:, 1], color='#2B2D42', s=1, alpha=0.25, label='accepted')
+    axes_3.scatter(rejected[:, 0], rejected[:, 1], color='#8D99AE', s=1, alpha=0.25, label='rejected')
+    axes_3.scatter(false_positive[:, 0], false_positive[:, 1], color='#EF233C', s=1, alpha=0.75, label='false positive')
+    axes_3.scatter(false_negative[:, 0], false_negative[:, 1], color='orange', s=1, alpha=0.75, label='false negative')
+
     axes_3.set_title(f'Accepted/Rejected = {len(samples)/len(rejected):.1f}')
-    axes_3.contourf(xx, yy, zz_2, alpha=0.25, cmap=my_cmap)
+    axes_3.contourf(xx, yy, zz_2, alpha=0., cmap=my_cmap)
     axes_3.grid('on')
+    axes_3.legend()
 
     my_cmap = matplotlib.cm.get_cmap('Blues')
     axes_4.contourf(xx, yy, zz_2, alpha=0., cmap='OrRd')
