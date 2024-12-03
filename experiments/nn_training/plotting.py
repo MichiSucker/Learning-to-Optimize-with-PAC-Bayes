@@ -85,7 +85,7 @@ def create_evaluation_plots(loading_path: str, path_of_experiment: str) -> None:
     ax[0, 0].axvline(n_train, 0, 1, color=colors['pac'], linestyle='dashdot', alpha=0.5, label='$n_{\\rm{train}}$')
 
     # Finalize plot for loss over iterations
-    ax[0, 0].set(title=f'Loss over Iterations', xlabel='$n_{\\rm{it}}$', ylabel='$\ell(x^{(i)})$')
+    ax[0, 0].set(title=f'Loss over Iterations', xlabel='$n_{\\rm{it}}$', ylabel='$\\ell(x^{(i)})$')
     ax[0, 0].legend()
     ax[0, 0].grid('on')
     ax[0, 0].set_yscale('log')
@@ -115,7 +115,7 @@ def create_evaluation_plots(loading_path: str, path_of_experiment: str) -> None:
 
     ax[1, 0].grid('on')
     ax[1, 0].legend()
-    ax[1, 0].set(title='Loss Histogram', xlabel='$\ell(x^{(n_{\\rm{max}})})$', xscale='log')
+    ax[1, 0].set(title='Loss Histogram', xlabel='$\\ell(x^{(n_{\\rm{max}})})$', xscale='log')
 
     ####################################################################################################################
     # Plot bilevel performance
@@ -176,7 +176,7 @@ def create_evaluation_plots(loading_path: str, path_of_experiment: str) -> None:
     ax[1, 1].fill_between(fill_x, rv.pdf(fill_x), color='orange', alpha=0.3,
                           label=f'$F(p_u) - F(p_l)$ = {mass_inside:.4f}')
     ax[1, 1].axvline(empirical_probability, 0, 1, color='orange', linestyle='dashed',
-                     label=f'$p(\\alpha)$ = {100 * empirical_probability:.1f} \%')
+                     label=f'$p(\\alpha)$ = {100 * empirical_probability:.1f} \\%')
     ax[1, 1].set(title='Sublevel Prob.', xlabel='p')
     ax[1, 1].set_xticks(np.linspace(0.0, 1.0, num=11, endpoint=True))
     ax[1, 1].set_yticks([])
