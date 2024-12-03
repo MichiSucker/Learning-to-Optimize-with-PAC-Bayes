@@ -195,7 +195,9 @@ def plot_results(loading_path):
     plt.rcParams.update(tex_fonts)
 
     names = {'with': 'with', 'without': 'without', 'other': 'other'}
-    colors = {'with': '#FDC500', 'without': '#007DFF', 'other': '#f72585'}
+    colors = {'with': '#FFC300', 'without': '#FF377B', 'other': '#f72585'}
+
+    colors = {'without': '#4cc9f0', 'with': '#f72585', 'other': '#613f75'}
 
     number_of_iterations_training = np.load(loading_path + 'number_of_iterations_training.npy')
     number_of_iterations_testing = np.load(loading_path + 'number_of_iterations_testing.npy')
@@ -235,7 +237,7 @@ def plot_results(loading_path):
     axes_1.axvline(x=number_of_iterations_training, ymin=0, ymax=1, linestyle='dashed', alpha=0.5,
                    label='$n_{\\rm{train}}$', color='black')
 
-    axes_1.set_ylabel('$\ell(x^{(k)}, \\theta)$')
+    axes_1.set_ylabel('$\\ell(x^{(k)}, \\theta)$')
     axes_1.set_xlabel('$n_{\\rm{it}}$')
     axes_1.set_yscale('log')
     axes_1.set_title('Test')
@@ -263,7 +265,7 @@ def plot_results(loading_path):
     axes_2.axvline(x=number_of_iterations_training, ymin=0, ymax=1, linestyle='dashed', alpha=0.5,
                    label='$n_{\\rm{train}}$', color='black')
 
-    axes_2.set_ylabel('$\ell(x^{(k)}, \\theta)$')
+    axes_2.set_ylabel('$\\ell(x^{(k)}, \\theta)$')
     axes_2.set_xlabel('$n_{\\rm{it}}$')
     axes_2.set_yscale('log')
     axes_2.set_title('Train')
@@ -271,8 +273,8 @@ def plot_results(loading_path):
     axes_2.grid('on')
 
     plt.tight_layout()
-    fig.savefig(loading_path + 'comparison_randomization_trajectory.pdf', dpi=300, bbox_inches='tight')
-    fig.savefig(loading_path + 'comparison_randomization_trajectory.png', dpi=300, bbox_inches='tight')
+    fig.savefig(loading_path + 'comparison_randomization_trajectory.pdf', dpi=300, bbox_inches='tight', pad_inches=0)
+    fig.savefig(loading_path + 'comparison_randomization_trajectory.png', dpi=300, bbox_inches='tight', pad_inches=0)
 
 
 def set_up_and_train_algorithm(path_of_experiment: str) -> None:
