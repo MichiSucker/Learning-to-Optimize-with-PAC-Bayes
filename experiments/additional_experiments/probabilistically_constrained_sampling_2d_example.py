@@ -136,19 +136,19 @@ def create_plot(path):
     xx, yy = np.meshgrid(x, y)
     zz = true_probability_array(xx.copy(), yy.copy())
 
-    my_cmap = matplotlib.cm.get_cmap('YlGn')
+    my_cmap = matplotlib.cm.get_cmap('Blues')
     my_cmap.set_bad('white')
     zz = np.ma.masked_equal(zz, 0)
-    axes_1.contourf(xx, yy, zz, alpha=0.75, cmap=my_cmap)
+    axes_1.contourf(xx, yy, zz, alpha=1., cmap=my_cmap)
     axes_1.set_title('Underlying Probability $p$')
     axes_1.grid('on')
 
     zz_2 = constrained_potential(xx, yy)
-    my_cmap = matplotlib.cm.get_cmap('OrRd')
+    my_cmap = matplotlib.cm.get_cmap('PuRd')
     my_cmap.set_bad('white')
     zz_2 = np.ma.masked_equal(zz_2, 0)
-    axes_2.contourf(xx, yy, zz_2, alpha=0.75, cmap=my_cmap)
-    axes_2.set_title('Constrained Potential ($p \ge 0.6$)')
+    axes_2.contourf(xx, yy, zz_2, alpha=1., cmap=my_cmap)
+    axes_2.set_title('Constrained Potential ($p \\ge 0.6$)')
     axes_2.grid('on')
 
     savings_path = create_folder_for_storing_data(path_of_experiment=path)
@@ -161,17 +161,17 @@ def create_plot(path):
     false_positive = samples[true_probability_array(samples[:, 0], samples[:, 1]) < 0.6]
     false_negative = rejected[true_probability_array(rejected[:, 0], rejected[:, 1]) >= 0.6]
 
-    axes_3.scatter(samples[:, 0], samples[:, 1], color='#2B2D42', s=1, alpha=0.25, label='accepted')
-    axes_3.scatter(rejected[:, 0], rejected[:, 1], color='#8D99AE', s=1, alpha=0.25, label='rejected')
-    axes_3.scatter(false_positive[:, 0], false_positive[:, 1], color='#EF233C', s=1, alpha=0.75, label='false positive')
-    axes_3.scatter(false_negative[:, 0], false_negative[:, 1], color='orange', s=1, alpha=0.75, label='false negative')
+    axes_3.scatter(samples[:, 0], samples[:, 1], color='#0B090A', s=1, alpha=0.5, label='accepted')
+    axes_3.scatter(rejected[:, 0], rejected[:, 1], color='#D3D3D3', s=1, alpha=0.25, label='rejected')
+    axes_3.scatter(false_positive[:, 0], false_positive[:, 1], color='#A4161A', s=1, alpha=0.75, label='false positive')
+    axes_3.scatter(false_negative[:, 0], false_negative[:, 1], color='#E5383B', s=1, alpha=0.75, label='false negative')
 
     axes_3.set_title(f'Accepted/Rejected = {len(samples)/len(rejected):.1f}')
     axes_3.contourf(xx, yy, zz_2, alpha=0., cmap=my_cmap)
     axes_3.grid('on')
     axes_3.legend()
 
-    my_cmap = matplotlib.cm.get_cmap('Blues')
+    my_cmap = matplotlib.cm.get_cmap('PuRd')
     axes_4.contourf(xx, yy, zz_2, alpha=0., cmap='OrRd')
     axes_4.hist2d(samples[:, 0], samples[:, 1], bins=[100, 100],
                   range=[[np.min(xx), np.max(xx)], [np.min(yy), np.max(yy)]], cmap=my_cmap, cmin=1)
