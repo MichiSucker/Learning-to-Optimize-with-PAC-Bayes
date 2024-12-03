@@ -12,12 +12,14 @@ def create_folder_for_experiment(path_to_experiment_folder: str) -> str:
 
 
 def run(path_to_experiment_folder: str) -> None:
+
     print("Starting experiment on quadratic functions.")
+    torch.manual_seed(17)   # If you want to reproduce exactly.
+
     # This is pretty important! Without increased accuracy, the model will struggle to train, because at some point
     # (about loss of 1e-6) the incurred losses are subject to numerical instabilities, which do not provide meaningful
     # information for learning.
     torch.set_default_dtype(torch.double)
-    torch.manual_seed(17)   # If you want to reproduce exactly.
 
     path_of_experiment = create_folder_for_experiment(path_to_experiment_folder)
     set_up_and_train_algorithm(path_of_experiment=path_of_experiment)
