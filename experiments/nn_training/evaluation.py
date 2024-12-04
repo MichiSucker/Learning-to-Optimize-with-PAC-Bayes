@@ -236,7 +236,7 @@ def set_up_evaluation_assistant(loading_path: str) -> Tuple[EvaluationAssistant,
         optimal_hyperparameters=best_sample, implementation_class=NnOptimizer)
     evaluation_assistant.loss_of_neural_network = loss_of_neural_network
     evaluation_assistant.implementation_arguments = (
-        neural_network_for_standard_training.get_dimension_of_hyperparameters())
+        {'dim': neural_network_for_standard_training.get_dimension_of_hyperparameters()})
     evaluation_assistant.lr_adam = 0.008  # Originally, this was found by gridsearch.
     return evaluation_assistant, neural_network_for_standard_training
 
