@@ -2,6 +2,7 @@ from experiments.image_processing.training import set_up_and_train_algorithm
 from experiments.image_processing.evaluation import evaluate_algorithm
 from experiments.image_processing.plotting import create_evaluation_plots
 from pathlib import Path
+import torch
 
 
 def create_folder_for_experiment(path_to_experiment_folder: str) -> str:
@@ -11,8 +12,14 @@ def create_folder_for_experiment(path_to_experiment_folder: str) -> str:
 
 
 def run(path_to_experiment_folder: str) -> None:
+
+    print("Starting image-processing experiment.")
+    torch.manual_seed(27)  # This is for exact reproducibility.
+
     path_to_images = '/home/michael/Desktop/Experiments/Images/'
     path_of_experiment = create_folder_for_experiment(path_to_experiment_folder)
     set_up_and_train_algorithm(path_of_experiment=path_of_experiment, path_to_images=path_to_images)
     evaluate_algorithm(path_of_experiment=path_of_experiment, loading_path=path_of_experiment + 'data/')
     create_evaluation_plots(loading_path=path_of_experiment + 'data/', path_of_experiment=path_of_experiment)
+
+    print("Finished image-processing experiment.")

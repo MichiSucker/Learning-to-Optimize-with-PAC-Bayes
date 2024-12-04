@@ -12,9 +12,16 @@ def create_folder_for_experiment(path_to_experiment_folder: str) -> str:
 
 
 def run(path_to_experiment_folder: str) -> None:
+
+    print("Starting lasso experiment.")
+    torch.manual_seed(37)   # This is for exact reproducibility.
+
     # This is pretty important again. Also, it makes sure that all tensor types do match.
     torch.set_default_dtype(torch.float64)
+
     path_of_experiment = create_folder_for_experiment(path_to_experiment_folder)
     set_up_and_train_algorithm(path_of_experiment=path_of_experiment)
     evaluate_algorithm(path_of_experiment=path_of_experiment, loading_path=path_of_experiment + 'data/')
     create_evaluation_plots(loading_path=path_of_experiment + 'data/', path_of_experiment=path_of_experiment)
+
+    print("Finished lasso experiment.")
