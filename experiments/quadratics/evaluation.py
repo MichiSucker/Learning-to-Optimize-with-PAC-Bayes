@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import NDArray
 from typing import List, Tuple, Callable
@@ -5,6 +6,7 @@ import torch
 import pickle
 from pathlib import Path
 import time
+from tqdm import tqdm
 
 from classes.LossFunction.class_LossFunction import LossFunction
 from classes.LossFunction.derived_classes.subclass_ParametricLossFunction import ParametricLossFunction
@@ -125,7 +127,9 @@ def compute_losses(evaluation_assistant: EvaluationAssistant,
     number_of_times_constrained_satisfied = 0
     _, convergence_risk_constraint, _ = get_describing_property()
 
-    for test_parameter in evaluation_assistant.test_set:
+    progress_bar = tqdm(evaluation_assistant.test_set)
+    progress_bar.set_description('Compute losses')
+    for test_parameter in progress_bar:
 
         loss_over_iterations = compute_losses_over_iterations(
             algorithm=learned_algorithm, evaluation_assistant=evaluation_assistant, parameter=test_parameter)
@@ -195,7 +199,10 @@ def compute_times(learned_algorithm: OptimizationAlgorithm,
     times_pac = {epsilon: [0.] for epsilon in levels_of_accuracy}
     times_std = {epsilon: [0.] for epsilon in levels_of_accuracy}
 
-    for parameter, ground_truth_loss in zip(evaluation_assistant.test_set, ground_truth_losses):
+    progress_bar = tqdm(zip(evaluation_assistant.test_set, ground_truth_losses))
+    progress_bar.set_description('Compute times')
+
+    for parameter, ground_truth_loss in progress_bar:
         for epsilon in levels_of_accuracy:
 
             cur_loss_function = ParametricLossFunction(function=evaluation_assistant.loss_of_algorithm,
@@ -213,13 +220,36 @@ def compute_times(learned_algorithm: OptimizationAlgorithm,
     return times_pac, times_std
 
 
+def sanity_check_for_baseline(algorithm: OptimizationAlgorithm, savings_path: str) -> None:
+
+    fig, ax = plt.subplots(1, 1, figsize=(8, 4))
+
+    iterations = torch.arange(2e4 + 1)
+    losses = [algorithm.evaluate_loss_function_at_current_iterate().item()]
+    for _ in range(len(iterations) - 1):
+        algorithm.perform_step()
+        losses.append(algorithm.evaluate_loss_function_at_current_iterate().item())
+
+    losses = np.array(losses)
+    ax.plot(iterations.numpy(), losses)
+    ax.set_yscale('log')
+    ax.set_ylabel('loss')
+    ax.set_xlabel('iteration')
+    ax.grid('on')
+
+    fig.savefig(savings_path + 'sanity_check.pdf', dpi=300, bbox_inches='tight')
+
+
 def evaluate_algorithm(loading_path: str, path_of_experiment: str) -> None:
+    savings_path = create_folder_for_storing_data(path_of_experiment)
     evaluation_assistant = set_up_evaluation_assistant(loading_path)
     learned_algorithm = evaluation_assistant.set_up_learned_algorithm(
         arguments_of_implementation_class=evaluation_assistant.implementation_arguments)
     baseline_algorithm = get_baseline_algorithm(
         loss_function=learned_algorithm.loss_function, smoothness_constant=evaluation_assistant.smoothness_parameter,
         strong_convexity_constant=evaluation_assistant.smoothness_parameter, dim=evaluation_assistant.dim)
+
+    sanity_check_for_baseline(algorithm=baseline_algorithm, savings_path=savings_path)
 
     losses_of_baseline, losses_of_learned_algorithm, percentage_constrained_satisfied = compute_losses(
         evaluation_assistant=evaluation_assistant, learned_algorithm=learned_algorithm,
@@ -232,7 +262,7 @@ def evaluate_algorithm(loading_path: str, path_of_experiment: str) -> None:
         stop_procedure_after_at_most=int(1e4),
         ground_truth_losses=[0. for _ in range(len(evaluation_assistant.test_set))])
 
-    save_data(savings_path=create_folder_for_storing_data(path_of_experiment),
+    save_data(savings_path=savings_path,
               times_of_learned_algorithm=times_of_learned_algorithm,
               losses_of_learned_algorithm=losses_of_learned_algorithm,
               times_of_baseline_algorithm=times_of_baseline_algorithm,
