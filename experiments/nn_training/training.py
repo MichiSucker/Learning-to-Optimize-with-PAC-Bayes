@@ -110,7 +110,6 @@ def get_algorithm_for_initialization(initial_state_for_std_algorithm: torch.Tens
 def get_initial_state(dim: int) -> torch.Tensor:
     # Note that it is important to keep the same initial point: Here, the algorithm only gets on a single starting
     # point, so it depends on this concrete initialization.
-    torch.manual_seed(0)
     return torch.randn(2 * dim).reshape((2, -1))
 
 
