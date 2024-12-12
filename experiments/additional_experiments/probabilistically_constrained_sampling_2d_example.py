@@ -112,12 +112,12 @@ def create_plot(path):
         "text.usetex": True,
         "font.family": "serif",
         # Use 10pt font in plots, to match 10pt font in document
-        "axes.labelsize": 10,
-        "font.size": 10,
+        "axes.labelsize": 8,
+        "font.size": 8,
         # Make the legend/label fonts quantile_distance little smaller
         "legend.fontsize": 8,
-        "xtick.labelsize": 10,
-        "ytick.labelsize": 10
+        "xtick.labelsize": 8,
+        "ytick.labelsize": 8
     }
     plt.rcParams.update(tex_fonts)
 
