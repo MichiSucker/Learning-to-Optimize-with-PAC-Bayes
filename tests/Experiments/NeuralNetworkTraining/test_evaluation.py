@@ -21,6 +21,7 @@ from experiments.nn_training.evaluation import (compute_losses,
 class TestEvaluation(unittest.TestCase):
 
     def setUp(self):
+        torch.set_default_dtype(torch.double)
         self.data_path = '/home/michael/Desktop/JMLR_New/Experiments/neural_network_training/data/'
         self.dummy_savings_path = '/home/michael/Desktop/JMLR_New/Experiments/neural_network_training/dummy_data/'
 
