@@ -256,11 +256,12 @@ class TestEvaluationNN(unittest.TestCase):
         self.assertIsInstance(algo.constraint, Constraint)
 
     def test_create_folder(self):
-        path = '/home/michael/Desktop/JMLR_New/Experiments/neural_network_training/data/'
+        path = '/home/michael/Desktop/JMLR_New/Experiments/neural_network_training/'
         create_folder_for_storing_data(path)
 
     def test_save_data(self):
         dummy_savings_path = '/home/michael/Desktop/JMLR_New/Experiments/neural_network_training/dummy_data/'
+        create_folder_for_storing_data(dummy_savings_path)
         save_data(savings_path=dummy_savings_path,
                   pac_bound=np.empty(1),
                   initial_state=np.empty(1),
@@ -271,4 +272,4 @@ class TestEvaluationNN(unittest.TestCase):
 
     @unittest.skip(reason='Too expensive to test all the time.')
     def test_run_nn_training_experiment(self):
-        set_up_and_train_algorithm('/home/michael/Desktop/JMLR_New/Experiments')
+        set_up_and_train_algorithm('/home/michael/Desktop/JMLR_New/Experiments/neural_network_training/')
