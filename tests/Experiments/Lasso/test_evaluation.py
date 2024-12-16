@@ -29,7 +29,7 @@ class TestEvaluation(unittest.TestCase):
 
     def setUp(self):
         # Make sure that all tensors have the same type.
-        torch.set_default_dtype(torch.float64)
+        torch.set_default_dtype(torch.double)
         self.path_to_experiment = '/home/michael/Desktop/JMLR_New/Experiments/lasso/'
         self.dummy_savings_path = self.path_to_experiment + 'dummy_data/'
         self.loading_path = self.path_to_experiment + 'data/'
