@@ -8,6 +8,7 @@ The code implements three main of classes:
   1) LossFunction
   2) OptimizationAlgorithm
   3) Constraint
+     
 Here, we have the following inheritance:
 
 ![Inheritance.](classes/overview_classes.png)
@@ -45,27 +46,44 @@ The class `Constraint` implements constraints to which the `OptimizationAlgorith
 
 The class `ProbabilisticConstraint` is used to create a `Constraint` based on the probabilistic constraining procedure outlined in the paper. To instantiate such an object, one has to provide a `list_of_constraints`, which can be used for estimation, and the `parameters_of_estimation`, which specify the accuracy of the resulting estimate. The main method of `ProbabilisticConstraint` is `create_constraint`, which turns the described procedure into a `Constraint`-object. To do this, it uses an `BayesianProbabilityEstimator`, which implements the estimation procedure outlined in the paper, that is, a Bayesian estimation of the success-probability of Bernoulli random variables with a Beta prior. Correspondingly, its main method is 'estimate_probability'.
 
-### Experimental Results
+### Small additional experiments
+In the paper, we introduce some new design choices. Especially, a procedure to incorporate probabilistic constraints into a sampling algorithm, a new loss-function for learning-to-optimize, and a new randomization procedure for learning-to-optimize. For each of them, we provide a small-scale experiment. These can be found in the folder `experiments/additional_experiments`. 
+The plot below shows the result of our constraining procedure on a two-dimensional toy example. We can see that it allows to constrain the sampling algorithm (here: Gradient Langevin Dynamics) to the non-convex set, which is specified by the conditional probability defined in the upper left plot. The lower left plot shows the accepted (black) and rejected (gray) samples, which have a ratio of about 10:1, that is, still most samples get accepted. However, as the procedure itself is stochastic, it also produces some false-positives (dark red) and some false-negatives (red), that is, some samples get falsely accepted (more problematic) and some samples get falsely rejected (less problematic). Finally, the lower right plot shows the estimated potential, which, visually appears to be quite good.
+
+![Probabilistically constrained sampling.](experiments/additional_experiments/2d_example.png)
+
+The effect of the two other design-choices, namely the ratio of consecutive losses and the specified randomization procedure, is shown in the next plot:
+
+![Effect of design choices on performance.](experiments/additional_experiments/comparison_design_choices.png)
+
+In both cases, we trained two times the same algorithm, one time with our proposed design choice (yellow), and one time without (orange). In the case of the ratio of consecutive losses, we use normal function values as baseline. We can see that the ratio of consecutive losses greatly improves the performance compared to normal function values, and that the randomization procedure yields generalization to more iterations than during training. However, note that, especially for the ratio of consecutive losses, there might be some bias: The architecture of the algorithm is one that we found using our proposed method.
+
+### Main experimental results
 The experiments are implemented in the folder `experiments`. Each of these experiments implements an `algorithm.py`, the `data_generation.py`, the actual `training.py`, the `evaluation.py`, and the `plotting.py`. Here, the way we generate the data (with all its parameters) is specified in `data_generation.py`. Similarly, the training procedure with all its parameters is specified in `training.py`. If you just want to `run` a specific experiments, you can have a look at the corresponding file `run_experiments.py`. Here, you have to specfiy the `path_of_experiment`, that is, where all the data will be stored in (parameters, intermediate results, final results). The only exception to this is 'image_processing' experiment, in which you also have to specify the folder to the images that you want to use.
 
 #### Remark
 Between the experiments, there is some dublicated code (set-up, plotting, etc.). This is not optimal and could be changed. However, it was done on purpose to have all needed code for one experiment in one folder.
 
-If everything works out correctly, you should get plots that look like the following:
+If everything works out correctly, you should get plots that look like the following (for a detailed description of the experiments, please have a look at the paper):
 
-#### 1) Quadratic functions:
+#### 1) Quadratic functions (strongly convex and smooth):
 ![Results of the experiment on quadratic functions.](experiments/quadratics/evaluation_plot.png)
 
-#### 2) Image processing:
+#### 2) Image processing (convex and smooth):
 ![Results of the experiment the image processing experiment.](experiments/image_processing/evaluation_plot.png)
 
-#### 3) LASSO:
+#### 3) LASSO (convex and non-smooth:
 ![Results of the experiment on quadratic functions.](experiments/lasso/evaluation_plot.png)
 
-#### 4) Training a neural network:
+#### 4) Training a neural network (non-smooth and non-convex):
 ![Results of the neural-network-training experiment.](experiments/nn_training/evaluation_plot.png)
 
+#### 5) Training a neural network on MNIST (additional):
+![Results of the MNIST-experiment.](experiments/mnist/evaluation_plot.png)
+
+We want to remark that this procedure is (not yet) well-suited for training on large data sets: The theory does not apply to stochastic algorithms, so you have to compute full-batch gradients. In turn, the MNIST experiment is always run on rather small subsets of MNIST. For a detailed discussion of the experimental results, we again refer to the paper.
+
 ### Final comments
-The procedure is implemented in such a way, such that it is widely applicable and one can exchange the architecture of the algorithm easily. Basically, the only thing that has to be changed is the `implementation` of the corresponding `nn.Module`. This makes it very useful in the experimental stage, as one can run many different experiments in a short amount of time. However, based on its generality, it has some computational bottlenecks. All of them are related to computing the `pac_bound` in the `PacBayesOptimizationAlgorithm`. The main problem appears in the method `evaluate_sufficient_statistics_on_all_parameters_and_hyperparameters`, which computes the values of the sufficient statistic for all combinations of parameters and hyperparameters. In principle, there is no way around this, because we have to have the corresponding values to compute the theoretical guarantee. However, for a given concrete application, it might be possible to parallelize these operations. Another computationally expensive part is the sampling procedure with SGLD to construct the prior distribution. This is due to the fact that it has to happen iteratively and some samples need to be rejected in our case. If one is lucky, in the sense of having a concrete application where one can just use a specific predefined distribution without constraints, this can also be replaced.
+The procedure is implemented in such a way, such that it is widely applicable and one can exchange the architecture of the algorithm easily. Basically, the only thing that has to be changed is the `implementation` of the corresponding `nn.Module`. This makes it very useful in the experimental stage, as one can run many different experiments in a short amount of time. However, based on its generality, it has some computational bottlenecks. All of them are related to computing the `pac_bound` in the `PacBayesOptimizationAlgorithm`. The most expensive part appears in the method `evaluate_sufficient_statistics_on_all_parameters_and_hyperparameters`, which computes the values of the sufficient statistic for all combinations of parameters and hyperparameters. In principle, there is no way around this, because we have to have the corresponding values to compute the theoretical guarantee (in our case, this is the actual data!). However, for a given concrete application, it might be possible to parallelize these operations. Another computationally expensive part is the sampling procedure with SGLD to construct the prior distribution. This is due to the fact that, also here, we have to check for the guarantee (and some samples need to be rejected). If one is lucky, in the sense of having a concrete application where one can just use a specific predefined distribution without constraints, this should be preferred. 
 
 Thanks for your interest in our work. I hope this short overview was helpful to you!
