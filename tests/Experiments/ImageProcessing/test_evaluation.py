@@ -24,6 +24,7 @@ from experiments.image_processing.evaluation import (evaluate_algorithm,
 class TestEvaluation(unittest.TestCase):
 
     def setUp(self):
+        torch.set_default_dtype(torch.double)   # Data is stored in double.
         self.path_to_experiment = '/home/michael/Desktop/JMLR_New/Experiments/image_processing/'
         self.dummy_savings_path = self.path_to_experiment + 'dummy_data/'
         self.loading_path = self.path_to_experiment + 'data/'
