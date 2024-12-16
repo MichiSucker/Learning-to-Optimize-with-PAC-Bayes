@@ -42,18 +42,18 @@ class TestDataGeneration(unittest.TestCase):
         distribution, mu_min = get_distribution_of_strong_convexity_parameter()
         self.assertIsInstance(distribution, torch.distributions.uniform.Uniform)
         self.assertIsInstance(mu_min, torch.Tensor)
-        self.assertTrue(torch.equal(mu_min, torch.tensor(1e-3)))
-        self.assertTrue(torch.eq(distribution.low, torch.tensor(1e-3)))
-        self.assertTrue(torch.eq(distribution.high, torch.tensor(5e-3)))
+        self.assertTrue(torch.equal(mu_min, torch.tensor(1e-2)))
+        self.assertTrue(torch.eq(distribution.low, torch.tensor(1e-2)))
+        self.assertTrue(torch.eq(distribution.high, torch.tensor(5e-2)))
 
     def test_get_distribution_of_smoothness_parameter(self):
         # Check that smoothness parameters get sampled as specified.
         distribution, L_max = get_distribution_of_smoothness_parameter()
         self.assertIsInstance(distribution, torch.distributions.uniform.Uniform)
         self.assertIsInstance(L_max, torch.Tensor)
-        self.assertTrue(torch.equal(L_max, torch.tensor(5e2)))
-        self.assertTrue(torch.eq(distribution.low, torch.tensor(1e2)))
-        self.assertTrue(torch.eq(distribution.high, torch.tensor(5e2)))
+        self.assertTrue(torch.equal(L_max, torch.tensor(5e1)))
+        self.assertTrue(torch.eq(distribution.low, torch.tensor(1e1)))
+        self.assertTrue(torch.eq(distribution.high, torch.tensor(5e1)))
 
     def test_get_distribution_of_right_hand_side(self):
         # Check that the right-hand side gets sampled as specified.
@@ -107,8 +107,8 @@ class TestDataGeneration(unittest.TestCase):
         self.assertIsInstance(mu_min, torch.Tensor)
         self.assertIsInstance(L_max, torch.Tensor)
         self.assertTrue(mu_min.item() < L_max.item())
-        self.assertTrue(torch.equal(mu_min, torch.tensor(1e-3)))
-        self.assertTrue(torch.equal(L_max, torch.tensor(5e2)))
+        self.assertTrue(torch.equal(mu_min, torch.tensor(1e-2)))
+        self.assertTrue(torch.equal(L_max, torch.tensor(5e1)))
         self.assertEqual(dim, 200)
         self.assertTrue('prior' in list(parameters.keys()))
         self.assertTrue('train' in list(parameters.keys()))
