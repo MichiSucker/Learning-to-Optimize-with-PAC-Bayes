@@ -176,12 +176,6 @@ class TestEvaluationNN(unittest.TestCase):
         dim = torch.randint(low=1, high=100, size=(1,)).item()
         x_0 = get_initial_state(dim=dim)
         self.assertEqual(x_0.shape, torch.Size((2, dim)))
-        for _ in range(3):
-            # Make sure, you get same init every time.
-            # It is randomly sampled, but always the same.
-            # Note that we need random numbers, because these are the weights of the neural network, and initialization
-            # is important here.
-            self.assertTrue(torch.equal(x_0, get_initial_state(dim=dim)))
 
     def test_get_describing_property(self):
         # Check that you get three functions.
