@@ -16,13 +16,13 @@ def check_and_extract_number_of_datapoints(number_of_datapoints_per_dataset: dic
 
 
 def get_distribution_of_strong_convexity_parameter() -> Tuple[torch.distributions.Distribution, torch.Tensor]:
-    mu_min, mu_max = torch.tensor(1e-2), torch.tensor(5e-2)
+    mu_min, mu_max = torch.tensor(1e-3), torch.tensor(5e-3)
     strong_convexity_distribution = torch.distributions.uniform.Uniform(mu_min, mu_max)
     return strong_convexity_distribution, mu_min
 
 
 def get_distribution_of_smoothness_parameter() -> Tuple[torch.distributions.Distribution, torch.Tensor]:
-    L_min, L_max = torch.tensor(1e1), torch.tensor(5e1)
+    L_min, L_max = torch.tensor(1e2), torch.tensor(5e2)
     smoothness_distribution = torch.distributions.uniform.Uniform(L_min, L_max)
     return smoothness_distribution, L_max
 
