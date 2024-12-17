@@ -32,5 +32,5 @@ def run_experiments(path_to_experiment):
 
 if __name__ == '__main__':
 
-    path = ...  # Need to be specified first.
+    path = ... # Need to be specified first.
     run_experiments(path_to_experiment=path)
