@@ -247,7 +247,7 @@ def evaluate_algorithm(loading_path: str, path_of_experiment: str) -> None:
         arguments_of_implementation_class=evaluation_assistant.implementation_arguments)
     baseline_algorithm = get_baseline_algorithm(
         loss_function=learned_algorithm.loss_function, smoothness_constant=evaluation_assistant.smoothness_parameter,
-        strong_convexity_constant=evaluation_assistant.smoothness_parameter, dim=evaluation_assistant.dim)
+        strong_convexity_constant=evaluation_assistant.strong_convexity_parameter, dim=evaluation_assistant.dim)
 
     sanity_check_for_baseline(algorithm=baseline_algorithm, savings_path=savings_path)
 
