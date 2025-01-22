@@ -149,9 +149,9 @@ def get_sufficient_statistics(constants: torch.Tensor) -> Callable:
 
 
 def instantiate_algorithm_for_learning(loss_functions: dict,
-                                       dimension_of_hyperparameters: int) -> PacBayesOptimizationAlgorithm:
+                                       dimension_of_optimization_variable: int) -> PacBayesOptimizationAlgorithm:
 
-    initial_state = get_initial_state(dim=dimension_of_hyperparameters)
+    initial_state = get_initial_state(dim=dimension_of_optimization_variable)
     parameters_of_estimation = get_parameters_of_estimation()
     constraint = get_constraint(
         parameters_of_estimation=parameters_of_estimation,
@@ -162,7 +162,7 @@ def instantiate_algorithm_for_learning(loss_functions: dict,
     sufficient_statistics = get_sufficient_statistics(constants=constants)
     algorithm_for_learning = PacBayesOptimizationAlgorithm(
         initial_state=initial_state,
-        implementation=NnOptimizer(dim=dimension_of_hyperparameters),
+        implementation=NnOptimizer(dim=dimension_of_optimization_variable),
         loss_function=loss_functions['prior'][0],
         pac_parameters=get_pac_bayes_parameters(sufficient_statistics),
         constraint=constraint
@@ -186,9 +186,8 @@ def set_up_and_train_algorithm(path_of_experiment: str) -> None:
     loss_functions = create_parametric_loss_functions_from_parameters(
         template_loss_function=loss_function_for_algorithm, parameters=parameters)
 
-    algorithm_for_learning = instantiate_algorithm_for_learning(
-        loss_functions=loss_functions,
-        dimension_of_hyperparameters=neural_network_for_std_training.get_dimension_of_hyperparameters())
+    algorithm_for_learning = instantiate_algorithm_for_learning(loss_functions=loss_functions,
+                                                                dimension_of_optimization_variable=neural_network_for_std_training.get_dimension_of_hyperparameters())
     algorithm_for_initialization = get_algorithm_for_initialization(
         initial_state_for_std_algorithm=algorithm_for_learning.initial_state[-1].reshape((1, -1)),
         loss_function=loss_functions['prior'][0]

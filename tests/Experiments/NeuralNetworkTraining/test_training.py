@@ -239,8 +239,7 @@ class TestEvaluationNN(unittest.TestCase):
 
         loss_functions = create_parametric_loss_functions_from_parameters(template_loss_function=dummy_function,
                                                                           parameters=parameters)
-        algo = instantiate_algorithm_for_learning(loss_functions=loss_functions,
-                                                  dimension_of_hyperparameters=10)
+        algo = instantiate_algorithm_for_learning(loss_functions=loss_functions, dimension_of_optimization_variable=10)
         # Check that we get a PacBayesOptimizationAlgorithm, and the needed parameters are set.
         self.assertIsInstance(algo, PacBayesOptimizationAlgorithm)
         self.assertIsInstance(algo.sufficient_statistics, Callable)
