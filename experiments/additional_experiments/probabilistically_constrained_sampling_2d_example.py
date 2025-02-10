@@ -140,7 +140,7 @@ def create_plot(path):
     my_cmap.set_bad('white')
     zz = np.ma.masked_equal(zz, 0)
     axes_1.contourf(xx, yy, zz, alpha=1., cmap=my_cmap)
-    axes_1.set_title('Underlying Probability $p$')
+    axes_1.set_title('Underlying Probability $\\rho$')
     axes_1.grid('on')
 
     zz_2 = constrained_potential(xx, yy)
@@ -148,7 +148,7 @@ def create_plot(path):
     my_cmap.set_bad('white')
     zz_2 = np.ma.masked_equal(zz_2, 0)
     axes_2.contourf(xx, yy, zz_2, alpha=1., cmap=my_cmap)
-    axes_2.set_title('Constrained Potential ($p \\ge 0.6$)')
+    axes_2.set_title('Constrained Potential ($\\rho \\ge 0.6$)')
     axes_2.grid('on')
 
     savings_path = create_folder_for_storing_data(path_of_experiment=path)

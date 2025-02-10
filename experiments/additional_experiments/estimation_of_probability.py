@@ -83,17 +83,18 @@ def bayesian_estimation_of_probability(path_of_experiment):
     for i, idx in enumerate(indices):
 
         f_xes = beta.pdf(a=distributions[idx][0], b=distributions[idx][1], x=xes)
-        ax[i].plot(xes, f_xes, color=color_density, label='$f_{a,b}(p)$')
-        ax[i].axvline(true_p, 0, 1, color=color_true_probability, linestyle='dotted', label='p')
+        ax[i].plot(xes, f_xes, color=color_density, label='$f_{a,b}(\\rho)$')
+        ax[i].axvline(true_p, 0, 1, color=color_true_probability, linestyle='dotted', label='$\\rho$')
         ax[i].annotate(text='', xy=(quantiles[idx][0], 2), xytext=(quantiles[idx][1], 2),
                        arrowprops=dict(arrowstyle='<->', color=color_lines))
-        ax[i].axvline(quantiles[idx][0], 0, 1, color=color_lines, linestyle='dashed', label='$q_l, q_u$')
+        ax[i].axvline(quantiles[idx][0], 0, 1, color=color_lines, linestyle='dashed',
+                      label='$Q_{a,b}(q_{\\cdot})$')
         ax[i].axvline(quantiles[idx][1], 0, 1, color=color_lines, linestyle='dashed')
 
         ax[i].grid('on')
-        ax[i].set(title=f'n = {idx}', xlabel='$p$')
+        ax[i].set(title=f'n = {idx}', xlabel='$\\rho$')
         ax[i].legend()
-    ax[0].set_ylabel('$f_{a,b}(p)$')
+    ax[0].set_ylabel('$f_{a,b}(\\rho)$')
     plt.tight_layout()
     fig.savefig(fname=savings_path + 'bayesian_estimation.pdf', dpi=300, bbox_inches='tight',
                 pad_inches=0)
