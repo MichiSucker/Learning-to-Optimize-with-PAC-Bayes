@@ -14,8 +14,6 @@ def create_folder_for_experiment(path_to_experiment_folder: str) -> str:
 def run(path_to_experiment_folder: str) -> None:
 
     print("Starting experiment on training a neural network.")
-    # torch.manual_seed(47)  # This is for exact reproducibility.
-
     torch.manual_seed(4)   # If you want to reproduce exactly.
     seed = torch.randint(low=0, high=100, size=(1,)).item()
     torch.manual_seed(seed)
