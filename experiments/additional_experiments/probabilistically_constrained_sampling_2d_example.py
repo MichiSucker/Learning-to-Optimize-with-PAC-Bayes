@@ -3,7 +3,6 @@ import matplotlib
 import numpy as np
 import matplotlib.gridspec as gridspec
 import torch
-from sympy import false
 
 from experiments.helpers import set_size
 from pathlib import Path
@@ -73,7 +72,7 @@ def run_gld(x, number_of_steps):
     step_size = 5e-3
     dist = torch.distributions.MultivariateNormal(torch.zeros((2,)), torch.eye(2))
     potential = LossFunction(function=phi)
-    for k in tqdm(range(number_of_steps)):
+    for _ in tqdm(range(number_of_steps)):
         x_tilde = x - 0.5 * step_size * potential.compute_gradient(x) + step_size**0.5 * dist.sample()
         if estimate_probability(np.array(x_tilde[0]), np.array(x_tilde[1])) > 0.6:
             samples.append(x_tilde.numpy())
@@ -140,7 +139,7 @@ def create_plot(path):
     my_cmap.set_bad('white')
     zz = np.ma.masked_equal(zz, 0)
     axes_1.contourf(xx, yy, zz, alpha=1., cmap=my_cmap)
-    axes_1.set_title('Underlying Probability $\\rho$')
+    axes_1.set_title('Underlying Probability') # $\\rho$
     axes_1.grid('on')
 
     zz_2 = constrained_potential(xx, yy)
@@ -148,7 +147,7 @@ def create_plot(path):
     my_cmap.set_bad('white')
     zz_2 = np.ma.masked_equal(zz_2, 0)
     axes_2.contourf(xx, yy, zz_2, alpha=1., cmap=my_cmap)
-    axes_2.set_title('Constrained Potential ($\\rho \\ge 0.6$)')
+    axes_2.set_title('Constrained Potential') # ($\\rho \\ge 0.6$)
     axes_2.grid('on')
 
     savings_path = create_folder_for_storing_data(path_of_experiment=path)
